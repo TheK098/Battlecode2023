@@ -49,7 +49,7 @@ public class Carrier {
                 rc.collectResource(targetWell, -1);
             } else {  // out of range, move closer
                 Direction dir = directionToTarget(rc, targetWell, 4);  // floor(√20) = 4
-                rc.setIndicatorString(dir.toString());
+//                rc.setIndicatorString(dir.toString());
                 if (rc.canMove(dir)) rc.move(dir);
             }
         }
@@ -68,7 +68,7 @@ public class Carrier {
             rc.transferResource(targetHq, ResourceType.MANA, mana);
         } else {  // out of range, move closer
             Direction dir = directionToTarget(rc, targetHq, 4);  // floor(√20) = 4
-            rc.setIndicatorString(dir.toString());
+//            rc.setIndicatorString(dir.toString());
             if (rc.canMove(dir)) rc.move(dir);
         }
     }
