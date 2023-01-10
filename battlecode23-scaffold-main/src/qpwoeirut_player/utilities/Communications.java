@@ -1,5 +1,6 @@
 package qpwoeirut_player.utilities;
 
+import battlecode.common.Clock;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
@@ -36,7 +37,7 @@ public class Communications {
 
     private static MapLocation[] getLocations(RobotController rc, int offset, int size) throws GameActionException {
         ArrayList<MapLocation> locations = new ArrayList<>();
-        for (int i = 0; i < size; ++i) {
+        for (int i = size; i --> 0;) {
             int value = rc.readSharedArray(offset + i);
             if (value != INVALID) {
                 --value;
@@ -74,7 +75,7 @@ public class Communications {
     }
 
     private static int findEmptySpot(RobotController rc, int offset, int size) throws GameActionException {
-        for (int i = 0; i < size; ++i) {
+        for (int i = size; i --> 0;) {
             int value = rc.readSharedArray(offset + i);
             if (value == INVALID) return offset + i;
         }
