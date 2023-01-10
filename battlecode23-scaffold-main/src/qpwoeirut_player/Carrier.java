@@ -48,7 +48,7 @@ public class Carrier {
             if (rc.canCollectResource(targetWell, -1)) {
                 rc.collectResource(targetWell, -1);
             } else {  // out of range, move closer
-                Direction dir = directionToTarget(rc, targetWell);
+                Direction dir = directionToTarget(rc, targetWell, 4);  // floor(√20) = 4
                 rc.setIndicatorString(dir.toString());
                 if (rc.canMove(dir)) rc.move(dir);
             }
@@ -67,7 +67,7 @@ public class Carrier {
         } else if (mana > 0 && rc.canTransferResource(targetHq, ResourceType.MANA, mana)) {
             rc.transferResource(targetHq, ResourceType.MANA, mana);
         } else {  // out of range, move closer
-            Direction dir = directionToTarget(rc, targetHq);
+            Direction dir = directionToTarget(rc, targetHq, 4);  // floor(√20) = 4
             rc.setIndicatorString(dir.toString());
             if (rc.canMove(dir)) rc.move(dir);
         }

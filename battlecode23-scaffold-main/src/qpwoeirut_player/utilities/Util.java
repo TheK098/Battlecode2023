@@ -1,9 +1,6 @@
 package qpwoeirut_player.utilities;
 
-import battlecode.common.Direction;
-import battlecode.common.GameActionException;
-import battlecode.common.MapLocation;
-import battlecode.common.RobotController;
+import battlecode.common.*;
 
 import java.util.Arrays;
 import java.util.PriorityQueue;
@@ -64,66 +61,85 @@ public class Util {
     // TODO: include effects of boosts/destabilization
     // TODO: include how crowded an area already is with bots
     // TODO: replace priority queue with bytecode-efficient impl
-    public static Direction directionToTarget(RobotController rc, MapLocation target) throws GameActionException {
-        return rc.getLocation().directionTo(target);
+    public static Direction directionToTarget(RobotController rc, MapLocation target, int vision) throws GameActionException {
+        int visionRange = vision + vision + 1;
+
+//        return rc.getLocation().directionTo(target);
         // note that indexing is [x][y]
-//        Direction[][] startingDir = new Direction[rc.getMapWidth()][rc.getMapHeight()];
-//        int[][] distance = new int[rc.getMapWidth()][rc.getMapHeight()];
-//        for (int r = rc.getMapWidth(); r --> 0;) {
-//            Arrays.fill(distance[r], INF_DIST);
-//        }
-//
-//        PriorityQueue<Item> pq = new PriorityQueue<>(62);  // most common range is √20, 20 * π ≈ 62
-//        for (Direction dir : DIRECTIONS) {
-//            if (rc.canMove(dir)) {
-//                int dist = REGULAR_COST;
-//
-//                // FIXME: waiting until API for this is released
-//                // int dist = determineCost(rc.getLocationType(rc.getLocation(), dir));
-//
-//                MapLocation newLoc = rc.getLocation().add(dir);
-//                pq.add(new Item(dist, dir, newLoc));
-//                startingDir[newLoc.x][newLoc.y] = dir;
-//                distance[newLoc.x][newLoc.y] = dist;
-//            }
-//        }
-//        while (!pq.isEmpty()) {
-//            Item cur = pq.poll();
-//            if (distance[cur.loc.x][cur.loc.y] < cur.dist) continue;
-//            if (!rc.canSenseLocation(cur.loc)) continue;
-//            for (Direction dir : DIRECTIONS) {
-//                MapLocation newLoc = cur.loc.add(dir);
-//                if (newLoc.x < 0 || newLoc.x >= rc.getMapWidth() || newLoc.y < 0 || newLoc.y >= rc.getMapHeight())
-//                    continue;
-//
-//                int newDist = cur.dist + REGULAR_COST;
-//
-//                // FIXME: waiting until API for this is released
-//                // int newDist = cur.dist + determineCost(rc.getLocationType(cur.loc, dir));
-//                if (distance[newLoc.x][newLoc.y] > newDist) {
-//                    distance[newLoc.x][newLoc.y] = newDist;
-//
-//                    startingDir[newLoc.x][newLoc.y] = cur.dir;
-//                    pq.add(new Item(newDist, cur.dir, newLoc));
-//                }
-//            }
-//        }
-//
-//        Direction closestDir = Direction.CENTER;
-//        int closestDistance = INF_DIST;
-//        for (int x = rc.getMapWidth(); x --> 0) {
-//            for (int y = rc.getMapHeight(); y --> 0) {
-//                // multiply by 1.1 as a quick estimate
-//                int distanceRemaining = Math.max(Math.abs(target.x - x), Math.abs(target.y - y)) * 11 / 10;
-//                int totalDistance = distance[x][y] + distanceRemaining;
-//
-//                if (closestDistance > totalDistance) {
-//                    closestDistance = totalDistance;
-//                    closestDir = startingDir[x][y];
-//                }
-//            }
-//        }
-//        return closestDir;
+        int offsetX = rc.getLocation().x - vision;
+        int offsetY = rc.getLocation().y - vision;
+
+        if (rc.getID() == 10438) System.out.println("1: " + Clock.getBytecodeNum());
+        Direction[][] startingDir = new Direction[visionRange][visionRange];
+        int[][] distance = new int[visionRange][visionRange];
+        for (int r = visionRange; r --> 0;) {
+            Arrays.fill(distance[r], INF_DIST);
+        }
+        if (rc.getID() == 10438) System.out.println("2: " + Clock.getBytecodeNum());
+
+        PriorityQueue<Item> pq = new PriorityQueue<>(62);  // most common range is √20, 20 * π ≈ 62
+        if (rc.getID() == 10438) System.out.println("3: " + Clock.getBytecodeNum());
+        for (Direction dir : DIRECTIONS) {
+            if (rc.canMove(dir)) {
+                int dist = REGULAR_COST;
+
+                // FIXME: waiting until API for this is released
+                // int dist = determineCost(rc.getLocationType(rc.getLocation(), dir));
+
+                MapLocation newLoc = rc.getLocation().add(dir);
+                pq.add(new Item(dist, dir, newLoc));
+                startingDir[newLoc.x - offsetX][newLoc.y - offsetY] = dir;
+                distance[newLoc.x - offsetX][newLoc.y - offsetY] = dist;
+            }
+        }
+        while (!pq.isEmpty()) {
+            if (rc.getID() == 10438) System.out.println("4: " + Clock.getBytecodeNum());
+            Item cur = pq.poll();
+            if (rc.getID() == 10438) System.out.println("4.1: " + Clock.getBytecodeNum());
+            assert cur != null;
+            if (distance[cur.loc.x - offsetX][cur.loc.y - offsetY] < cur.dist) continue;
+            for (Direction dir : DIRECTIONS) {
+                MapLocation newLoc = cur.loc.add(dir);
+                if (!rc.canSenseLocation(newLoc)) continue;
+
+                int newDist = cur.dist + REGULAR_COST;
+
+                // FIXME: waiting until API for this is released
+                // int newDist = cur.dist + determineCost(rc.getLocationType(cur.loc, dir));
+                if (distance[newLoc.x - offsetX][newLoc.y - offsetY] > newDist) {
+                    distance[newLoc.x - offsetX][newLoc.y - offsetY] = newDist;
+
+                    startingDir[newLoc.x - offsetX][newLoc.y - offsetY] = cur.dir;
+                    pq.add(new Item(newDist, cur.dir, newLoc));
+                }
+            }
+        }
+        if (rc.getID() == 10438) System.out.println("5: " + Clock.getBytecodeNum());
+
+        Direction closestDir = Direction.CENTER;
+        int closestDistance = INF_DIST;
+        MapLocation centerOfRange = new MapLocation(vision, vision);
+        for (int x = visionRange; x --> 0;) {
+            for (int y = visionRange; y --> 0;) {
+                // check the boundaries of the circle only
+                if (centerOfRange.isWithinDistanceSquared(new MapLocation(x, y), vision * vision)) {
+                    continue;
+                }
+                // multiply by 1.1 as a quick estimate
+                int distanceRemaining = Math.max(
+                        Math.abs(target.x - (x + offsetX)),
+                        Math.abs(target.y - (y + offsetY))
+                ) * 11 / 10;
+                int totalDistance = distance[x][y] + distanceRemaining;
+
+                if (closestDistance > totalDistance) {
+                    closestDistance = totalDistance;
+                    closestDir = startingDir[x][y];
+                }
+            }
+        }
+        if (rc.getID() == 10438) System.out.println("6: " + Clock.getBytecodeNum());
+        return closestDir;
     }
 
     // FIXME: waiting until API for this is released
