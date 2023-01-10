@@ -1,8 +1,7 @@
 package qpwoeirut_player;
 
 import battlecode.common.*;
-
-import static qpwoeirut_player.Util.*;
+import qpwoeirut_player.utilities.FastRandom;
 
 public class Launcher {
     private static RobotController rc;
@@ -10,6 +9,7 @@ public class Launcher {
     public static void initialize(RobotController robotController) {
         Launcher.rc = robotController;
     }
+
     public static void processRound() throws GameActionException {
         // Try to attack someone
         int radius = rc.getType().actionRadiusSquared;
@@ -26,7 +26,7 @@ public class Launcher {
         }
 
         // Also try to move randomly.
-        Direction dir = directions[rng.nextInt(directions.length)];
+        Direction dir = Direction.allDirections()[FastRandom.nextInt(Direction.allDirections().length)];
         if (rc.canMove(dir)) {
             rc.move(dir);
         }
