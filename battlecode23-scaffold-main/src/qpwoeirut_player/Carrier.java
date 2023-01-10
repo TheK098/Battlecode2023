@@ -2,8 +2,10 @@ package qpwoeirut_player;
 
 import battlecode.common.*;
 import qpwoeirut_player.utilities.Communications;
+import qpwoeirut_player.utilities.FastRandom;
 import qpwoeirut_player.utilities.Util;
 
+import static qpwoeirut_player.utilities.Util.DIRECTIONS;
 import static qpwoeirut_player.utilities.Util.directionToTarget;
 
 public class Carrier {
@@ -31,14 +33,25 @@ public class Carrier {
             Communications.addWell(rc, wellInfo.getMapLocation());
         }
 
-        MapLocation targetWell = Util.pickNearest(rc.getLocation(), Communications.getKnownWells(rc));
+        MapLocation[] knownWells = Communications.getKnownWells(rc);
 
-        if (rc.canCollectResource(targetWell, -1)) {
-            rc.collectResource(targetWell, -1);
-        } else {  // out of range, move closer
-            Direction dir = directionToTarget(rc, targetWell);
-            rc.setIndicatorString(dir.toString());
-            if (rc.canMove(dir)) rc.move(dir);
+        // I think it's guaranteed this won't happen, but it's good to be safe
+        if (knownWells.length == 0) {  // pick a random direction
+            // TODO: remember the direction and keep going that way, with a chance of turning
+            Direction randomDirection = DIRECTIONS[FastRandom.nextInt(DIRECTIONS.length)];
+            if (rc.canMove(randomDirection)) {
+                rc.move(randomDirection);
+            }
+        } else {
+            MapLocation targetWell = Util.pickNearest(rc.getLocation(), knownWells);
+
+            if (rc.canCollectResource(targetWell, -1)) {
+                rc.collectResource(targetWell, -1);
+            } else {  // out of range, move closer
+                Direction dir = directionToTarget(rc, targetWell);
+                rc.setIndicatorString(dir.toString());
+                if (rc.canMove(dir)) rc.move(dir);
+            }
         }
     }
 
