@@ -59,7 +59,7 @@ public class Communications {
     private static boolean addLocation(RobotController rc, MapLocation loc, int offset, int size) throws GameActionException {
         MapLocation[] knownLocations = getLocations(rc, offset, size);
 
-        if (Util.locationInArray(knownLocations, loc)) {
+        if (!Util.locationInArray(knownLocations, loc)) {
             int index = findEmptySpot(rc, offset, size);
             int value = loc.x * MAP_SIZE + loc.y + 1;
             if (index != -1 && rc.canWriteSharedArray(index, value)) {

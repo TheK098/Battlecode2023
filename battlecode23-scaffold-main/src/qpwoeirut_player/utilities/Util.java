@@ -21,7 +21,7 @@ public class Util {
 
     public static boolean locationInArray(MapLocation[] locations, MapLocation loc) {
         for (int i = locations.length; i --> 0;) {
-            if (locations[i] == loc) return true;
+            if (locations[i].equals(loc)) return true;
         }
         return false;
     }
