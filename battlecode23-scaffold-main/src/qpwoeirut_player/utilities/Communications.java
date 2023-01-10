@@ -1,12 +1,8 @@
 package qpwoeirut_player.utilities;
 
-import battlecode.common.Clock;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 // TODO: consider cycling through writing data so that all the bots can eventually know everything
 
@@ -36,17 +32,19 @@ public class Communications {
     }
 
     private static MapLocation[] getLocations(RobotController rc, int offset, int size) throws GameActionException {
-        ArrayList<MapLocation> locations = new ArrayList<>();
+        MapLocation[] locations = new MapLocation[size];
+        int locationsIdx = 0;
         for (int i = size; i --> 0;) {
             int value = rc.readSharedArray(offset + i);
             if (value != INVALID) {
                 --value;
-                locations.add(new MapLocation(value / MAP_SIZE, value % MAP_SIZE));
+                locations[locationsIdx++] = new MapLocation(value / MAP_SIZE, value % MAP_SIZE);
             }
         }
 
-        // https://stackoverflow.com/questions/9572795/convert-list-to-array-in-java
-        return locations.toArray(new MapLocation[0]);
+        MapLocation[] ret = new MapLocation[locationsIdx];
+        System.arraycopy(locations, 0, ret, 0, locationsIdx);
+        return ret;
     }
 
     // TODO: give each bot a cache to avoid reading the shared array repeatedly
@@ -61,9 +59,7 @@ public class Communications {
     private static boolean addLocation(RobotController rc, MapLocation loc, int offset, int size) throws GameActionException {
         MapLocation[] knownLocations = getLocations(rc, offset, size);
 
-        // TODO: check bytecode for this line, probably expensive
-        // lambda is required because the Battlecode impl doesn't allow passing ::equals reference
-        if (Arrays.stream(knownLocations).noneMatch(l -> loc.equals(l))) {
+        if (Util.locationInArray(knownLocations, loc)) {
             int index = findEmptySpot(rc, offset, size);
             int value = loc.x * MAP_SIZE + loc.y + 1;
             if (index != -1 && rc.canWriteSharedArray(index, value)) {

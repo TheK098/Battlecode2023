@@ -19,6 +19,13 @@ public class Util {
             Direction.WEST, Direction.NORTH, Direction.EAST, Direction.SOUTH
     };
 
+    public static boolean locationInArray(MapLocation[] locations, MapLocation loc) {
+        for (int i = locations.length; i --> 0;) {
+            if (locations[i] == loc) return true;
+        }
+        return false;
+    }
+
     // TODO: include pathfinding in the future
     public static MapLocation pickNearest(MapLocation currentLocation, MapLocation[] locations) {
         int closestIndex = 0;
