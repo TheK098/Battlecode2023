@@ -59,11 +59,11 @@ public class Communications {
     }
 
     private static boolean addLocation(RobotController rc, MapLocation loc, int offset, int size) throws GameActionException {
-        MapLocation[] knownWells = getKnownWells(rc);
+        MapLocation[] knownLocations = getLocations(rc, offset, size);
 
         // TODO: check bytecode for this line, probably expensive
         // lambda is required because the Battlecode impl doesn't allow passing ::equals reference
-        if (Arrays.stream(knownWells).noneMatch(l -> loc.equals(l))) {
+        if (Arrays.stream(knownLocations).noneMatch(l -> loc.equals(l))) {
             int index = findEmptySpot(rc, offset, size);
             int value = loc.x * MAP_SIZE + loc.y + 1;
             if (index != -1 && rc.canWriteSharedArray(index, value)) {
@@ -74,11 +74,11 @@ public class Communications {
         return false;
     }
 
-    private static int findEmptySpot(RobotController rc, int offset, int size) throws GameActionException {
+    private static int findEmptySpot(RobotController rc, int offset, int size) throws GameActionException, IllegalStateException {
         for (int i = size; i --> 0;) {
             int value = rc.readSharedArray(offset + i);
             if (value == INVALID) return offset + i;
         }
-        return -1;
+        throw new IllegalStateException("Ran out of empty spots");
     }
 }
