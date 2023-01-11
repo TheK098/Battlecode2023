@@ -5,12 +5,9 @@ import qpwoeirut_player.common.Communications;
 import qpwoeirut_player.utilities.FastRandom;
 import qpwoeirut_player.utilities.Util;
 
-import static qpwoeirut_player.common.Pathfinding.DIRECTIONS;
-
 
 public class Carrier extends BaseBot {
     private static final int CAPACITY = 40;
-    private static Direction fallbackDirection = DIRECTIONS[FastRandom.nextInt(DIRECTIONS.length)];
 
     public Carrier(RobotController rc) {
         super(rc);
@@ -36,11 +33,6 @@ public class Carrier extends BaseBot {
         MapLocation[] knownWells = Communications.getKnownWells(rc);
         MapLocation targetWell = Util.pickNearest(rc.getLocation(), knownWells);
         Direction dir = pickDirection(rc, targetWell);
-        if (dir == Direction.CENTER) {
-            if (FastRandom.nextInt(10) == 0) fallbackDirection = fallbackDirection.rotateLeft();
-            if (FastRandom.nextInt(10) == 0) fallbackDirection = fallbackDirection.rotateRight();
-            dir = fallbackDirection;
-        }
         if (rc.canMove(dir)) rc.move(dir);
         else if (rc.canMove(dir.rotateLeft())) rc.move(dir.rotateLeft());
         else if (rc.canMove(dir.rotateRight())) rc.move(dir.rotateRight());
