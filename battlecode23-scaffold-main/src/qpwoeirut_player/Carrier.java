@@ -26,6 +26,11 @@ public class Carrier extends BaseBot {
 
     @Override
     public void processRound() throws GameActionException {
+        WellInfo[] nearbyWells = rc.senseNearbyWells();
+        for (WellInfo wellInfo : nearbyWells) {
+            Communications.addWell(rc, wellInfo.getMapLocation());
+        }
+
         if (!capacityFull()) {
             collectResources();
         } else {
@@ -34,11 +39,6 @@ public class Carrier extends BaseBot {
     }
 
     private static void collectResources() throws GameActionException {
-        WellInfo[] nearbyWells = rc.senseNearbyWells();
-        for (WellInfo wellInfo : nearbyWells) {
-            Communications.addWell(rc, wellInfo.getMapLocation());
-        }
-
         MapLocation[] knownWells = Communications.getKnownWells(rc);
         MapLocation targetWell = Util.pickNearest(rc, knownWells, blacklist);
         handleBlacklist(targetWell, TileType.WELL);
