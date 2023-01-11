@@ -40,6 +40,8 @@ public class Carrier extends BaseBot {
 
     private static void collectResources() throws GameActionException {
         MapLocation[] knownWells = Communications.getKnownWells(rc);
+        if (knownWells.length == 0) return; // just in case, to avoid throwing
+
         MapLocation targetWell = Util.pickNearest(rc, knownWells, blacklist);
         handleBlacklist(targetWell, TileType.WELL);
 
@@ -80,7 +82,7 @@ public class Carrier extends BaseBot {
             timeRemaining = tileType.blacklistTimer;
         } else if (--timeRemaining == 0) {
             blacklist[target.x][target.y] = rc.getRoundNum() + tileType.blacklistLength;
-            System.out.println("Blacklisted " + target);
+//            System.out.println("Blacklisted " + target);
         }
     }
 
