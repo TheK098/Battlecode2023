@@ -19,28 +19,26 @@ public class Communications {
 
     private static final int MAP_SIZE = 60;
 
-    private static final int WELL_OFFSET = 0;
-    private static final int WELLS = 60;
+    private static final int MAX_COUNT = 150;
 
-    private static final int HQ_OFFSET = 60;
-    private static final int HQS = 4;
+    private static final MapLocation[] locations = new MapLocation[MAX_COUNT];
 
-    public MapLocation[] getKnownWells(RobotController rc) throws GameActionException {
-        return getLocations(rc, WELL_OFFSET, WELLS);
+    private static final MapLocation[] wellCache = new MapLocation[MAX_COUNT];
+    private static int wellCacheSize = 0;
+
+    public static MapLocation[] getKnownWells(RobotController rc) throws GameActionException {
+        return getLocations(rc, TileType.WELL);
     }
 
-    public MapLocation[] getHqs(RobotController rc) throws GameActionException {
-        return getLocations(rc, HQ_OFFSET, HQS);
+    public static MapLocation[] getHqs(RobotController rc) throws GameActionException {
+        return getLocations(rc, TileType.HQ);
     }
 
-    private MapLocation[] getLocations(RobotController rc, int offset, int size) throws GameActionException {
-        MapLocation[] locations = new MapLocation[size];
-        int locationsIdx = 0;
-        for (int i = size; i --> 0;) {
-            int value = rc.readSharedArray(offset + i);
-            if (value != INVALID) {
-                --value;
-                locations[locationsIdx++] = new MapLocation(value / MAP_SIZE, value % MAP_SIZE);
+    private static MapLocation[] getLocations(RobotController rc, TileType tileType) throws GameActionException {
+        int locationsIdx = loadSharedLocations(rc, tileType);
+        if (tileType == TileType.WELL) {
+            for (int i = wellCacheSize; i --> 0;) {
+                locations[locationsIdx++] = wellCache[i];
             }
         }
 
@@ -49,34 +47,62 @@ public class Communications {
         return ret;
     }
 
-    // TODO: give each bot a cache to avoid reading the shared array repeatedly
-    // returns whether bot was able to write to the array
-    public boolean addWell(RobotController rc, MapLocation wellLoc) throws GameActionException {
-        return addLocation(rc, wellLoc, WELL_OFFSET, WELLS);
-    }
-    public boolean addHq(RobotController rc, MapLocation hqLoc) throws GameActionException {
-        return addLocation(rc, hqLoc, HQ_OFFSET, HQS);
-    }
-
-    private boolean addLocation(RobotController rc, MapLocation loc, int offset, int size) throws GameActionException {
-        MapLocation[] knownLocations = getLocations(rc, offset, size);
-
-        if (!locationInArray(knownLocations, loc)) {
-            int index = findEmptySpot(rc, offset, size);
-            int value = loc.x * MAP_SIZE + loc.y + 1;
-            if (index != -1 && rc.canWriteSharedArray(index, value)) {
-                rc.writeSharedArray(index, value);
-                return true;
+    private static int loadSharedLocations(RobotController rc, TileType tileType) throws GameActionException {
+        int locationsIdx = 0;
+        for (int i = tileType.count; i --> 0;) {
+            int value = rc.readSharedArray(tileType.offset + i);
+            if (value != INVALID) {
+                --value;
+                locations[locationsIdx++] = new MapLocation(value / MAP_SIZE, value % MAP_SIZE);
             }
         }
-        return false;
+        return locationsIdx;
     }
 
-    private static int findEmptySpot(RobotController rc, int offset, int size) throws GameActionException, IllegalStateException {
-        for (int i = size; i --> 0;) {
-            int value = rc.readSharedArray(offset + i);
-            if (value == INVALID) return offset + i;
+    public void addWell(RobotController rc, MapLocation wellLoc) throws GameActionException {
+        MapLocation[] knownLocations = getLocations(rc, TileType.WELL);
+        if (!locationInArray(knownLocations, wellLoc)) {
+            wellCache[wellCacheSize++] = wellLoc;
+            tryPushCache(rc);
+        }
+    }
+    public void addHq(RobotController rc, MapLocation hqLoc) throws GameActionException {
+        MapLocation[] knownLocations = getLocations(rc, TileType.HQ);
+        if (!locationInArray(knownLocations, hqLoc)) {
+            int index = findEmptySpot(rc, TileType.HQ);
+            if (rc.canWriteSharedArray(index, pack(hqLoc))) {
+                rc.writeSharedArray(index, pack(hqLoc));
+            }
+        }
+    }
+
+    private static int findEmptySpot(RobotController rc, TileType tileType) throws GameActionException, IllegalStateException {
+        for (int i = tileType.count; i --> 0;) {
+            int value = rc.readSharedArray(tileType.offset + i);
+            if (value == INVALID) return tileType.offset + i;
         }
         throw new IllegalStateException("Ran out of empty spots");
+    }
+
+    public static void tryPushCache(RobotController rc) throws GameActionException {
+        MapLocation[] knownWells = getKnownWells(rc);
+        while (wellCacheSize --> 0) {
+            int ct = 0;
+            for (int j = knownWells.length; j --> 0;) if (knownWells[j].equals(wellCache[wellCacheSize])) ++ct;
+
+            if (ct > 1) continue;  // value has already been pushed by another bot
+
+            int index = findEmptySpot(rc, TileType.WELL);
+            if (index != -1 && rc.canWriteSharedArray(index, pack(wellCache[wellCacheSize]))) {
+                rc.writeSharedArray(index, pack(wellCache[wellCacheSize]));
+            } else {
+                ++wellCacheSize;
+                break;
+            }
+        }
+    }
+
+    private static int pack(MapLocation loc) {
+        return loc.x * MAP_SIZE + loc.y + 1;
     }
 }

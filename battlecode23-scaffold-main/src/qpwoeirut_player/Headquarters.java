@@ -36,6 +36,9 @@ public class Headquarters extends BaseBot {
             } else ++failures;
             spawnIdx ^= 1;
         }
+
+//        System.out.println(Arrays.toString(comms.getHqs(rc)));
+//        System.out.println(Arrays.toString(comms.getKnownWells(rc)));
     }
 
     /**
