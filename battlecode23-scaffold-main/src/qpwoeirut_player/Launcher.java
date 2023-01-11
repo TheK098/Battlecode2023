@@ -3,14 +3,13 @@ package qpwoeirut_player;
 import battlecode.common.*;
 import qpwoeirut_player.utilities.FastRandom;
 
-public class Launcher {
-    private static RobotController rc;
-
-    public static void initialize(RobotController robotController) {
-        Launcher.rc = robotController;
+public class Launcher extends BaseBot{
+    public Launcher(RobotController rc) {
+        super(rc);
     }
 
-    public static void processRound() throws GameActionException {
+    @Override
+    public  void processRound() throws GameActionException {
         // Try to attack someone
         int radius = rc.getType().actionRadiusSquared;
         Team opponent = rc.getTeam().opponent();

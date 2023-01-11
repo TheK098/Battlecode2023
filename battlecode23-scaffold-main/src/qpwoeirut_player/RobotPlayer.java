@@ -2,48 +2,40 @@ package qpwoeirut_player;
 
 import battlecode.common.*;
 
-/**
- * RobotPlayer is the class that describes your main robot strategy.
- * The run() method inside this class is like your main function: this is what we'll call once your robot
- * is created!
- */
 @SuppressWarnings("unused")
 public strictfp class RobotPlayer {
-    static int turnCount = 0;
-
     /**
      *
      * @param rc  The RobotController object. You use it to perform actions from this robot, and to get
      *            information on its current status. Essentially your portal to interacting with the world.
      **/
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "InfiniteLoopStatement"})
     public static void run(RobotController rc) throws GameActionException {
+        BaseBot bot = null;
+        // switch assignments don't work in 1.8 smh
+        switch (rc.getType()) {
+            case HEADQUARTERS:
+                bot = new Headquarters(rc);
+                break;
+            case CARRIER:
+                bot = new Carrier(rc);
+                break;
+            case LAUNCHER:
+                bot = new Launcher(rc);
+                break;
+            case BOOSTER:
+            case DESTABILIZER:
+            case AMPLIFIER:
+                throw new IllegalArgumentException("Type " + rc.getType() + " is not handled!");
+        }
         while (true) {
-            turnCount += 1;
             try {
-                switch (rc.getType()) {
-                    case HEADQUARTERS:
-                        Headquarters.initialize(rc);
-                        Headquarters.processRound();
-                        break;
-                    case CARRIER:
-                        Carrier.initialize(rc);
-                        Carrier.processRound();
-                        break;
-                    case LAUNCHER:
-                        Launcher.initialize(rc);
-                        Launcher.processRound();
-                        break;
-                    case BOOSTER:
-                    case DESTABILIZER:
-                    case AMPLIFIER:     break;
-                }
-
+                bot.processRound();
             } catch (GameActionException e) {
-                System.out.println(rc.getType() + " GameActionException");
+                System.out.println("GameActionException: " + rc.getType());
                 e.printStackTrace();
             } catch (Exception e) {
-                System.out.println(rc.getType() + " Exception");
+                System.out.println("Exception: " + rc.getType());
                 e.printStackTrace();
             } finally {  // end turn
                 Clock.yield();

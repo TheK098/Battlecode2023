@@ -1,23 +1,22 @@
 package qpwoeirut_player;
 
 import battlecode.common.*;
-import qpwoeirut_player.utilities.Communications;
 import qpwoeirut_player.utilities.FastRandom;
 import qpwoeirut_player.utilities.Util;
 
-import static qpwoeirut_player.utilities.Util.DIRECTIONS;
-import static qpwoeirut_player.utilities.Util.directionToTarget;
+import static qpwoeirut_player.common.Pathfinding.DIRECTIONS;
+import static qpwoeirut_player.common.Pathfinding.directionToTarget;
 
-public class Carrier {
-    private static RobotController rc;
 
+public class Carrier extends BaseBot {
     private static final int CAPACITY = 40;
 
-    public static void initialize(RobotController robotController) {
-        Carrier.rc = robotController;
+    public Carrier(RobotController rc) {
+        super(rc);
     }
 
-    public static void processRound() throws GameActionException {
+    @Override
+    public void processRound() throws GameActionException {
         if (!capacityFull()) {
             collectResources();
         } else {
@@ -30,10 +29,10 @@ public class Carrier {
     private static void collectResources() throws GameActionException {
         WellInfo[] nearbyWells = rc.senseNearbyWells();
         for (WellInfo wellInfo : nearbyWells) {
-            Communications.addWell(rc, wellInfo.getMapLocation());
+            comms.addWell(rc, wellInfo.getMapLocation());
         }
 
-        MapLocation[] knownWells = Communications.getKnownWells(rc);
+        MapLocation[] knownWells = comms.getKnownWells(rc);
 
         // I think it's guaranteed this won't happen, but it's good to be safe
         if (knownWells.length == 0) {  // pick a random direction
@@ -56,7 +55,7 @@ public class Carrier {
     }
 
     private static void returnResources() throws GameActionException {
-        MapLocation targetHq = Util.pickNearest(rc.getLocation(), Communications.getHqs(rc));
+        MapLocation targetHq = Util.pickNearest(rc.getLocation(), comms.getHqs(rc));
         int adamantium = rc.getResourceAmount(ResourceType.ADAMANTIUM);
         int elixir = rc.getResourceAmount(ResourceType.ELIXIR);
         int mana = rc.getResourceAmount(ResourceType.MANA);

@@ -4,23 +4,22 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
-import qpwoeirut_player.utilities.Communications;
 import qpwoeirut_player.utilities.FastRandom;
 
 import java.util.ArrayList;
 
-public class Headquarters {
-    private static RobotController rc;
+public class Headquarters extends BaseBot {
 
     private static final int HQ_SPAWN_RADIUS = 9;
 
-    public static void initialize(RobotController robotController) {
-        Headquarters.rc = robotController;
+    public Headquarters(RobotController rc) {
+        super(rc);
     }
 
-    public static void processRound() throws GameActionException {
+    @Override
+    public void processRound() throws GameActionException {
         // report HQ position
-        Communications.addHq(rc, rc.getLocation());
+        comms.addHq(rc, rc.getLocation());
 
         // for now the strat is to spam carriers
         MapLocation newCarrierLoc = pickEmptySpawnLocation(RobotType.CARRIER);

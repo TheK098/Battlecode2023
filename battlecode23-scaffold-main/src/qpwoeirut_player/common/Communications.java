@@ -1,8 +1,10 @@
-package qpwoeirut_player.utilities;
+package qpwoeirut_player.common;
 
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
+
+import static qpwoeirut_player.common.Pathfinding.locationInArray;
 
 // TODO: consider cycling through writing data so that all the bots can eventually know everything
 
@@ -23,15 +25,15 @@ public class Communications {
     private static final int HQ_OFFSET = 60;
     private static final int HQS = 4;
 
-    public static MapLocation[] getKnownWells(RobotController rc) throws GameActionException {
+    public MapLocation[] getKnownWells(RobotController rc) throws GameActionException {
         return getLocations(rc, WELL_OFFSET, WELLS);
     }
 
-    public static MapLocation[] getHqs(RobotController rc) throws GameActionException {
+    public MapLocation[] getHqs(RobotController rc) throws GameActionException {
         return getLocations(rc, HQ_OFFSET, HQS);
     }
 
-    private static MapLocation[] getLocations(RobotController rc, int offset, int size) throws GameActionException {
+    private MapLocation[] getLocations(RobotController rc, int offset, int size) throws GameActionException {
         MapLocation[] locations = new MapLocation[size];
         int locationsIdx = 0;
         for (int i = size; i --> 0;) {
@@ -49,17 +51,17 @@ public class Communications {
 
     // TODO: give each bot a cache to avoid reading the shared array repeatedly
     // returns whether bot was able to write to the array
-    public static boolean addWell(RobotController rc, MapLocation wellLoc) throws GameActionException {
+    public boolean addWell(RobotController rc, MapLocation wellLoc) throws GameActionException {
         return addLocation(rc, wellLoc, WELL_OFFSET, WELLS);
     }
-    public static boolean addHq(RobotController rc, MapLocation hqLoc) throws GameActionException {
+    public boolean addHq(RobotController rc, MapLocation hqLoc) throws GameActionException {
         return addLocation(rc, hqLoc, HQ_OFFSET, HQS);
     }
 
-    private static boolean addLocation(RobotController rc, MapLocation loc, int offset, int size) throws GameActionException {
+    private boolean addLocation(RobotController rc, MapLocation loc, int offset, int size) throws GameActionException {
         MapLocation[] knownLocations = getLocations(rc, offset, size);
 
-        if (!Util.locationInArray(knownLocations, loc)) {
+        if (!locationInArray(knownLocations, loc)) {
             int index = findEmptySpot(rc, offset, size);
             int value = loc.x * MAP_SIZE + loc.y + 1;
             if (index != -1 && rc.canWriteSharedArray(index, value)) {
