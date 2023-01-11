@@ -5,7 +5,6 @@ import qpwoeirut_player.utilities.FastRandom;
 import qpwoeirut_player.utilities.Util;
 
 import static qpwoeirut_player.common.Pathfinding.DIRECTIONS;
-import static qpwoeirut_player.common.Pathfinding.spreadOut;
 
 
 public class Carrier extends BaseBot {
@@ -35,7 +34,7 @@ public class Carrier extends BaseBot {
 
         MapLocation[] knownWells = comms.getKnownWells(rc);
         MapLocation targetWell = Util.pickNearest(rc.getLocation(), knownWells);
-        Direction dir = spreadOut(rc, targetWell);
+        Direction dir = pickDirection(rc, targetWell);
         if (dir == Direction.CENTER) {
             if (FastRandom.nextInt(10) == 0) fallbackDirection = fallbackDirection.rotateLeft();
             if (FastRandom.nextInt(10) == 0) fallbackDirection = fallbackDirection.rotateRight();
@@ -62,10 +61,48 @@ public class Carrier extends BaseBot {
         } else if (mana > 0 && rc.canTransferResource(targetHq, ResourceType.MANA, mana)) {
             rc.transferResource(targetHq, ResourceType.MANA, mana);
         } else {  // out of range, move closer
-            Direction dir = spreadOut(rc, targetHq);
+            Direction dir = pickDirection(rc, targetHq);
 //            rc.setIndicatorString(dir.toString());
             if (rc.canMove(dir)) rc.move(dir);
         }
+    }
+
+    private static final int TARGET_DISTANCE_CUTOFF = 100;
+    private static final int TARGET_DISTANCE_DIVISOR = 5;
+    private static final int ALLY_DISTANCE_CUTOFF = 30;
+    private static final int ALLY_DISTANCE_DIVISOR = 10;
+    private static final int RANDOM_CUTOFF = 50;
+
+    /**
+     * Move the bot away from other allied carriers, with a stronger attraction towards a target
+     * @param target location that bot wants to go to
+     * @return recommended direction
+     */
+    public static Direction pickDirection(RobotController rc, MapLocation target) throws GameActionException {
+        int weightX = 0;
+        int weightY = 0;
+        int distanceToTarget = rc.getLocation().distanceSquaredTo(target);
+        if (distanceToTarget < TARGET_DISTANCE_CUTOFF) {
+            int dx = target.x - rc.getLocation().x;
+            int dy = target.y - rc.getLocation().y;
+            weightX = dx * (TARGET_DISTANCE_CUTOFF - distanceToTarget) / TARGET_DISTANCE_DIVISOR;
+            weightY = dy * (TARGET_DISTANCE_CUTOFF - distanceToTarget) / TARGET_DISTANCE_DIVISOR;
+        }
+        RobotInfo[] nearbyRobots = rc.senseNearbyRobots(ALLY_DISTANCE_CUTOFF, rc.getTeam());
+        for (RobotInfo robot: nearbyRobots) {
+            if (robot.type == rc.getType()) {
+                int dist = rc.getLocation().distanceSquaredTo(robot.location);
+                int dx = robot.location.x - rc.getLocation().x;
+                int dy = robot.location.y - rc.getLocation().y;
+                // subtract since we want to move away
+                weightX -= dx * (ALLY_DISTANCE_CUTOFF - dist) / ALLY_DISTANCE_DIVISOR;
+                weightY -= dy * (ALLY_DISTANCE_CUTOFF - dist) / ALLY_DISTANCE_DIVISOR;
+            }
+        }
+
+        int finalDx = FastRandom.nextInt(RANDOM_CUTOFF + RANDOM_CUTOFF + 1) - RANDOM_CUTOFF > weightX ? -1 : 1;
+        int finalDy = FastRandom.nextInt(RANDOM_CUTOFF + RANDOM_CUTOFF + 1) - RANDOM_CUTOFF > weightY ? -1 : 1;
+        return new MapLocation(0, 0).directionTo(new MapLocation(finalDx, finalDy));
     }
 
     private static boolean capacityFull() {

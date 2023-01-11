@@ -1,7 +1,8 @@
 package qpwoeirut_player.utilities;
 
-import battlecode.common.MapLocation;
+import battlecode.common.*;
 
+import static qpwoeirut_player.common.Pathfinding.DIRECTIONS;
 import static qpwoeirut_player.common.Pathfinding.INF_DIST;
 
 public class Util {
@@ -17,5 +18,27 @@ public class Util {
             }
         }
         return locations[closestIndex];
+    }
+
+    public static boolean adjacentToHeadquarters(RobotController rc, MapLocation location) throws GameActionException {
+        for (Direction dir: DIRECTIONS) {
+            MapLocation loc = location.add(dir);
+            if (rc.canSenseLocation(loc)) {
+                RobotInfo robot = rc.senseRobotAtLocation(loc);
+                if (robot != null && robot.team == rc.getTeam() && robot.type == RobotType.HEADQUARTERS) return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean adjacentToWell(RobotController rc, MapLocation location) throws GameActionException {
+        for (Direction dir: DIRECTIONS) {
+            MapLocation loc = location.add(dir);
+            if (rc.canSenseLocation(loc)) {
+                WellInfo well = rc.senseWell(loc);
+                if (well != null) return true;
+            }
+        }
+        return false;
     }
 }
