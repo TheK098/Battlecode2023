@@ -7,12 +7,12 @@ import static qpwoeirut_player.common.Pathfinding.INF_DIST;
 
 public class Util {
     // TODO: include pathfinding in the future
-    public static MapLocation pickNearest(MapLocation currentLocation, MapLocation[] locations) {
+    public static MapLocation pickNearest(RobotController rc, MapLocation[] locations, int[][] blacklist) {
         int closestIndex = 0;
         int closestDistance = INF_DIST;
         for (int i = locations.length; i --> 0;) {
-            int distance = locations[i].distanceSquaredTo(currentLocation);
-            if (closestDistance > distance) {
+            int distance = locations[i].distanceSquaredTo(rc.getLocation());
+            if (closestDistance > distance && blacklist[locations[i].x][locations[i].y] <= rc.getRoundNum()) {
                 closestDistance = distance;
                 closestIndex = i;
             }

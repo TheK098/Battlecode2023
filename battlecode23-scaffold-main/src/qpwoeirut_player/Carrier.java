@@ -2,12 +2,23 @@ package qpwoeirut_player;
 
 import battlecode.common.*;
 import qpwoeirut_player.common.Communications;
-import qpwoeirut_player.utilities.FastRandom;
+import qpwoeirut_player.common.SpreadSettings;
+import qpwoeirut_player.common.TileType;
 import qpwoeirut_player.utilities.Util;
+
+import static battlecode.common.GameConstants.MAP_MAX_HEIGHT;
+import static battlecode.common.GameConstants.MAP_MAX_WIDTH;
+import static qpwoeirut_player.common.Pathfinding.spreadOut;
 
 
 public class Carrier extends BaseBot {
     private static final int CAPACITY = 40;
+
+    // some wells or HQs have so many carriers already that we need to direct this carrier to a different one
+    // blacklist[x][y] = t --> don't use (x, y) as a target until round t
+    private static final int[][] blacklist = new int[MAP_MAX_WIDTH][MAP_MAX_HEIGHT];
+    private static MapLocation currentTarget = null;
+    private static int timeRemaining = 100;
 
     public Carrier(RobotController rc) {
         super(rc);
@@ -22,8 +33,6 @@ public class Carrier extends BaseBot {
         }
     }
 
-    // TODO: fix potential issue where carriers clump around well/HQ and block others from leaving
-
     private static void collectResources() throws GameActionException {
         WellInfo[] nearbyWells = rc.senseNearbyWells();
         for (WellInfo wellInfo : nearbyWells) {
@@ -31,8 +40,10 @@ public class Carrier extends BaseBot {
         }
 
         MapLocation[] knownWells = Communications.getKnownWells(rc);
-        MapLocation targetWell = Util.pickNearest(rc.getLocation(), knownWells);
-        Direction dir = pickDirection(rc, targetWell);
+        MapLocation targetWell = Util.pickNearest(rc, knownWells, blacklist);
+        handleBlacklist(targetWell, TileType.WELL);
+
+        Direction dir = pickDirectionForCollection(rc, targetWell);
         if (rc.canMove(dir)) rc.move(dir);
         else if (rc.canMove(dir.rotateLeft())) rc.move(dir.rotateLeft());
         else if (rc.canMove(dir.rotateRight())) rc.move(dir.rotateRight());
@@ -43,7 +54,9 @@ public class Carrier extends BaseBot {
     }
 
     private static void returnResources() throws GameActionException {
-        MapLocation targetHq = Util.pickNearest(rc.getLocation(), Communications.getHqs(rc));
+        MapLocation targetHq = Util.pickNearest(rc, Communications.getHqs(rc), blacklist);
+        handleBlacklist(targetHq, TileType.HQ);
+
         int adamantium = rc.getResourceAmount(ResourceType.ADAMANTIUM);
         int elixir = rc.getResourceAmount(ResourceType.ELIXIR);
         int mana = rc.getResourceAmount(ResourceType.MANA);
@@ -54,24 +67,33 @@ public class Carrier extends BaseBot {
         } else if (mana > 0 && rc.canTransferResource(targetHq, ResourceType.MANA, mana)) {
             rc.transferResource(targetHq, ResourceType.MANA, mana);
         } else {  // out of range, move closer
-            Direction dir = pickDirection(rc, targetHq);
+            Direction dir = pickDirectionForReturn(rc, targetHq);
 //            rc.setIndicatorString(dir.toString());
             if (rc.canMove(dir)) rc.move(dir);
         }
     }
 
+    private static void handleBlacklist(MapLocation target, TileType tileType) {
+        rc.setIndicatorString(String.valueOf(target));
+        if (currentTarget == null || !currentTarget.equals(target)) {
+            currentTarget = target;
+            timeRemaining = tileType.blacklistTimer;
+        } else if (--timeRemaining == 0) {
+            blacklist[target.x][target.y] = rc.getRoundNum() + tileType.blacklistLength;
+            System.out.println("Blacklisted " + target);
+        }
+    }
+
     private static final int TARGET_DISTANCE_CUTOFF = 100;
     private static final int TARGET_DISTANCE_DIVISOR = 5;
-    private static final int ALLY_DISTANCE_CUTOFF = 30;
-    private static final int ALLY_DISTANCE_DIVISOR = 10;
-    private static final int RANDOM_CUTOFF = 50;
 
     /**
      * Move the bot away from other allied carriers, with a stronger attraction towards a target
+     *
      * @param target location that bot wants to go to
      * @return recommended direction
      */
-    public static Direction pickDirection(RobotController rc, MapLocation target) throws GameActionException {
+    public static Direction pickDirectionForCollection(RobotController rc, MapLocation target) throws GameActionException {
         int weightX = 0;
         int weightY = 0;
         int distanceToTarget = rc.getLocation().distanceSquaredTo(target);
@@ -81,21 +103,19 @@ public class Carrier extends BaseBot {
             weightX = dx * (TARGET_DISTANCE_CUTOFF - distanceToTarget) / TARGET_DISTANCE_DIVISOR;
             weightY = dy * (TARGET_DISTANCE_CUTOFF - distanceToTarget) / TARGET_DISTANCE_DIVISOR;
         }
-        RobotInfo[] nearbyRobots = rc.senseNearbyRobots(ALLY_DISTANCE_CUTOFF, rc.getTeam());
-        for (RobotInfo robot: nearbyRobots) {
-            if (robot.type == rc.getType()) {
-                int dist = rc.getLocation().distanceSquaredTo(robot.location);
-                int dx = robot.location.x - rc.getLocation().x;
-                int dy = robot.location.y - rc.getLocation().y;
-                // subtract since we want to move away
-                weightX -= dx * (ALLY_DISTANCE_CUTOFF - dist) / ALLY_DISTANCE_DIVISOR;
-                weightY -= dy * (ALLY_DISTANCE_CUTOFF - dist) / ALLY_DISTANCE_DIVISOR;
-            }
-        }
+        return spreadOut(rc, weightX, weightY, SpreadSettings.CARRIER_COLLECTING);
+    }
 
-        int finalDx = FastRandom.nextInt(RANDOM_CUTOFF + RANDOM_CUTOFF + 1) - RANDOM_CUTOFF > weightX ? -1 : 1;
-        int finalDy = FastRandom.nextInt(RANDOM_CUTOFF + RANDOM_CUTOFF + 1) - RANDOM_CUTOFF > weightY ? -1 : 1;
-        return new MapLocation(0, 0).directionTo(new MapLocation(finalDx, finalDy));
+    /**
+     * Move bot towards target, occasionally making random moves once close to target
+     *
+     * @param target location that bot wants to go to
+     * @return recommended direction
+     */
+    public static Direction pickDirectionForReturn(RobotController rc, MapLocation target) throws GameActionException {
+        int weightX = target.x - rc.getLocation().x;
+        int weightY = target.y - rc.getLocation().y;
+        return spreadOut(rc, weightX, weightY, SpreadSettings.CARRIER_RETURNING);
     }
 
     private static boolean capacityFull() {

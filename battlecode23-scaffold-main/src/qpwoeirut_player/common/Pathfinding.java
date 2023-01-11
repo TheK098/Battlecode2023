@@ -1,7 +1,7 @@
 package qpwoeirut_player.common;
 
-import battlecode.common.Direction;
-import battlecode.common.MapLocation;
+import battlecode.common.*;
+import qpwoeirut_player.utilities.FastRandom;
 
 public class Pathfinding {
 
@@ -17,10 +17,28 @@ public class Pathfinding {
     };
 
     public static boolean locationInArray(MapLocation[] array, MapLocation loc) {
-        for (int i = array.length; i --> 0;) {
+        for (int i = array.length; i-- > 0; ) {
             if (array[i].equals(loc)) return true;
         }
         return false;
+    }
+
+    public static Direction spreadOut(RobotController rc, int weightX, int weightY, SpreadSettings settings) throws GameActionException {
+        RobotInfo[] nearbyRobots = rc.senseNearbyRobots(settings.ally_dist_cutoff, rc.getTeam());
+        for (RobotInfo robot : nearbyRobots) {
+            if (robot.type == rc.getType()) {
+                int dist = rc.getLocation().distanceSquaredTo(robot.location);
+                int dx = robot.location.x - rc.getLocation().x;
+                int dy = robot.location.y - rc.getLocation().y;
+                // subtract since we want to move away
+                weightX -= dx * (settings.ally_dist_cutoff - dist) / settings.ally_dist_divisor;
+                weightY -= dy * (settings.ally_dist_cutoff - dist) / settings.ally_dist_divisor;
+            }
+        }
+
+        int finalDx = FastRandom.nextInt(settings.random_bound) - settings.random_cutoff > weightX ? -1 : 1;
+        int finalDy = FastRandom.nextInt(settings.random_bound) - settings.random_cutoff > weightY ? -1 : 1;
+        return new MapLocation(0, 0).directionTo(new MapLocation(finalDx, finalDy));
     }
 
     // declare arrays once whenever possible to save bytecode
