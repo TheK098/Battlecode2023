@@ -25,7 +25,7 @@ public class Pathfinding {
 
     private static final int TARGET_DISTANCE_CUTOFF = 100;
     private static final int TARGET_DISTANCE_DIVISOR = 5;
-    private static final int ALLY_DISTANCE_CUTOFF = 20;
+    private static final int ALLY_DISTANCE_CUTOFF = 30;
     private static final int ALLY_DISTANCE_DIVISOR = 10;
     private static final int RANDOM_CUTOFF = 50;
 
