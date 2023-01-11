@@ -21,11 +21,20 @@ public class Headquarters extends BaseBot {
         // report HQ position
         comms.addHq(rc, rc.getLocation());
 
-        // for now the strat is to spam carriers
-        MapLocation newCarrierLoc = pickEmptySpawnLocation(RobotType.CARRIER);
-        while (newCarrierLoc != null) {
-            rc.buildRobot(RobotType.CARRIER, newCarrierLoc);  // it's guaranteed that we can build
-            newCarrierLoc = pickEmptySpawnLocation(RobotType.CARRIER);
+        RobotType[] spawnPriority = {RobotType.CARRIER, RobotType.LAUNCHER};
+        if (rc.getRoundNum() > 10 && rc.getRoundNum() % 2 == 0) {
+            spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
+        }
+
+        int spawnIdx = 0;
+        int failures = 0;
+        while (failures < spawnPriority.length) {
+            MapLocation newCarrierLoc = pickEmptySpawnLocation(spawnPriority[spawnIdx]);
+            if (newCarrierLoc != null) {
+                rc.buildRobot(spawnPriority[spawnIdx], newCarrierLoc);  // it's guaranteed that we can build
+                failures = 0;
+            } else ++failures;
+            spawnIdx ^= 1;
         }
     }
 

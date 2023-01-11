@@ -37,12 +37,14 @@ public class Pathfinding {
     public static Direction spreadOut(RobotController rc, MapLocation target) throws GameActionException {
         int weightX = 0;
         int weightY = 0;
-        int distanceToTarget = rc.getLocation().distanceSquaredTo(target);
-        if (distanceToTarget < TARGET_DISTANCE_CUTOFF) {
-            int dx = target.x - rc.getLocation().x;
-            int dy = target.y - rc.getLocation().y;
-            weightX = dx * (TARGET_DISTANCE_CUTOFF - distanceToTarget) / TARGET_DISTANCE_DIVISOR;
-            weightY = dy * (TARGET_DISTANCE_CUTOFF - distanceToTarget) / TARGET_DISTANCE_DIVISOR;
+        if (target != null) {
+            int distanceToTarget = rc.getLocation().distanceSquaredTo(target);
+            if (distanceToTarget < TARGET_DISTANCE_CUTOFF) {
+                int dx = target.x - rc.getLocation().x;
+                int dy = target.y - rc.getLocation().y;
+                weightX = dx * (TARGET_DISTANCE_CUTOFF - distanceToTarget) / TARGET_DISTANCE_DIVISOR;
+                weightY = dy * (TARGET_DISTANCE_CUTOFF - distanceToTarget) / TARGET_DISTANCE_DIVISOR;
+            }
         }
         RobotInfo[] nearbyRobots = rc.senseNearbyRobots(ALLY_DISTANCE_CUTOFF, rc.getTeam());
         for (RobotInfo robot: nearbyRobots) {
