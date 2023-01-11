@@ -41,4 +41,11 @@ public class Util {
         }
         return false;
     }
+
+    public static boolean locationInArray(MapLocation[] array, MapLocation loc) {
+        for (int i = array.length; i-- > 0; ) {
+            if (array[i].equals(loc)) return true;
+        }
+        return false;
+    }
 }

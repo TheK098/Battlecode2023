@@ -4,7 +4,7 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
-import static qpwoeirut_player.common.Pathfinding.locationInArray;
+import static qpwoeirut_player.utilities.Util.locationInArray;
 
 // TODO: consider cycling through writing data so that all the bots can eventually know everything
 

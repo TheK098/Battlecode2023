@@ -8,7 +8,8 @@ import qpwoeirut_player.utilities.Util;
 
 import static battlecode.common.GameConstants.MAP_MAX_HEIGHT;
 import static battlecode.common.GameConstants.MAP_MAX_WIDTH;
-import static qpwoeirut_player.common.Pathfinding.spreadOut;
+import static qpwoeirut_player.common.Pathfinding.*;
+import static qpwoeirut_player.utilities.Util.adjacentToWell;
 
 
 public class Carrier extends BaseBot {
@@ -45,10 +46,14 @@ public class Carrier extends BaseBot {
         MapLocation targetWell = Util.pickNearest(rc, knownWells, blacklist);
         handleBlacklist(targetWell, TileType.WELL);
 
-        Direction dir = pickDirectionForCollection(rc, targetWell);
+//        Direction dir = pickDirectionForCollection(rc, targetWell);
+        Direction dir;
+        if (adjacentToWell(rc, rc.getLocation())) {
+            dir = moveWhileStayingAdjacent(rc, targetWell);
+        } else {
+            dir = moveToward(rc, targetWell);
+        }
         if (rc.canMove(dir)) rc.move(dir);
-        else if (rc.canMove(dir.rotateLeft())) rc.move(dir.rotateLeft());
-        else if (rc.canMove(dir.rotateRight())) rc.move(dir.rotateRight());
 
         if (rc.canCollectResource(targetWell, -1)) {
             rc.collectResource(targetWell, -1);
@@ -86,8 +91,8 @@ public class Carrier extends BaseBot {
         }
     }
 
-    private static final int TARGET_DISTANCE_CUTOFF = 100;
-    private static final int TARGET_DISTANCE_DIVISOR = 5;
+    private static final int TARGET_DISTANCE_CUTOFF = 400;
+    private static final int TARGET_DISTANCE_DIVISOR = 2;
 
     /**
      * Move the bot away from other allied carriers, with a stronger attraction towards a target
