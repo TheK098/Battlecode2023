@@ -14,20 +14,37 @@ public class Launcher extends BaseBot {
 
     @Override
     public void processRound() throws GameActionException {
-        int radius = rc.getType().actionRadiusSquared;
-        RobotInfo[] enemies = rc.senseNearbyRobots(radius, rc.getTeam().opponent());
-        if (enemies.length > 0) {
-            MapLocation toAttack = enemies[0].location;
+        int actionRadius = rc.getType().actionRadiusSquared;
+        int closestDist = 3600;
+        RobotInfo target = null;
+        for (RobotInfo enemy: rc.senseNearbyRobots(actionRadius, rc.getTeam().opponent())) {
+            if (enemy.type != RobotType.HEADQUARTERS && closestDist > rc.getLocation().distanceSquaredTo(enemy.location)) {
+                closestDist = rc.getLocation().distanceSquaredTo(enemy.location);
+                target = enemy;
+            }
+        }
+        if (target != null) {
+            MapLocation toAttack = target.location;
             if (rc.canAttack(toAttack)) {
-                rc.setIndicatorString("Attacking");
                 rc.attack(toAttack);
+                Direction dir = rc.getLocation().directionTo(target.location).opposite();
+                if (rc.canMove(dir)) {
+                    rc.move(dir);
+                }
+                rc.setIndicatorString("Attack and run");
+            } else {
+                Direction dir = rc.getLocation().directionTo(target.location);
+                if (rc.canMove(dir)) {
+                    rc.move(dir);
+                    rc.attack(toAttack);
+                }
+                rc.setIndicatorString("Charge and attack");
             }
         }
 
         Direction dir = spreadOut(rc, 0, 0, SpreadSettings.LAUNCHER);
         // maintain space for carriers
-        if (rc.canMove(dir) &&
-                !adjacentToHeadquarters(rc, rc.getLocation().add(dir)) && !adjacentToWell(rc, rc.getLocation().add(dir))) {
+        if (rc.canMove(dir) && !adjacentToHeadquarters(rc, rc.getLocation().add(dir)) && !adjacentToWell(rc, rc.getLocation().add(dir))) {
             rc.move(dir);
         }
     }
