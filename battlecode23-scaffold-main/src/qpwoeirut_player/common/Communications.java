@@ -100,6 +100,7 @@ public class Communications {
                 break;
             }
         }
+        if (wellCacheSize == -1) wellCacheSize = 0;
     }
 
     private static int pack(MapLocation loc) {
