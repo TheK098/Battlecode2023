@@ -30,7 +30,7 @@ public class Launcher extends BaseBot{
             rc.move(dir);
         }
     }
-    
+
     private static final int ALLY_DISTANCE_CUTOFF = 30;
     private static final int ALLY_DISTANCE_DIVISOR = 10;
     private static final int RANDOM_CUTOFF = 50;

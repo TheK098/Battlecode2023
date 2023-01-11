@@ -59,14 +59,14 @@ public class Communications {
         return locationsIdx;
     }
 
-    public void addWell(RobotController rc, MapLocation wellLoc) throws GameActionException {
+    public static void addWell(RobotController rc, MapLocation wellLoc) throws GameActionException {
         MapLocation[] knownLocations = getLocations(rc, TileType.WELL);
         if (!locationInArray(knownLocations, wellLoc)) {
             wellCache[wellCacheSize++] = wellLoc;
             tryPushCache(rc);
         }
     }
-    public void addHq(RobotController rc, MapLocation hqLoc) throws GameActionException {
+    public static void addHq(RobotController rc, MapLocation hqLoc) throws GameActionException {
         MapLocation[] knownLocations = getLocations(rc, TileType.HQ);
         if (!locationInArray(knownLocations, hqLoc)) {
             int index = findEmptySpot(rc, TileType.HQ);

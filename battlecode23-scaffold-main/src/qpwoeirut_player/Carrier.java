@@ -1,6 +1,7 @@
 package qpwoeirut_player;
 
 import battlecode.common.*;
+import qpwoeirut_player.common.Communications;
 import qpwoeirut_player.utilities.FastRandom;
 import qpwoeirut_player.utilities.Util;
 
@@ -29,10 +30,10 @@ public class Carrier extends BaseBot {
     private static void collectResources() throws GameActionException {
         WellInfo[] nearbyWells = rc.senseNearbyWells();
         for (WellInfo wellInfo : nearbyWells) {
-            comms.addWell(rc, wellInfo.getMapLocation());
+            Communications.addWell(rc, wellInfo.getMapLocation());
         }
 
-        MapLocation[] knownWells = comms.getKnownWells(rc);
+        MapLocation[] knownWells = Communications.getKnownWells(rc);
         MapLocation targetWell = Util.pickNearest(rc.getLocation(), knownWells);
         Direction dir = pickDirection(rc, targetWell);
         if (dir == Direction.CENTER) {
@@ -50,7 +51,7 @@ public class Carrier extends BaseBot {
     }
 
     private static void returnResources() throws GameActionException {
-        MapLocation targetHq = Util.pickNearest(rc.getLocation(), comms.getHqs(rc));
+        MapLocation targetHq = Util.pickNearest(rc.getLocation(), Communications.getHqs(rc));
         int adamantium = rc.getResourceAmount(ResourceType.ADAMANTIUM);
         int elixir = rc.getResourceAmount(ResourceType.ELIXIR);
         int mana = rc.getResourceAmount(ResourceType.MANA);

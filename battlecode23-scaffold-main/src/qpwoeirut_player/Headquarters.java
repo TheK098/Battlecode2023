@@ -4,6 +4,7 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
+import qpwoeirut_player.common.Communications;
 import qpwoeirut_player.utilities.FastRandom;
 
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ public class Headquarters extends BaseBot {
     @Override
     public void processRound() throws GameActionException {
         // report HQ position
-        comms.addHq(rc, rc.getLocation());
+        Communications.addHq(rc, rc.getLocation());
 
         RobotType[] spawnPriority = {RobotType.CARRIER, RobotType.LAUNCHER};
         if (rc.getRoundNum() > 10 && rc.getRoundNum() % 2 == 0) {
