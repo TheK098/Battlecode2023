@@ -6,7 +6,7 @@ import qpwoeirut_player.common.Communications;
 
 abstract public class BaseBot {
     protected static RobotController rc;
-    protected static Communications comms;
+    protected static Communications comms = new Communications();
 
     public BaseBot(RobotController rc) {
         BaseBot.rc = rc;

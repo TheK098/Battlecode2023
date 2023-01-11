@@ -5,11 +5,12 @@ import qpwoeirut_player.utilities.FastRandom;
 import qpwoeirut_player.utilities.Util;
 
 import static qpwoeirut_player.common.Pathfinding.DIRECTIONS;
-import static qpwoeirut_player.common.Pathfinding.directionToTarget;
+import static qpwoeirut_player.common.Pathfinding.spreadOut;
 
 
 public class Carrier extends BaseBot {
     private static final int CAPACITY = 40;
+    private static Direction fallbackDirection = DIRECTIONS[FastRandom.nextInt(DIRECTIONS.length)];
 
     public Carrier(RobotController rc) {
         super(rc);
@@ -33,24 +34,19 @@ public class Carrier extends BaseBot {
         }
 
         MapLocation[] knownWells = comms.getKnownWells(rc);
+        MapLocation targetWell = Util.pickNearest(rc.getLocation(), knownWells);
+        Direction dir = spreadOut(rc, targetWell);
+        if (dir == Direction.CENTER) {
+            if (FastRandom.nextInt(10) == 0) fallbackDirection = fallbackDirection.rotateLeft();
+            if (FastRandom.nextInt(10) == 0) fallbackDirection = fallbackDirection.rotateRight();
+            dir = fallbackDirection;
+        }
+        if (rc.canMove(dir)) rc.move(dir);
+        else if (rc.canMove(dir.rotateLeft())) rc.move(dir.rotateLeft());
+        else if (rc.canMove(dir.rotateRight())) rc.move(dir.rotateRight());
 
-        // I think it's guaranteed this won't happen, but it's good to be safe
-        if (knownWells.length == 0) {  // pick a random direction
-            // TODO: remember the direction and keep going that way, with a chance of turning
-            Direction randomDirection = DIRECTIONS[FastRandom.nextInt(DIRECTIONS.length)];
-            if (rc.canMove(randomDirection)) {
-                rc.move(randomDirection);
-            }
-        } else {
-            MapLocation targetWell = Util.pickNearest(rc.getLocation(), knownWells);
-
-            if (rc.canCollectResource(targetWell, -1)) {
-                rc.collectResource(targetWell, -1);
-            } else {  // out of range, move closer
-                Direction dir = directionToTarget(rc, targetWell, 4);  // floor(√20) = 4
-//                rc.setIndicatorString(dir.toString());
-                if (rc.canMove(dir)) rc.move(dir);
-            }
+        if (rc.canCollectResource(targetWell, -1)) {
+            rc.collectResource(targetWell, -1);
         }
     }
 
@@ -66,7 +62,7 @@ public class Carrier extends BaseBot {
         } else if (mana > 0 && rc.canTransferResource(targetHq, ResourceType.MANA, mana)) {
             rc.transferResource(targetHq, ResourceType.MANA, mana);
         } else {  // out of range, move closer
-            Direction dir = directionToTarget(rc, targetHq, 4);  // floor(√20) = 4
+            Direction dir = spreadOut(rc, targetHq);
 //            rc.setIndicatorString(dir.toString());
             if (rc.canMove(dir)) rc.move(dir);
         }
