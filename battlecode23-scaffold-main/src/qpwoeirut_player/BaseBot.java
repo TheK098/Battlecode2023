@@ -1,5 +1,6 @@
 package qpwoeirut_player;
 
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 
@@ -11,4 +12,12 @@ abstract public class BaseBot {
     }
 
     abstract public void processRound() throws GameActionException;
+
+    protected static boolean tryMove(Direction dir) throws GameActionException {
+        if (rc.canMove(dir) && dir != Direction.CENTER) {
+            rc.move(dir);
+            return true;
+        }
+        return false;
+    }
 }

@@ -52,6 +52,21 @@ public class Util {
         return Direction.CENTER;
     }
 
+    public static Direction directionToward(RobotController rc, MapLocation target) {
+        return similarDirection(rc, rc.getLocation().directionTo(target));
+    }
+
+    public static Direction directionAway(RobotController rc, MapLocation target) {
+        return directionToward(rc, target).opposite();
+    }
+
+    public static Direction similarDirection(RobotController rc, Direction dir) {
+        if (rc.canMove(dir)) return dir;
+        if (rc.canMove(dir.rotateLeft())) return dir.rotateLeft();
+        if (rc.canMove(dir.rotateRight())) return dir.rotateRight();
+        return Direction.CENTER;
+    }
+
     public static boolean locationInArray(MapLocation[] array, MapLocation loc) {
         for (int i = array.length; i-- > 0; ) {
             if (array[i].equals(loc)) return true;

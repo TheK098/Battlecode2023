@@ -57,7 +57,14 @@ public class Carrier extends BaseBot {
         } else {
             dir = moveToward(rc, targetWell);
         }
-        if (rc.canMove(dir) && dir != Direction.CENTER) rc.move(dir);
+        if (tryMove(dir)) {
+            tryMove(similarDirection(rc, dir));
+        } else if (!adjacentToWell(rc, rc.getLocation())) {
+            // just try moving away from HQ
+            MapLocation nearestHq = Util.pickNearest(rc, Communications.getHqs(rc), blacklist);
+            tryMove(directionAway(rc, nearestHq));
+            tryMove(directionAway(rc, nearestHq));
+        }
 
         if (rc.canSenseLocation(targetWell)) {
             int toCollect = Math.min(CAPACITY - getCurrentResources(), rc.senseWell(targetWell).getRate());
@@ -83,7 +90,7 @@ public class Carrier extends BaseBot {
         } else {
             dir = moveToward(rc, targetHq);
         }
-        if (rc.canMove(dir) && dir != Direction.CENTER) rc.move(dir);
+        tryMove(dir);
 
         int adamantium = rc.getResourceAmount(ResourceType.ADAMANTIUM);
         int elixir = rc.getResourceAmount(ResourceType.ELIXIR);
