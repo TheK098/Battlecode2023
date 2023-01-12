@@ -32,6 +32,30 @@ public class Carrier extends BaseBot {
         }
 //        debugBytecode("1.0");
 
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+        if (enemies.length > 0) {
+            RobotInfo nearestEnemy = pickNearest(rc, enemies);
+            assert nearestEnemy != null;
+            boolean launchersNearby = false;
+            for (RobotInfo enemy: enemies) launchersNearby |= enemy.type == RobotType.LAUNCHER;
+
+            // attack if possible; otherwise run if launchers nearby
+            Direction toward = directionToward(rc, nearestEnemy.location);
+            if (getCurrentResources() >= Math.max(5, rc.getHealth()) &&
+                    rc.getLocation().add(toward).isWithinDistanceSquared(nearestEnemy.location, rc.getType().actionRadiusSquared)) {
+                if (!rc.canAttack(nearestEnemy.location)) {
+                    tryMove(toward);
+                }
+                if (rc.canAttack(nearestEnemy.location)) rc.attack(nearestEnemy.location);
+                tryMove(directionAway(rc, nearestEnemy.location));
+                rc.setIndicatorString("Attacking " + nearestEnemy.location);
+                return;
+            } else if (launchersNearby) {
+                tryMove(directionAway(rc, nearestEnemy.location));  // assume enemies are in same direction
+                rc.setIndicatorString("Running away from " + nearestEnemy.location);
+                return;
+            }
+        }
         if ((getCurrentResources() > 0 && adjacentToHeadquarters(rc, rc.getLocation())) || getCurrentResources() >= 39) {
             returnResources();
             rc.setIndicatorString("returning");
