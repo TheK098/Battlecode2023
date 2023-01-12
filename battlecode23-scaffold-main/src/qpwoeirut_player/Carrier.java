@@ -2,13 +2,13 @@ package qpwoeirut_player;
 
 import battlecode.common.*;
 import qpwoeirut_player.common.Communications;
-import qpwoeirut_player.common.SpreadSettings;
 import qpwoeirut_player.common.TileType;
 import qpwoeirut_player.utilities.Util;
 
 import static battlecode.common.GameConstants.MAP_MAX_HEIGHT;
 import static battlecode.common.GameConstants.MAP_MAX_WIDTH;
-import static qpwoeirut_player.common.Pathfinding.*;
+import static qpwoeirut_player.common.Pathfinding.moveToward;
+import static qpwoeirut_player.common.Pathfinding.moveWhileStayingAdjacent;
 import static qpwoeirut_player.utilities.Util.*;
 
 
@@ -115,40 +115,6 @@ public class Carrier extends BaseBot {
 
     private static void resetBlacklistTimer(TileType tileType) {
         timeRemaining = tileType.blacklistTimer;
-    }
-
-    private static final int TARGET_DISTANCE_CUTOFF = 400;
-    private static final int TARGET_DISTANCE_DIVISOR = 2;
-
-    /**
-     * Move the bot away from other allied carriers, with a stronger attraction towards a target
-     *
-     * @param target location that bot wants to go to
-     * @return recommended direction
-     */
-    public static Direction pickDirectionForCollection(RobotController rc, MapLocation target) throws GameActionException {
-        int weightX = 0;
-        int weightY = 0;
-        int distanceToTarget = rc.getLocation().distanceSquaredTo(target);
-        if (distanceToTarget < TARGET_DISTANCE_CUTOFF) {
-            int dx = target.x - rc.getLocation().x;
-            int dy = target.y - rc.getLocation().y;
-            weightX = dx * (TARGET_DISTANCE_CUTOFF - distanceToTarget) / TARGET_DISTANCE_DIVISOR;
-            weightY = dy * (TARGET_DISTANCE_CUTOFF - distanceToTarget) / TARGET_DISTANCE_DIVISOR;
-        }
-        return spreadOut(rc, weightX, weightY, SpreadSettings.CARRIER_COLLECTING);
-    }
-
-    /**
-     * Move bot towards target, occasionally making random moves once close to target
-     *
-     * @param target location that bot wants to go to
-     * @return recommended direction
-     */
-    public static Direction pickDirectionForReturn(RobotController rc, MapLocation target) throws GameActionException {
-        int weightX = target.x - rc.getLocation().x;
-        int weightY = target.y - rc.getLocation().y;
-        return spreadOut(rc, weightX, weightY, SpreadSettings.CARRIER_RETURNING);
     }
 
     private static int getCurrentResources() {
