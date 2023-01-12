@@ -5,8 +5,6 @@ import qpwoeirut_player.common.Communications;
 import qpwoeirut_player.common.TileType;
 import qpwoeirut_player.utilities.Util;
 
-import static battlecode.common.GameConstants.MAP_MAX_HEIGHT;
-import static battlecode.common.GameConstants.MAP_MAX_WIDTH;
 import static qpwoeirut_player.common.Pathfinding.moveToward;
 import static qpwoeirut_player.common.Pathfinding.moveWhileStayingAdjacent;
 import static qpwoeirut_player.utilities.Util.*;
@@ -17,12 +15,13 @@ public class Carrier extends BaseBot {
 
     // some wells or HQs have so many carriers already that we need to direct this carrier to a different one
     // blacklist[x][y] = t --> don't use (x, y) as a target until round t
-    private static final int[][] blacklist = new int[MAP_MAX_WIDTH][MAP_MAX_HEIGHT];
+    private static int[][] blacklist;
     private static MapLocation currentTarget = null;
     private static int timeRemaining = 100;
 
     public Carrier(RobotController rc) {
         super(rc);
+        blacklist = new int[rc.getMapWidth()][rc.getMapHeight()];
     }
 
     @Override

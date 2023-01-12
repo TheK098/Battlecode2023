@@ -19,7 +19,7 @@ public class Communications {
 
     private static final int MAP_SIZE = 60;
 
-    private static final int MAX_COUNT = 150;
+    private static final int MAX_COUNT = 6 * 6 * 4;
 
     private static final MapLocation[] locations = new MapLocation[MAX_COUNT];
 
