@@ -5,15 +5,15 @@ import qpwoeirut_player.utilities.FastRandom;
 
 import java.util.Arrays;
 
-import static qpwoeirut_player.utilities.Util.cube;
-import static qpwoeirut_player.utilities.Util.similarDirection;
+import static qpwoeirut_player.Carrier.debugBytecode;
+import static qpwoeirut_player.utilities.Util.*;
 
 public class Pathfinding {
 
     public static final int INF_DIST = 60 * 60 * 60 * 60;
 
     // TODO: assumes vision radius is always 20 (HQ/amplifier have 34)
-    private static final int MAX_IN_RANGE = 80;
+    private static final int MAX_IN_RANGE = 80;  // theoretical max is 69, but we might have bytecode issues
     private static final int MAX_SIZE = 4 + 4 + 1;
 
     public static final Direction[] DIRECTIONS = {  // put diagonal directions first since they should go faster maybe?
@@ -41,6 +41,13 @@ public class Pathfinding {
     // BFS, only handles passability
     // TODO eventually optimize by declaring all variables outside loop
     public static Direction moveToward(RobotController rc, MapLocation target) throws GameActionException {
+//        debugBytecode("4.0");
+        Direction dir = directionToward(rc, target);
+        if (dir != Direction.CENTER) {
+            rc.setIndicatorString("Shortcut move " + dir);
+            return dir;
+        }
+
         int visionLength = (int)(Math.sqrt(rc.getType().visionRadiusSquared) + 0.00001);
         int minX = rc.getLocation().x - visionLength, minY = rc.getLocation().y - visionLength;
 
@@ -48,6 +55,7 @@ public class Pathfinding {
         for (int x = visionLength + visionLength + 1; x --> 0;) {
             Arrays.fill(distance[x], INF_DIST);
         }
+//        debugBytecode("4.1");
 
         int queueStart = 0, queueEnd = 0;
         queue[queueEnd++] = rc.getLocation().translate(-minX, -minY);
@@ -56,49 +64,49 @@ public class Pathfinding {
 
         Direction closestDir = rc.getLocation().directionTo(target);
         int closestDistance = INF_DIST;
-        while (queueStart < queueEnd) {
-            int x = queue[queueStart].x, y = queue[queueStart].y;
 
-            int distanceRemaining = Math.max(
+        MapLocation nextLoc; int x, y, d, nx, ny, distanceRemaining, totalDistance;  // declare once at top to save bytecode
+        while (queueStart < queueEnd) {
+//            debugBytecode("4.2");
+            x = queue[queueStart].x; y = queue[queueStart].y;
+
+            distanceRemaining = Math.max(
                     Math.abs(target.x - (x + minX)),
                     Math.abs(target.y - (y + minY))
             ) * 3 / 2;
-            int totalDistance = distance[x][y] + distanceRemaining;
+            totalDistance = distance[x][y] + distanceRemaining;
 
             if (closestDistance > totalDistance) {
                 closestDistance = totalDistance;
                 closestDir = startingDir[x][y];
-                rc.setIndicatorString(closestDir + " " + (x + minX) + " " + (y + minY) + " " + target.x + " " + target.y + " " + totalDistance + " " + distanceRemaining + " " + queueStart);
+//                rc.setIndicatorString(closestDir + " " + (x + minX) + " " + (y + minY) + " " + target.x + " " + target.y + " " + totalDistance + " " + distanceRemaining + " " + queueStart);
             }
 
-            for (int d = 8; d --> 0;) {
-                Direction dir = Direction.allDirections()[d];
-                MapLocation nextLoc = queue[queueStart].add(dir);
-                int nx = nextLoc.x, ny = nextLoc.y;
+//            debugBytecode("4.3");
+            for (d = 8; d --> 0;) {
+                dir = Direction.allDirections()[d];
+                nextLoc = queue[queueStart].add(dir);
+                nx = nextLoc.x; ny = nextLoc.y;
 
-                if (nx >= 0 && nx < MAX_SIZE && ny >= 0 && ny < MAX_SIZE) {
-                    if (distance[nx][ny] == INF_DIST) {
-                        MapLocation trueNextLoc = nextLoc.translate(minX, minY);
-
-                        if (rc.canSenseLocation(trueNextLoc) && rc.sensePassability(trueNextLoc)) {
-                            // check if we're processing starting location and trying to move to adjacent
-                            if (startingDir[x][y] == Direction.CENTER) {
-                                if (rc.canMove(dir)) {
-                                    startingDir[nx][ny] = dir;
-                                    distance[nx][ny] = distance[x][y] + 1;
-                                    queue[queueEnd++] = nextLoc;
-                                }
-                            } else {
-                                startingDir[nx][ny] = startingDir[x][y];
-                                distance[nx][ny] = distance[x][y] + 1;
-                                queue[queueEnd++] = nextLoc;
-                            }
+                if (nx >= 0 && nx < MAX_SIZE && ny >= 0 && ny < MAX_SIZE && distance[nx][ny] == INF_DIST) {
+                    MapLocation trueNextLoc = nextLoc.translate(minX, minY);
+                    if (rc.canSenseLocation(trueNextLoc) && rc.sensePassability(trueNextLoc)) {
+                        // check if we're processing starting location and trying to move to adjacent
+                        if (startingDir[x][y] != Direction.CENTER) {
+                            startingDir[nx][ny] = startingDir[x][y];
+                            distance[nx][ny] = distance[x][y] + 1;
+                            queue[queueEnd++] = nextLoc;
+                        } else if (rc.canMove(dir)) {
+                            startingDir[nx][ny] = dir;
+                            distance[nx][ny] = distance[x][y] + 1;
+                            queue[queueEnd++] = nextLoc;
                         }
                     }
                 }
             }
             ++queueStart;
         }
+//        debugBytecode("4.4");
         return closestDir;
     }
 
