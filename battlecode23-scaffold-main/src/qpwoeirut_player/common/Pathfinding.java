@@ -8,9 +8,10 @@ import java.util.Arrays;
 public class Pathfinding {
 
     public static final int INF_DIST = 60 * 60 * 60 * 60;
-    public static final int REGULAR_COST = 10;
 
-    private static final int MAX_IN_RANGE = 120;
+    // TODO: assumes vision radius is always 20 (HQ/amplifier have 34)
+    private static final int MAX_IN_RANGE = 80;
+    private static final int MAX_SIZE = 4 + 4 + 1;
 
     public static final Direction[] DIRECTIONS = {  // put diagonal directions first since they should go faster maybe?
             Direction.NORTHWEST, Direction.NORTHEAST, Direction.SOUTHEAST, Direction.SOUTHWEST,
@@ -19,103 +20,82 @@ public class Pathfinding {
 
     public static Direction moveWhileStayingAdjacent(RobotController rc, MapLocation target) throws GameActionException {
         for (Direction dir: DIRECTIONS) {
-            if (rc.canMove(dir) && rc.getLocation().add(dir).isAdjacentTo(target)) return dir;
+            if (rc.canMove(dir) && (rc.getLocation().add(dir).isAdjacentTo(target) || rc.getLocation().add(dir).equals(target))) return dir;
         }
         return Direction.CENTER;
     }
 
 
     // declare arrays once whenever possible to save bytecode
-    private static final Direction[][] startingDir = new Direction[15][15];
-    private static final int[][] distance = new int[15][15];
-    private static final MapLocation[] locations = new MapLocation[MAX_IN_RANGE];
+    private static final Direction[][] startingDir = new Direction[MAX_SIZE][MAX_SIZE];
+    private static final int[][] distance = new int[MAX_SIZE][MAX_SIZE];
+//    private static final MapLocation[] locations = new MapLocation[MAX_IN_RANGE];
 //    private static final int[][] cost = new int[MAX_IN_RANGE][DIRECTIONS.length];
 
-    private static final MapLocation[] queue = new MapLocation[200];
+    private static final MapLocation[] queue = new MapLocation[MAX_IN_RANGE];
 
 
     // BFS, only handles passability
+    // TODO eventually optimize by declaring all variables outside loop
     public static Direction moveToward(RobotController rc, MapLocation target) throws GameActionException {
-        System.out.println("1 " + Clock.getBytecodeNum());
-        MapInfo[] tilesInRange = rc.senseNearbyMapInfos();
-        int n = tilesInRange.length;
-        for (int i = n; i --> 0;) {
-            locations[i] = tilesInRange[i].getMapLocation();
-//            for (int d = DIRECTIONS.length; d --> 0;) {
-//                cost[i][d] = (tilesInRange[i].getCurrentDirection() == DIRECTIONS[d]) ?
-//                        0 : (int) Math.ceil(REGULAR_COST * tilesInRange[i].getCooldownMuliplier(rc.getTeam()));
-//            }
-        }
-        System.out.println("2 " + Clock.getBytecodeNum());
-
-        int minX = rc.getLocation().x, maxX = rc.getLocation().x;
-        int minY = rc.getLocation().y, maxY = rc.getLocation().y;
-        for (int i = n; i --> 0;) {
-            minX = Math.min(minX, locations[i].x);
-            minY = Math.min(minY, locations[i].y);
-            maxX = Math.max(maxX, locations[i].x);
-            maxY = Math.max(maxY, locations[i].y);
-        }
-        System.out.println("3 " + Clock.getBytecodeNum());
+        int visionLength = (int)(Math.sqrt(rc.getType().visionRadiusSquared) + 0.00001);
+        int minX = rc.getLocation().x - visionLength, minY = rc.getLocation().y - visionLength;
 
         // note that indexing is [x][y]
-        for (int x = maxX - minX + 1; x --> 0;) {
+        for (int x = visionLength + visionLength + 1; x --> 0;) {
             Arrays.fill(distance[x], INF_DIST);
         }
-        System.out.println("4 " + Clock.getBytecodeNum());
 
         int queueStart = 0, queueEnd = 0;
         queue[queueEnd++] = rc.getLocation().translate(-minX, -minY);
         distance[rc.getLocation().x - minX][rc.getLocation().y - minY] = 0;
         startingDir[rc.getLocation().x - minX][rc.getLocation().y - minY] = Direction.CENTER;
-        System.out.println("5 " + Clock.getBytecodeNum());
 
-        while (queueStart < queueEnd) {
-            System.out.println("6 " + Clock.getBytecodeNum());
-            int curDist = distance[queue[queueStart].x][queue[queueStart].y];
-            for (Direction dir: DIRECTIONS) {
-                MapLocation nextLoc = queue[queueStart].add(dir);
-                if (nextLoc.x < 0 || nextLoc.y < 0) continue;
-                MapLocation trueNextLoc = nextLoc.translate(minX, minY);
-                if (distance[nextLoc.x][nextLoc.y] == INF_DIST && rc.canSenseLocation(trueNextLoc) && rc.sensePassability(trueNextLoc)) {
-                    distance[nextLoc.x][nextLoc.y] = curDist;
-
-                    // check if we're processing starting location and trying to move to adjacent
-                    if (startingDir[queue[queueStart].x][queue[queueStart].y] == Direction.CENTER) {
-                        if (!rc.canMove(dir)) continue;
-                        startingDir[nextLoc.x][nextLoc.y] = dir;
-                    } else startingDir[nextLoc.x][nextLoc.y] = startingDir[queue[queueStart].x][queue[queueStart].y];
-                    queue[queueEnd++] = nextLoc;
-                }
-            }
-            ++queueStart;
-        }
-        System.out.println("7 " + Clock.getBytecodeNum());
-
-        Direction closestDir = Direction.CENTER;
+        Direction closestDir = rc.getLocation().directionTo(target);
         int closestDistance = INF_DIST;
-        MapLocation centerOfRange = new MapLocation((minX + maxX) / 2, (minY + maxY) / 2);
-        for (int u = n; u --> 0;) {
-            int x = locations[u].x - minX;
-            int y = locations[u].y - minY;
-            // check the boundaries of the circle only
-            if (distance[x][y] == INF_DIST || centerOfRange.isWithinDistanceSquared(new MapLocation(x, y), 10)) {
-                continue;
-            }
-            // multiply by 15 as a quick estimate
+        while (queueStart < queueEnd) {
+            int x = queue[queueStart].x, y = queue[queueStart].y;
+
             int distanceRemaining = Math.max(
-                    Math.abs(target.x - locations[u].x),
-                    Math.abs(target.y - locations[u].y)
-            ) * 15;
+                    Math.abs(target.x - (x + minX)),
+                    Math.abs(target.y - (y + minY))
+            ) * 3 / 2;
             int totalDistance = distance[x][y] + distanceRemaining;
 
             if (closestDistance > totalDistance) {
                 closestDistance = totalDistance;
                 closestDir = startingDir[x][y];
-                rc.setIndicatorString((x + minX) + " " + (y + minY) + " " + target.x + " " + target.y + " " + totalDistance + " " + distanceRemaining);
+                rc.setIndicatorString(closestDir + " " + (x + minX) + " " + (y + minY) + " " + target.x + " " + target.y + " " + totalDistance + " " + distanceRemaining + " " + queueStart);
             }
+
+            for (int d = 8; d --> 0;) {
+                Direction dir = Direction.allDirections()[d];
+                MapLocation nextLoc = queue[queueStart].add(dir);
+                int nx = nextLoc.x, ny = nextLoc.y;
+
+                if (nx >= 0 && nx < MAX_SIZE && ny >= 0 && ny < MAX_SIZE) {
+                    if (distance[nx][ny] == INF_DIST) {
+                        MapLocation trueNextLoc = nextLoc.translate(minX, minY);
+
+                        if (rc.canSenseLocation(trueNextLoc) && rc.sensePassability(trueNextLoc)) {
+                            // check if we're processing starting location and trying to move to adjacent
+                            if (startingDir[x][y] == Direction.CENTER) {
+                                if (rc.canMove(dir)) {
+                                    startingDir[nx][ny] = dir;
+                                    distance[nx][ny] = distance[x][y] + 1;
+                                    queue[queueEnd++] = nextLoc;
+                                }
+                            } else {
+                                startingDir[nx][ny] = startingDir[x][y];
+                                distance[nx][ny] = distance[x][y] + 1;
+                                queue[queueEnd++] = nextLoc;
+                            }
+                        }
+                    }
+                }
+            }
+            ++queueStart;
         }
-        System.out.println("8 " + Clock.getBytecodeNum());
         return closestDir;
     }
 

@@ -32,7 +32,7 @@ public class Util {
     }
 
     public static boolean adjacentToWell(RobotController rc, MapLocation location) throws GameActionException {
-        for (Direction dir: DIRECTIONS) {
+        for (Direction dir: Direction.allDirections()) {  // include current location
             MapLocation loc = location.add(dir);
             if (rc.canSenseLocation(loc)) {
                 WellInfo well = rc.senseWell(loc);
@@ -40,6 +40,16 @@ public class Util {
             }
         }
         return false;
+    }
+
+    public static Direction randomDirection(RobotController rc) throws GameActionException {
+        Direction dir;
+
+        for (int i = 15; i --> 0;) {
+            dir = DIRECTIONS[FastRandom.nextInt(DIRECTIONS.length)];
+            if (rc.canMove(dir)) return dir;
+        }
+        return Direction.CENTER;
     }
 
     public static boolean locationInArray(MapLocation[] array, MapLocation loc) {

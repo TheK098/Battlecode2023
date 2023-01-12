@@ -9,11 +9,11 @@ import qpwoeirut_player.utilities.Util;
 import static battlecode.common.GameConstants.MAP_MAX_HEIGHT;
 import static battlecode.common.GameConstants.MAP_MAX_WIDTH;
 import static qpwoeirut_player.common.Pathfinding.*;
-import static qpwoeirut_player.utilities.Util.adjacentToWell;
+import static qpwoeirut_player.utilities.Util.*;
 
 
 public class Carrier extends BaseBot {
-    private static final int CAPACITY = 40;
+    private static final int CAPACITY = 39;  // using 39 helps us move faster
 
     // some wells or HQs have so many carriers already that we need to direct this carrier to a different one
     // blacklist[x][y] = t --> don't use (x, y) as a target until round t
@@ -32,10 +32,11 @@ public class Carrier extends BaseBot {
             Communications.addWell(rc, wellInfo.getMapLocation());
         }
 
-        if (!capacityFull()) {
-            collectResources();
-        } else {
+        if ((getCurrentResources() > 0 && adjacentToHeadquarters(rc, rc.getLocation())) || getCurrentResources() >= 39) {
             returnResources();
+            rc.setIndicatorString("returning");
+        } else {
+            collectResources();
         }
     }
 
@@ -49,20 +50,40 @@ public class Carrier extends BaseBot {
 //        Direction dir = pickDirectionForCollection(rc, targetWell);
         Direction dir;
         if (adjacentToWell(rc, rc.getLocation())) {
+            resetBlacklistTimer(TileType.WELL);
             dir = moveWhileStayingAdjacent(rc, targetWell);
+        } else if (timeRemaining <= TileType.WELL.randomMoveCutoff && timeRemaining % TileType.WELL.randomMovePeriod == 0) {
+            dir = randomDirection(rc);
         } else {
             dir = moveToward(rc, targetWell);
         }
-        if (rc.canMove(dir)) rc.move(dir);
+        if (rc.canMove(dir) && dir != Direction.CENTER) rc.move(dir);
 
-        if (rc.canCollectResource(targetWell, -1)) {
-            rc.collectResource(targetWell, -1);
-        }
+        if (rc.canSenseLocation(targetWell)) {
+            int toCollect = Math.min(CAPACITY - getCurrentResources(), rc.senseWell(targetWell).getRate());
+            if (rc.canCollectResource(targetWell, toCollect)) {
+                rc.setIndicatorString("Collecting " + toCollect);
+                rc.collectResource(targetWell, toCollect);
+            } else {
+                rc.setIndicatorString("Could not collect " + toCollect);
+            }
+        } else rc.setIndicatorString("Could not sense " + targetWell);
     }
 
     private static void returnResources() throws GameActionException {
         MapLocation targetHq = Util.pickNearest(rc, Communications.getHqs(rc), blacklist);
         handleBlacklist(targetHq, TileType.HQ);
+
+        Direction dir;
+        if (adjacentToHeadquarters(rc, rc.getLocation())) {
+            resetBlacklistTimer(TileType.HQ);
+            dir = moveWhileStayingAdjacent(rc, targetHq);
+        } else if (timeRemaining <= TileType.HQ.randomMoveCutoff && timeRemaining % TileType.HQ.randomMovePeriod == 0) {
+            dir = randomDirection(rc);
+        } else {
+            dir = moveToward(rc, targetHq);
+        }
+        if (rc.canMove(dir) && dir != Direction.CENTER) rc.move(dir);
 
         int adamantium = rc.getResourceAmount(ResourceType.ADAMANTIUM);
         int elixir = rc.getResourceAmount(ResourceType.ELIXIR);
@@ -73,15 +94,10 @@ public class Carrier extends BaseBot {
             rc.transferResource(targetHq, ResourceType.ELIXIR, elixir);
         } else if (mana > 0 && rc.canTransferResource(targetHq, ResourceType.MANA, mana)) {
             rc.transferResource(targetHq, ResourceType.MANA, mana);
-        } else {  // out of range, move closer
-            Direction dir = pickDirectionForReturn(rc, targetHq);
-//            rc.setIndicatorString(dir.toString());
-            if (rc.canMove(dir)) rc.move(dir);
         }
     }
 
     private static void handleBlacklist(MapLocation target, TileType tileType) {
-        rc.setIndicatorString(String.valueOf(target));
         if (currentTarget == null || !currentTarget.equals(target)) {
             currentTarget = target;
             timeRemaining = tileType.blacklistTimer;
@@ -89,6 +105,10 @@ public class Carrier extends BaseBot {
             blacklist[target.x][target.y] = rc.getRoundNum() + tileType.blacklistLength;
 //            System.out.println("Blacklisted " + target);
         }
+    }
+
+    private static void resetBlacklistTimer(TileType tileType) {
+        timeRemaining = tileType.blacklistTimer;
     }
 
     private static final int TARGET_DISTANCE_CUTOFF = 400;
@@ -125,7 +145,11 @@ public class Carrier extends BaseBot {
         return spreadOut(rc, weightX, weightY, SpreadSettings.CARRIER_RETURNING);
     }
 
-    private static boolean capacityFull() {
-        return rc.getAnchor() != null || rc.getResourceAmount(ResourceType.ADAMANTIUM) + rc.getResourceAmount(ResourceType.ELIXIR) + rc.getResourceAmount(ResourceType.MANA) == CAPACITY;
+    private static int getCurrentResources() {
+        return rc.getResourceAmount(ResourceType.ADAMANTIUM) + rc.getResourceAmount(ResourceType.ELIXIR) + rc.getResourceAmount(ResourceType.MANA);
+    }
+
+    private static int getCurrentCapacity() {
+        return rc.getAnchor() != null ? 40 : getCurrentResources();
     }
 }
