@@ -63,8 +63,8 @@ public class Launcher extends BaseBot {
                 // for now, just spread out
                 Direction dir = spreadOut(rc, 0, 0, SpreadSettings.LAUNCHER);
                 // maintain space for carriers
-                if (rc.canMove(dir) && !adjacentToHeadquarters(rc, rc.getLocation().add(dir)) && !adjacentToWell(rc, rc.getLocation().add(dir))) {
-                    rc.move(dir);
+                if (!adjacentToHeadquarters(rc, rc.getLocation().add(dir)) && !adjacentToWell(rc, rc.getLocation().add(dir))) {
+                    tryMove(dir);  // do tryMove because a round may have passed from running out of bytecode
                 }
 //                rc.setIndicatorString("Spreading out");
             }
