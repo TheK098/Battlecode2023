@@ -73,4 +73,8 @@ public class Util {
         }
         return false;
     }
+
+    public static int cube(int x) {
+        return x * x * x;
+    }
 }

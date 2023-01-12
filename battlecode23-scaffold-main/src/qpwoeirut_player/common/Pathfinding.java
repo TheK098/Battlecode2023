@@ -5,6 +5,9 @@ import qpwoeirut_player.utilities.FastRandom;
 
 import java.util.Arrays;
 
+import static qpwoeirut_player.utilities.Util.cube;
+import static qpwoeirut_player.utilities.Util.similarDirection;
+
 public class Pathfinding {
 
     public static final int INF_DIST = 60 * 60 * 60 * 60;
@@ -99,22 +102,31 @@ public class Pathfinding {
         return closestDir;
     }
 
+    private static final int EDGE_PUSH = 6;
+
     public static Direction spreadOut(RobotController rc, int weightX, int weightY, SpreadSettings settings) throws GameActionException {
+        int x = rc.getLocation().x, y = rc.getLocation().y;
+        // push away from edges
+        weightX += Math.max(0, cube(EDGE_PUSH - x));
+        weightX -= Math.max(0, cube(x - (rc.getMapWidth() - EDGE_PUSH - 1)));
+        weightY += Math.max(0, cube(EDGE_PUSH - y));
+        weightY -= Math.max(0, cube(y - (rc.getMapHeight() - EDGE_PUSH - 1)));
+
         RobotInfo[] nearbyRobots = rc.senseNearbyRobots(settings.ally_dist_cutoff, rc.getTeam());
         for (RobotInfo robot : nearbyRobots) {
-            if (robot.type == rc.getType()) {
-                int dist = rc.getLocation().distanceSquaredTo(robot.location);
-                int dx = robot.location.x - rc.getLocation().x;
-                int dy = robot.location.y - rc.getLocation().y;
-                // subtract since we want to move away
-                weightX -= dx * (settings.ally_dist_cutoff - dist) / settings.ally_dist_divisor;
-                weightY -= dy * (settings.ally_dist_cutoff - dist) / settings.ally_dist_divisor;
-            }
+            // add one to avoid div by 0 when running out of bytecode
+            int dist = rc.getLocation().distanceSquaredTo(robot.location) + 1;
+            int dx = robot.location.x - x;
+            int dy = robot.location.y - y;
+            // subtract since we want to move away
+            weightX -= dx * settings.ally_dist_factor / dist;
+            weightY -= dy * settings.ally_dist_factor / dist;
         }
+        rc.setIndicatorString(weightX + " " + weightY);
 
         int finalDx = FastRandom.nextInt(settings.random_bound) - settings.random_cutoff > weightX ? -1 : 1;
         int finalDy = FastRandom.nextInt(settings.random_bound) - settings.random_cutoff > weightY ? -1 : 1;
-        return new MapLocation(0, 0).directionTo(new MapLocation(finalDx, finalDy));
+        return similarDirection(rc, new MapLocation(0, 0).directionTo(new MapLocation(finalDx, finalDy)));
     }
 
  /*
