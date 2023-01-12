@@ -1,8 +1,10 @@
 package qpwoeirut_player;
 
 import battlecode.common.*;
+import qpwoeirut_player.common.Communications;
 import qpwoeirut_player.common.SpreadSettings;
 import qpwoeirut_player.utilities.IntHashMap;
+import qpwoeirut_player.utilities.Util;
 
 import static qpwoeirut_player.common.Pathfinding.spreadOut;
 import static qpwoeirut_player.utilities.Util.*;
@@ -62,10 +64,11 @@ public class Launcher extends BaseBot {
             } else {  // TODO: try to put carriers between this launcher and nearest HQ
                 // for now, just spread out
                 Direction dir = spreadOut(rc, 0, 0, SpreadSettings.LAUNCHER);
+                MapLocation newLoc = rc.getLocation().add(dir);
                 // maintain space for carriers
-                if (!adjacentToHeadquarters(rc, rc.getLocation().add(dir)) && !adjacentToWell(rc, rc.getLocation().add(dir))) {
-                    tryMove(dir);  // do tryMove because a round may have passed from running out of bytecode
-                }
+                if (adjacentToHeadquarters(rc, newLoc)) tryMove(directionAway(rc, Util.pickNearest(rc, Communications.getHqs(rc))));
+                else if (adjacentToWell(rc, newLoc)) tryMove(directionAway(rc, Util.pickNearest(rc, Communications.getKnownWells(rc))));
+                else tryMove(dir);  // do tryMove because a round may have passed from running out of bytecode
 //                rc.setIndicatorString("Spreading out");
             }
         }

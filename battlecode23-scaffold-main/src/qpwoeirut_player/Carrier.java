@@ -41,10 +41,8 @@ public class Carrier extends BaseBot {
     }
 
     private static void collectResources() throws GameActionException {
-        MapLocation[] knownWells = Communications.getKnownWells(rc);
-        if (knownWells.length == 0) return; // just in case, to avoid throwing
-
-        MapLocation targetWell = Util.pickNearest(rc, knownWells, blacklist);
+        MapLocation targetWell = Util.pickNearest(rc, Communications.getKnownWells(rc), blacklist);
+        if (targetWell == null) return;
         handleBlacklist(targetWell, TileType.WELL);
 
 //        Direction dir = pickDirectionForCollection(rc, targetWell);
@@ -79,6 +77,7 @@ public class Carrier extends BaseBot {
 
     private static void returnResources() throws GameActionException {
         MapLocation targetHq = Util.pickNearest(rc, Communications.getHqs(rc), blacklist);
+        if (targetHq == null) return;
         handleBlacklist(targetHq, TileType.HQ);
 
         Direction dir;

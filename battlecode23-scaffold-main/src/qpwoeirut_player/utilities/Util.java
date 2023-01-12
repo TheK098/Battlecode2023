@@ -8,7 +8,7 @@ import static qpwoeirut_player.common.Pathfinding.INF_DIST;
 public class Util {
     // TODO: include pathfinding in the future
     public static MapLocation pickNearest(RobotController rc, MapLocation[] locations, int[][] blacklist) {
-        int closestIndex = 0;
+        int closestIndex = -1;
         int closestDistance = INF_DIST;
         for (int i = locations.length; i --> 0;) {
             int distance = locations[i].distanceSquaredTo(rc.getLocation());
@@ -17,7 +17,19 @@ public class Util {
                 closestIndex = i;
             }
         }
-        return locations[closestIndex];
+        return closestIndex == -1 ? null : locations[closestIndex];
+    }
+    public static MapLocation pickNearest(RobotController rc, MapLocation[] locations) {
+        int closestIndex = -1;
+        int closestDistance = INF_DIST;
+        for (int i = locations.length; i --> 0;) {
+            int distance = locations[i].distanceSquaredTo(rc.getLocation());
+            if (closestDistance > distance) {
+                closestDistance = distance;
+                closestIndex = i;
+            }
+        }
+        return closestIndex == -1 ? null : locations[closestIndex];
     }
 
     public static boolean adjacentToHeadquarters(RobotController rc, MapLocation location) throws GameActionException {
