@@ -31,6 +31,18 @@ public class Util {
         }
         return closestIndex == -1 ? null : locations[closestIndex];
     }
+    public static RobotInfo pickNearest(RobotController rc, RobotInfo[] robots) {
+        int closestIndex = -1;
+        int closestDistance = INF_DIST;
+        for (int i = robots.length; i --> 0;) {
+            int distance = robots[i].location.distanceSquaredTo(rc.getLocation());
+            if (closestDistance > distance) {
+                closestDistance = distance;
+                closestIndex = i;
+            }
+        }
+        return closestIndex == -1 ? null : robots[closestIndex];
+    }
 
     public static boolean adjacentToHeadquarters(RobotController rc, MapLocation location) throws GameActionException {
         for (Direction dir: DIRECTIONS) {
@@ -69,7 +81,7 @@ public class Util {
     }
 
     public static Direction directionAway(RobotController rc, MapLocation target) {
-        return directionToward(rc, target).opposite();
+        return similarDirection(rc, rc.getLocation().directionTo(target).opposite());
     }
 
     public static Direction similarDirection(RobotController rc, Direction dir) {
