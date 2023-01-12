@@ -23,7 +23,7 @@ public class Headquarters extends BaseBot {
         Communications.addHq(rc, rc.getLocation());
 
         RobotType[] spawnPriority = {RobotType.CARRIER, RobotType.LAUNCHER};
-        if (rc.getRoundNum() > 10 && rc.getRoundNum() % 2 == 0) {
+        if ((rc.getRoundNum() > 10 && rc.getRoundNum() % 2 == 0) || rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) {
             spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
         }
 
