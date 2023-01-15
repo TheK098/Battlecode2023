@@ -47,7 +47,8 @@ public class Headquarters extends BaseBot {
 
     /**
      * Picks a random spawn location within the Headquarters' action radius
-     * Returns null if no locations are available or if a robot cannot be built
+     * Avoids spawning if most locations (relative to # of passable locations) are already full to prevent clogging
+     * Returns null if cannot/should not be built
      */
     private static MapLocation pickEmptySpawnLocation(RobotType robotType) throws GameActionException {
         // TODO: arraylist is probably bytecode-heavy, should optimize
@@ -55,6 +56,7 @@ public class Headquarters extends BaseBot {
         for (MapLocation loc : rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), HQ_SPAWN_RADIUS)) {
             if (rc.canBuildRobot(robotType, loc)) possibleLocations.add(loc);
         }
-        return possibleLocations.isEmpty() ? null : possibleLocations.get(FastRandom.nextInt(possibleLocations.size()));
+        int nearbyRobots = rc.senseNearbyRobots(RobotType.HEADQUARTERS.actionRadiusSquared).length;
+        return possibleLocations.size() <= nearbyRobots / 12 ? null : possibleLocations.get(FastRandom.nextInt(possibleLocations.size()));
     }
 }
