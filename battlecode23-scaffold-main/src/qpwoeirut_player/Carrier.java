@@ -245,7 +245,7 @@ public class Carrier extends BaseBot {
     }
 
     private static void dieIfStuck() {  // desperate times call for desperate measures
-        if (rc.getRoundNum() - lastMoveOrAction >= 100 + getCurrentResources() * 20) rc.disintegrate();
+        if (rc.getRoundNum() - lastMoveOrAction >= 100 + getCurrentResources() * 20 + rc.getNumAnchors(Anchor.STANDARD) * 150) rc.disintegrate();
     }
 
     private static void resetBlacklistTimer(EntityType entityType) {
