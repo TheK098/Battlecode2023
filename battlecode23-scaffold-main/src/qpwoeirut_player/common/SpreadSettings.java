@@ -1,8 +1,7 @@
 package qpwoeirut_player.common;
 
 public enum SpreadSettings {
-    CARRIER_COLLECTING(20, 2, 50),
-    CARRIER_RETURNING(10, 2, 20),
+    CARRIER_ANCHOR(25, 15, 100),
     LAUNCHER(18, 10, 100);
 
     public final int ally_dist_cutoff;

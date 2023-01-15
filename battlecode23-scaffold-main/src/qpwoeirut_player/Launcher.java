@@ -63,7 +63,7 @@ public class Launcher extends BaseBot {
                 rc.setIndicatorString("Trying to help" + allyToFollow);
             } else {  // TODO: try to put carriers between this launcher and nearest HQ
                 // for now, just spread out
-                Direction dir = spreadOut(rc, 0, 0, SpreadSettings.LAUNCHER);
+                Direction dir = spreadOut(rc, SpreadSettings.LAUNCHER);
                 MapLocation newLoc = rc.getLocation().add(dir);
                 // maintain space for carriers
                 if (adjacentToHeadquarters(rc, newLoc)) tryMove(directionAway(rc, Util.pickNearest(rc, Communications.getHqs(rc))));

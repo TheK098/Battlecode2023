@@ -112,16 +112,17 @@ public class Pathfinding {
 
     private static final int EDGE_PUSH = 6;
 
-    public static Direction spreadOut(RobotController rc, int weightX, int weightY, SpreadSettings settings) throws GameActionException {
+    public static Direction spreadOut(RobotController rc, SpreadSettings settings) throws GameActionException {
         int x = rc.getLocation().x, y = rc.getLocation().y;
         // push away from edges
-        weightX += Math.max(0, cube(EDGE_PUSH - x));
-        weightX -= Math.max(0, cube(x - (rc.getMapWidth() - EDGE_PUSH - 1)));
-        weightY += Math.max(0, cube(EDGE_PUSH - y));
-        weightY -= Math.max(0, cube(y - (rc.getMapHeight() - EDGE_PUSH - 1)));
+        int weightX = Math.max(0, cube(EDGE_PUSH - x)) - Math.max(0, cube(x - (rc.getMapWidth() - EDGE_PUSH - 1)));
+        int weightY = Math.max(0, cube(EDGE_PUSH - y)) - Math.max(0, cube(y - (rc.getMapHeight() - EDGE_PUSH - 1)));
 
         RobotInfo[] nearbyRobots = rc.senseNearbyRobots(settings.ally_dist_cutoff, rc.getTeam());
         for (RobotInfo robot : nearbyRobots) {
+            // when spreading out anchoring carriers, we only care about other anchor carriers
+            if (settings == SpreadSettings.CARRIER_ANCHOR && robot.getNumAnchors(Anchor.STANDARD) == 0) continue;
+
             // add one to avoid div by 0 when running out of bytecode
             int dist = rc.getLocation().distanceSquaredTo(robot.location) + 1;
             int dx = robot.location.x - x;
