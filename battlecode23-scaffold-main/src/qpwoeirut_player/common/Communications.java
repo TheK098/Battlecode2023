@@ -10,8 +10,7 @@ import static qpwoeirut_player.utilities.Util.locationInArray;
 
 /**
  * Handles all communications.
- * Indexes 0-59 hold well locations.
- * Indexes 60-63 hold HQ locations.
+ * Array spots are allocated in EntityType.java
  * Locations are stored as x * 60 + y + 1. 0 represents no data.
  */
 public class Communications {
@@ -21,7 +20,7 @@ public class Communications {
     private static final int MAX_LOCATION = MAP_SIZE * MAP_SIZE + 1;
     private static final int MAX_VALUE = 17;
 
-    private static final int MAX_COUNT = Math.max(EntityType.WELL.count, EntityType.ENEMY.count);
+    private static final int MAX_COUNT = Math.max(6 * 6 * 4, EntityType.ENEMY.count);
 
     private static final int[] indexes = new int[MAX_COUNT];
     private static final MapLocation[] locations = new MapLocation[MAX_COUNT];
