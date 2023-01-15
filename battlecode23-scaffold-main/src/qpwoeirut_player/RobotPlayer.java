@@ -29,6 +29,7 @@ public strictfp class RobotPlayer {
                 throw new IllegalArgumentException("Type " + rc.getType() + " is not handled!");
         }
         while (true) {
+//            int startingRound = rc.getRoundNum();
             try {
                 bot.processRound();
             } catch (GameActionException e) {
@@ -38,6 +39,9 @@ public strictfp class RobotPlayer {
                 System.out.println("Exception: " + rc.getType());
                 e.printStackTrace();
             } finally {  // end turn
+//                if (startingRound != rc.getRoundNum()) {
+//                    System.out.println("Started on round " + startingRound + " but ended on round " + rc.getRoundNum() + " with " + Clock.getBytecodeNum() + " bytecode used");
+//                }
                 Clock.yield();
             }
         }
