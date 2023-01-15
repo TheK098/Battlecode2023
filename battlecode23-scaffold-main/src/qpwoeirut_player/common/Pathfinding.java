@@ -5,7 +5,6 @@ import qpwoeirut_player.utilities.FastRandom;
 
 import java.util.Arrays;
 
-import static qpwoeirut_player.Carrier.debugBytecode;
 import static qpwoeirut_player.utilities.Util.*;
 
 public class Pathfinding {
@@ -115,8 +114,8 @@ public class Pathfinding {
     public static Direction spreadOut(RobotController rc, SpreadSettings settings) throws GameActionException {
         int x = rc.getLocation().x, y = rc.getLocation().y;
         // push away from edges
-        int weightX = Math.max(0, cube(EDGE_PUSH - x)) - Math.max(0, cube(x - (rc.getMapWidth() - EDGE_PUSH - 1)));
-        int weightY = Math.max(0, cube(EDGE_PUSH - y)) - Math.max(0, cube(y - (rc.getMapHeight() - EDGE_PUSH - 1)));
+        float weightX = Math.max(0, cube(EDGE_PUSH - x)) - Math.max(0, cube(x - (rc.getMapWidth() - EDGE_PUSH - 1)));
+        float weightY = Math.max(0, cube(EDGE_PUSH - y)) - Math.max(0, cube(y - (rc.getMapHeight() - EDGE_PUSH - 1)));
 
         RobotInfo[] nearbyRobots = rc.senseNearbyRobots(settings.ally_dist_cutoff, rc.getTeam());
         for (RobotInfo robot : nearbyRobots) {
@@ -125,11 +124,11 @@ public class Pathfinding {
 
             // add one to avoid div by 0 when running out of bytecode
             int dist = rc.getLocation().distanceSquaredTo(robot.location) + 1;
-            int dx = robot.location.x - x;
-            int dy = robot.location.y - y;
+            float dx = robot.location.x - x;
+            float dy = robot.location.y - y;
             // subtract since we want to move away
-            weightX -= dx * settings.ally_dist_factor / dist;
-            weightY -= dy * settings.ally_dist_factor / dist;
+            weightX -= Math.pow(dx / dist, settings.ally_dist_exp);
+            weightY -= Math.pow(dy / dist, settings.ally_dist_exp);
         }
         rc.setIndicatorString(weightX + " " + weightY);
 

@@ -1,9 +1,6 @@
 package qpwoeirut_player;
 
-import battlecode.common.GameActionException;
-import battlecode.common.MapLocation;
-import battlecode.common.RobotController;
-import battlecode.common.RobotType;
+import battlecode.common.*;
 import qpwoeirut_player.common.Communications;
 import qpwoeirut_player.utilities.FastRandom;
 
@@ -22,24 +19,26 @@ public class Headquarters extends BaseBot {
         // report HQ position
         Communications.addHq(rc, rc.getLocation());
 
-        RobotType[] spawnPriority = {RobotType.CARRIER, RobotType.LAUNCHER};
-        if ((rc.getRoundNum() > 10 && rc.getRoundNum() % 2 == 0) || rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) {
-            spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
-        }
+        if (!itsAnchorTime()) {
+            RobotType[] spawnPriority = {RobotType.CARRIER, RobotType.LAUNCHER};
+            if ((rc.getRoundNum() > 10 && rc.getRoundNum() % 2 == 0) || rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) {
+                spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
+            }
 
-        int spawnIdx = 0;
-        int failures = 0;
-        while (failures < spawnPriority.length) {
-            MapLocation newCarrierLoc = pickEmptySpawnLocation(spawnPriority[spawnIdx]);
-            if (newCarrierLoc != null) {
-                rc.buildRobot(spawnPriority[spawnIdx], newCarrierLoc);  // it's guaranteed that we can build
-                failures = 0;
-            } else ++failures;
-            spawnIdx ^= 1;
+            int spawnIdx = 0;
+            int failures = 0;
+            while (failures < spawnPriority.length) {
+                MapLocation newCarrierLoc = pickEmptySpawnLocation(spawnPriority[spawnIdx]);
+                if (newCarrierLoc != null) {
+                    rc.buildRobot(spawnPriority[spawnIdx], newCarrierLoc);  // it's guaranteed that we can build
+                    failures = 0;
+                } else ++failures;
+                spawnIdx ^= 1;
+            }
+        } else if (rc.canBuildAnchor(Anchor.STANDARD)) {
+            // stick with Standard anchors for now, chances are we're already overrunning the map
+            rc.buildAnchor(Anchor.STANDARD);
         }
-
-//        System.out.println(Arrays.toString(comms.getHqs(rc)));
-//        System.out.println(Arrays.toString(comms.getKnownWells(rc)));
     }
 
     /**

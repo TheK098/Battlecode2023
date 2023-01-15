@@ -1,17 +1,17 @@
 package qpwoeirut_player.common;
 
 public enum SpreadSettings {
-    CARRIER_ANCHOR(25, 15, 100),
-    LAUNCHER(18, 10, 100);
+    CARRIER_ANCHOR(25, 1.5f, 100),
+    LAUNCHER(18, 1.0f, 100);
 
     public final int ally_dist_cutoff;
-    public final int ally_dist_factor;
+    public final float ally_dist_exp;
     public final int random_cutoff;
     public final int random_bound;
 
-    SpreadSettings(int ally_dist_cutoff, int ally_dist_factor, int random_cutoff) {
+    SpreadSettings(int ally_dist_cutoff, float ally_dist_exp, int random_cutoff) {
         this.ally_dist_cutoff = ally_dist_cutoff;
-        this.ally_dist_factor = ally_dist_factor;
+        this.ally_dist_exp = ally_dist_exp;
         this.random_cutoff = random_cutoff;
         this.random_bound = random_cutoff + random_cutoff + 1;
     }

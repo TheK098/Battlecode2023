@@ -2,11 +2,13 @@ package qpwoeirut_player;
 
 import battlecode.common.*;
 import qpwoeirut_player.common.Communications;
+import qpwoeirut_player.common.SpreadSettings;
 import qpwoeirut_player.common.TileType;
 import qpwoeirut_player.utilities.Util;
 
-import static qpwoeirut_player.common.Pathfinding.moveToward;
-import static qpwoeirut_player.common.Pathfinding.moveWhileStayingAdjacent;
+import java.util.Arrays;
+
+import static qpwoeirut_player.common.Pathfinding.*;
 import static qpwoeirut_player.utilities.Util.*;
 
 
@@ -32,12 +34,27 @@ public class Carrier extends BaseBot {
         }
 //        debugBytecode("1.0");
 
+        boolean shouldReturn = handleCombat();
+        if (shouldReturn) return;
+
+        if (rc.getID() % 3 == 0 && itsAnchorTime()) {
+            handleAnchor();
+        } else if ((getCurrentResources() > 0 && adjacentToHeadquarters(rc, rc.getLocation())) || getCurrentResources() >= 39) {
+            returnResources();
+            rc.setIndicatorString("returning");
+        } else {
+            collectResources();
+        }
+//        debugBytecode("1.1");
+    }
+
+    private static boolean handleCombat() throws GameActionException {
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         if (enemies.length > 0) {
             RobotInfo nearestEnemy = pickNearest(rc, enemies);
             assert nearestEnemy != null;
             boolean launchersNearby = false;
-            for (RobotInfo enemy: enemies) launchersNearby |= enemy.type == RobotType.LAUNCHER;
+            for (RobotInfo enemy : enemies) launchersNearby |= enemy.type == RobotType.LAUNCHER;
 
             // attack if possible; otherwise run if launchers nearby
             Direction toward = directionToward(rc, nearestEnemy.location);
@@ -49,20 +66,48 @@ public class Carrier extends BaseBot {
                 if (rc.canAttack(nearestEnemy.location)) rc.attack(nearestEnemy.location);
                 tryMove(directionAway(rc, nearestEnemy.location));
                 rc.setIndicatorString("Attacking " + nearestEnemy.location);
-                return;
+                return true;
             } else if (launchersNearby) {
                 tryMove(directionAway(rc, nearestEnemy.location));  // assume enemies are in same direction
                 rc.setIndicatorString("Running away from " + nearestEnemy.location);
-                return;
+                return true;
             }
         }
-        if ((getCurrentResources() > 0 && adjacentToHeadquarters(rc, rc.getLocation())) || getCurrentResources() >= 39) {
-            returnResources();
-            rc.setIndicatorString("returning");
-        } else {
-            collectResources();
+         return false;
+    }
+
+    private static void handleAnchor() throws GameActionException {
+        if (rc.getAnchor() == null) {  // need to pick up an anchor
+            MapLocation targetHq = Util.pickNearest(rc, Communications.getHqs(rc), blacklist);
+            moveTowardHeadquarters(targetHq);
+            if (rc.canTakeAnchor(targetHq, Anchor.STANDARD)) {
+                rc.takeAnchor(targetHq, Anchor.STANDARD);
+            }
         }
-//        debugBytecode("1.1");
+        if (rc.getAnchor() == Anchor.STANDARD) {
+            int[] islands = rc.senseNearbyIslands();  // TODO: add comms to make anchoring more efficient
+            boolean foundTargetIsland = false;
+            if (islands.length > 0) {
+                MapLocation irrelevantLocation = new MapLocation(-10000, -10000);
+                assert !rc.getLocation().isWithinDistanceSquared(irrelevantLocation, INF_DIST);
+
+                MapLocation[] nearestIslandLocations = new MapLocation[islands.length];
+                for (int i = islands.length; i --> 0;) {
+                    nearestIslandLocations[i] = (rc.senseTeamOccupyingIsland(islands[i]) != rc.getTeam()) ?
+                         pickNearest(rc, rc.senseNearbyIslandLocations(islands[i])) : irrelevantLocation;
+                }
+                MapLocation target = pickNearest(rc, nearestIslandLocations);
+                if (target != null) {
+                    tryMove(directionToward(rc, target));  // no-op if we're at target already
+                    if (rc.getLocation().equals(target) && rc.canPlaceAnchor()) rc.placeAnchor();
+                    foundTargetIsland = true;
+                }
+            }
+            if (!foundTargetIsland) {
+                // spread out from other anchor bots
+                tryMove(spreadOut(rc, SpreadSettings.CARRIER_ANCHOR));
+            }
+        }
     }
 
     private static void collectResources() throws GameActionException {
@@ -72,26 +117,7 @@ public class Carrier extends BaseBot {
         handleBlacklist(targetWell, TileType.WELL);
 
 //        Direction dir = pickDirectionForCollection(rc, targetWell);
-        Direction dir;
-        if (adjacentToWell(rc, rc.getLocation())) {
-            resetBlacklistTimer(TileType.WELL);
-            dir = moveWhileStayingAdjacent(rc, targetWell);
-        } else if (timeRemaining <= TileType.WELL.randomMoveCutoff && timeRemaining % TileType.WELL.randomMovePeriod == 0) {
-            dir = randomDirection(rc);
-        } else {
-            dir = moveToward(rc, targetWell);
-        }
-
-//        debugBytecode("2.1");
-
-        if (tryMove(dir)) {
-            tryMove(similarDirection(rc, dir));
-        } else if (!adjacentToWell(rc, rc.getLocation())) {
-            // just try moving away from HQ
-            MapLocation nearestHq = Util.pickNearest(rc, Communications.getHqs(rc), blacklist);
-            tryMove(directionAway(rc, nearestHq));
-            tryMove(directionAway(rc, nearestHq));
-        }
+        moveTowardsWell(targetWell);
 
         if (rc.canSenseLocation(targetWell)) {
             int toCollect = Math.min(CAPACITY - getCurrentResources(), rc.senseWell(targetWell).getRate());
@@ -114,19 +140,7 @@ public class Carrier extends BaseBot {
             handleBlacklist(targetHq, TileType.HQ);
 
 //            debugBytecode("3.1");
-
-            Direction dir;
-            if (adjacentToHeadquarters(rc, rc.getLocation())) {
-                resetBlacklistTimer(TileType.HQ);
-                dir = moveWhileStayingAdjacent(rc, targetHq);
-            } else if (timeRemaining <= TileType.HQ.randomMoveCutoff && timeRemaining % TileType.HQ.randomMovePeriod == 0) {
-                dir = randomDirection(rc);
-            } else {
-                dir = moveToward(rc, targetHq);
-            }
-            tryMove(dir);
-            tryMove(similarDirection(rc, dir));
-
+            moveTowardHeadquarters(targetHq);
 //            debugBytecode("3.2");
 
             int adamantium = rc.getResourceAmount(ResourceType.ADAMANTIUM);
@@ -148,6 +162,43 @@ public class Carrier extends BaseBot {
                 tryMove(directionAway(rc, nearestHq));
             }
 //            debugBytecode("3.4");
+        }
+    }
+
+    private static void moveTowardHeadquarters(MapLocation targetHq) throws GameActionException {
+        Direction dir;
+        if (adjacentToHeadquarters(rc, rc.getLocation())) {
+            resetBlacklistTimer(TileType.HQ);
+            dir = moveWhileStayingAdjacent(rc, targetHq);
+        } else if (timeRemaining <= TileType.HQ.randomMoveCutoff && timeRemaining % TileType.HQ.randomMovePeriod == 0) {
+            dir = randomDirection(rc);
+        } else {
+            dir = moveToward(rc, targetHq);
+        }
+        tryMove(dir);
+        tryMove(similarDirection(rc, dir));
+    }
+
+    private static void moveTowardsWell(MapLocation targetWell) throws GameActionException {
+        Direction dir;
+        if (adjacentToWell(rc, rc.getLocation())) {
+            resetBlacklistTimer(TileType.WELL);
+            dir = moveWhileStayingAdjacent(rc, targetWell);
+        } else if (timeRemaining <= TileType.WELL.randomMoveCutoff && timeRemaining % TileType.WELL.randomMovePeriod == 0) {
+            dir = randomDirection(rc);
+        } else {
+            dir = moveToward(rc, targetWell);
+        }
+
+//        debugBytecode("2.1");
+
+        if (tryMove(dir)) {
+            tryMove(similarDirection(rc, dir));
+        } else if (!adjacentToWell(rc, rc.getLocation())) {
+            // just try moving away from HQ
+            MapLocation nearestHq = Util.pickNearest(rc, Communications.getHqs(rc));
+            tryMove(directionAway(rc, nearestHq));
+            tryMove(directionAway(rc, nearestHq));
         }
     }
 
