@@ -45,7 +45,6 @@ public class Carrier extends BaseBot {
             else handleAnchor();
         } else if ((getCurrentResources() > 0 && adjacentToHeadquarters(rc, rc.getLocation())) || getCurrentResources() >= 39) {
             returnResources();
-            rc.setIndicatorString("returning");
         } else {
             collectResources();
         }
@@ -71,8 +70,14 @@ public class Carrier extends BaseBot {
             if (!rc.canAttack(nearestEnemy.location) && closer.isWithinDistanceSquared(nearestEnemy.location, rc.getType().actionRadiusSquared)) {
                 tryMove(toward);
             }
-            if (rc.canAttack(nearestEnemy.location)) rc.attack(nearestEnemy.location);
-            else if (rc.canAttack(closer)) rc.attack(closer);  // just toss the resources so we can move faster
+            if (rc.canAttack(nearestEnemy.location)) {
+                rc.attack(nearestEnemy.location);
+                rc.setIndicatorString("Attacking " + nearestEnemy.location);
+            }
+            else if (rc.canAttack(closer)) {
+                rc.attack(closer);  // just toss the resources so we can move faster
+                rc.setIndicatorString("Tossing resources to " + closer);
+            }
 
             MapLocation nearestHq = Util.pickNearest(rc, Communications.getHqs(rc));
             assert nearestHq != null;
@@ -87,6 +92,7 @@ public class Carrier extends BaseBot {
         if (rc.getAnchor() == null) {  // need to pick up an anchor
             MapLocation targetHq = Util.pickNearest(rc, Communications.getHqs(rc), blacklist);
             moveTowardHeadquarters(targetHq);
+            rc.setIndicatorString("Waiting for anchor from " + targetHq);
             if (rc.canTakeAnchor(targetHq, Anchor.STANDARD)) {
                 rc.takeAnchor(targetHq, Anchor.STANDARD);
             }
@@ -109,10 +115,12 @@ public class Carrier extends BaseBot {
                     if (rc.getLocation().equals(target) && rc.canPlaceAnchor()) rc.placeAnchor();
                     foundTargetIsland = true;
                 }
+                rc.setIndicatorString("Trying to place anchor at " + target);
             }
             if (!foundTargetIsland) {
                 // spread out from other anchor bots
                 tryMove(spreadOut(rc, 0, 0, SpreadSettings.CARRIER_ANCHOR));
+                rc.setIndicatorString("Spreading out with anchor");
             }
         }
     }
@@ -129,10 +137,10 @@ public class Carrier extends BaseBot {
         if (rc.canSenseLocation(targetWell)) {
             int toCollect = Math.min(CAPACITY - getCurrentResources(), rc.senseWell(targetWell).getRate());
             if (rc.canCollectResource(targetWell, toCollect)) {
-                rc.setIndicatorString("Collecting " + toCollect);
+                rc.setIndicatorString("Collecting " + toCollect + " from " + targetWell);
                 rc.collectResource(targetWell, toCollect);
             } else {
-                rc.setIndicatorString("Could not collect " + toCollect);
+                rc.setIndicatorString("Could not collect " + toCollect + " from " + targetWell);
             }
         } else rc.setIndicatorString("Could not sense " + targetWell);
 
@@ -143,6 +151,7 @@ public class Carrier extends BaseBot {
 //        debugBytecode("3.0");
 
         MapLocation targetHq = Util.pickNearest(rc, Communications.getHqs(rc), blacklist);
+        rc.setIndicatorString("Returning to " + targetHq);
         if (targetHq != null) {
             handleBlacklist(targetHq, EntityType.HQ);
 
