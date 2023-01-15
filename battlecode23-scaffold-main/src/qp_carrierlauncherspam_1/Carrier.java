@@ -120,7 +120,7 @@ public class Carrier extends BaseBot {
         return spreadOut(rc, weightX, weightY, SpreadSettings.CARRIER_RETURNING);
     }
 
-    private static boolean capacityFull() {
+    private static boolean capacityFull() throws GameActionException {
         return rc.getAnchor() != null || rc.getResourceAmount(ResourceType.ADAMANTIUM) + rc.getResourceAmount(ResourceType.ELIXIR) + rc.getResourceAmount(ResourceType.MANA) == CAPACITY;
     }
 }

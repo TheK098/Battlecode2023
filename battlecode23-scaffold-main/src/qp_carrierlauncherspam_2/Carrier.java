@@ -169,7 +169,7 @@ public class Carrier extends BaseBot {
         return rc.getResourceAmount(ResourceType.ADAMANTIUM) + rc.getResourceAmount(ResourceType.ELIXIR) + rc.getResourceAmount(ResourceType.MANA);
     }
 
-    private static int getCurrentCapacity() {
+    private static int getCurrentCapacity() throws GameActionException {
         return rc.getAnchor() != null ? 40 : getCurrentResources();
     }
 
