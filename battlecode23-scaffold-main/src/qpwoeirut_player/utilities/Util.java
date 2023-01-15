@@ -76,20 +76,29 @@ public class Util {
         return Direction.CENTER;
     }
 
-    public static Direction directionToward(RobotController rc, MapLocation target) {
+    public static Direction directionToward(RobotController rc, MapLocation target) throws GameActionException {
         return similarDirection(rc, rc.getLocation().directionTo(target));
     }
 
-    public static Direction directionAway(RobotController rc, MapLocation target) {
+    public static Direction directionAway(RobotController rc, MapLocation target) throws GameActionException {
         return similarDirection(rc, rc.getLocation().directionTo(target).opposite());
     }
 
-    public static Direction similarDirection(RobotController rc, Direction dir) {
-        if (rc.canMove(dir)) return dir;
-        if (rc.canMove(dir.rotateLeft())) return dir.rotateLeft();
-        if (rc.canMove(dir.rotateRight())) return dir.rotateRight();
-        if (rc.canMove(dir.rotateLeft().rotateLeft())) return dir.rotateLeft().rotateLeft();
+    public static Direction similarDirection(RobotController rc, Direction dir) throws GameActionException {
+        if (directionOkay(rc, dir)) return dir;
+        if (directionOkay(rc, dir.rotateLeft())) return dir.rotateLeft();
+        if (directionOkay(rc, dir.rotateRight())) return dir.rotateRight();
+        if (directionOkay(rc, dir.rotateLeft().rotateLeft())) return dir.rotateLeft().rotateLeft();
         return Direction.CENTER;
+    }
+
+    private static boolean directionOkay(RobotController rc, Direction dir) throws GameActionException {
+        return rc.canMove(dir) && currentMatchesDirection(rc, rc.getLocation().add(dir), dir);
+    }
+
+    private static boolean currentMatchesDirection(RobotController rc, MapLocation location, Direction targetDir) throws GameActionException {
+        Direction currentOppositeDir = rc.senseMapInfo(location).getCurrentDirection().opposite();
+        return currentOppositeDir != targetDir && currentOppositeDir.rotateLeft() != targetDir && currentOppositeDir.rotateRight() != targetDir;
     }
 
     public static boolean locationInArray(MapLocation[] array, MapLocation loc) {
