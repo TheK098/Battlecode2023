@@ -76,7 +76,7 @@ public class IntHashMap implements Iterable<IntHashMap.Entry> {
     }
 
     public static class Entry {
-        public int key, value;
+        public final int key, value;
 
         public Entry(int key, int value) {
             this.key = key;
