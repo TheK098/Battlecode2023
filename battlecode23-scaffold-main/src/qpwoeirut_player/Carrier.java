@@ -35,6 +35,12 @@ public class Carrier extends BaseBot {
             enemySighting = null;
         }
 
+        // deal with issue where carriers with resources sometimes end up next to blacklisted headquarters
+        for (Direction dir: Direction.allDirections()) {
+            MapLocation loc = rc.getLocation().add(dir);
+            if (rc.onTheMap(loc)) blacklist[loc.x][loc.y] = 0;
+        }
+
 //        debugBytecode("1.0");
 
         boolean shouldReturn = handleCombat();
