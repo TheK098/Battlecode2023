@@ -21,11 +21,10 @@ abstract public class BaseBot {
         return false;
     }
 
-    // once we have enough bots to fill one-third of the map, the anchoring process can kick in
-    // TODO: reduce threshold to start if the 2000th round is soon
     protected static boolean itsAnchorTime() {
-        int mapSize = rc.getMapWidth() * rc.getMapHeight();
+        double mapSize = rc.getMapWidth() * rc.getMapHeight();
+        double threshold = mapSize / Math.pow(Math.max(1, rc.getRoundNum() * rc.getRoundNum() - 3_500_000), 0.15);
         int ourRobots = rc.getRobotCount();
-        return ourRobots * 3 >= mapSize;
+        return ourRobots * 3 >= threshold;
     }
 }
