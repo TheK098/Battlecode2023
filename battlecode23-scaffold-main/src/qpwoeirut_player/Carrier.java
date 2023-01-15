@@ -49,12 +49,14 @@ public class Carrier extends BaseBot {
         if (rc.getID() % 4 == 0 && itsAnchorTime()) {
             if (getCurrentResources() > 0) returnResources();
             else handleAnchor();
-        } else if ((getCurrentResources() > 0 && adjacentToHeadquarters(rc, rc.getLocation())) || getCurrentResources() >= 39) {
+        } else if (getCurrentResources() >= 39 || (getCurrentResources() > 0 && adjacentToHeadquarters(rc, rc.getLocation()) && !adjacentToWell(rc, rc.getLocation()))) {
             returnResources();
         } else {
             collectResources();
         }
 //        debugBytecode("1.1");
+
+        dieIfStuck();
     }
 
     private static boolean handleCombat() throws GameActionException {
@@ -134,7 +136,11 @@ public class Carrier extends BaseBot {
     private static void collectResources() throws GameActionException {
 //        debugBytecode("2.0");
         MapLocation targetWell = Util.pickNearest(rc, Communications.getKnownWells(rc), blacklist);
-        if (targetWell == null) return;
+        if (targetWell == null) {
+            rc.setIndicatorString("All wells blacklisted");
+            tryMove(randomDirection(rc));
+            return;
+        }
         handleBlacklist(targetWell, EntityType.WELL);
 
 //        Direction dir = pickDirectionForCollection(rc, targetWell);
@@ -145,6 +151,7 @@ public class Carrier extends BaseBot {
             if (rc.canCollectResource(targetWell, toCollect)) {
                 rc.setIndicatorString("Collecting " + toCollect + " from " + targetWell);
                 rc.collectResource(targetWell, toCollect);
+                lastMoveOrAction = rc.getRoundNum();
             } else {
                 rc.setIndicatorString("Could not collect " + toCollect + " from " + targetWell);
             }
@@ -165,15 +172,18 @@ public class Carrier extends BaseBot {
             moveTowardHeadquarters(targetHq);
 //            debugBytecode("3.2");
 
+            int mana = rc.getResourceAmount(ResourceType.MANA);
             int adamantium = rc.getResourceAmount(ResourceType.ADAMANTIUM);
             int elixir = rc.getResourceAmount(ResourceType.ELIXIR);
-            int mana = rc.getResourceAmount(ResourceType.MANA);
-            if (adamantium > 0 && rc.canTransferResource(targetHq, ResourceType.ADAMANTIUM, adamantium)) {
+            if (mana > 0 && rc.canTransferResource(targetHq, ResourceType.MANA, mana)) {
+                rc.transferResource(targetHq, ResourceType.MANA, mana);
+                lastMoveOrAction = rc.getRoundNum();
+            } else if (adamantium > 0 && rc.canTransferResource(targetHq, ResourceType.ADAMANTIUM, adamantium)) {
                 rc.transferResource(targetHq, ResourceType.ADAMANTIUM, adamantium);
+                lastMoveOrAction = rc.getRoundNum();
             } else if (elixir > 0 && rc.canTransferResource(targetHq, ResourceType.ELIXIR, elixir)) {
                 rc.transferResource(targetHq, ResourceType.ELIXIR, elixir);
-            } else if (mana > 0 && rc.canTransferResource(targetHq, ResourceType.MANA, mana)) {
-                rc.transferResource(targetHq, ResourceType.MANA, mana);
+                lastMoveOrAction = rc.getRoundNum();
             }
 //            debugBytecode("3.3");
         } else {
@@ -232,6 +242,10 @@ public class Carrier extends BaseBot {
             blacklist[target.x][target.y] = rc.getRoundNum() + entityType.blacklistLength;
 //            System.out.println("Blacklisted " + target);
         }
+    }
+
+    private static void dieIfStuck() {  // desperate times call for desperate measures
+        if (rc.getRoundNum() - lastMoveOrAction >= 100 + getCurrentResources() * 20) rc.disintegrate();
     }
 
     private static void resetBlacklistTimer(EntityType entityType) {

@@ -6,6 +6,7 @@ import battlecode.common.RobotController;
 
 abstract public class BaseBot {
     protected static RobotController rc;
+    protected static int lastMoveOrAction = 0;
 
     public BaseBot(RobotController rc) {
         BaseBot.rc = rc;
@@ -16,6 +17,7 @@ abstract public class BaseBot {
     protected static boolean tryMove(Direction dir) throws GameActionException {
         if (rc.canMove(dir) && dir != Direction.CENTER) {
             rc.move(dir);
+            lastMoveOrAction = rc.getRoundNum();
             return true;
         }
         return false;
