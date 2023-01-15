@@ -88,6 +88,7 @@ public class Util {
         if (rc.canMove(dir)) return dir;
         if (rc.canMove(dir.rotateLeft())) return dir.rotateLeft();
         if (rc.canMove(dir.rotateRight())) return dir.rotateRight();
+        if (rc.canMove(dir.rotateLeft().rotateLeft())) return dir.rotateLeft().rotateLeft();
         return Direction.CENTER;
     }
 
