@@ -41,7 +41,8 @@ public class Carrier extends BaseBot {
         if (shouldReturn) return;
 
         if (rc.getID() % 3 == 0 && itsAnchorTime()) {
-            handleAnchor();
+            if (getCurrentResources() > 0) returnResources();
+            else handleAnchor();
         } else if ((getCurrentResources() > 0 && adjacentToHeadquarters(rc, rc.getLocation())) || getCurrentResources() >= 39) {
             returnResources();
             rc.setIndicatorString("returning");
