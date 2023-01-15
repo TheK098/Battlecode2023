@@ -23,15 +23,7 @@ public class Launcher extends BaseBot {
 
     @Override
     public void processRound() throws GameActionException {
-        int actionRadius = rc.getType().actionRadiusSquared;
-        int closestDist = 3600;
-        RobotInfo target = null;
-        for (RobotInfo enemy: rc.senseNearbyRobots(actionRadius, rc.getTeam().opponent())) {
-            if (enemy.type != RobotType.HEADQUARTERS && closestDist > rc.getLocation().distanceSquaredTo(enemy.location)) {
-                closestDist = rc.getLocation().distanceSquaredTo(enemy.location);
-                target = enemy;
-            }
-        }
+        RobotInfo target = pickTarget();
         if (target != null) {
             MapLocation toAttack = target.location;
             if (rc.canAttack(toAttack)) {  // TODO: hide in a cloud?
@@ -95,6 +87,28 @@ public class Launcher extends BaseBot {
                 else tryMove(dir);  // do tryMove because a round may have passed from running out of bytecode
 //                rc.setIndicatorString("Spreading out");\
             }
+
+            // try attacking again
+            target = pickTarget();
+            if (target != null) {
+                if (rc.canAttack(target.location)) rc.attack(target.location);
+            }
         }
+    }
+
+    private static RobotInfo pickTarget() throws GameActionException {
+        if (rc.isActionReady()) {
+            int actionRadius = rc.getType().actionRadiusSquared;
+            int closestDist = 3600;
+            RobotInfo target = null;
+            for (RobotInfo enemy : rc.senseNearbyRobots(actionRadius, rc.getTeam().opponent())) {
+                if (enemy.type != RobotType.HEADQUARTERS && closestDist > rc.getLocation().distanceSquaredTo(enemy.location)) {
+                    closestDist = rc.getLocation().distanceSquaredTo(enemy.location);
+                    target = enemy;
+                }
+            }
+            return target;
+        }
+        return null;
     }
 }
