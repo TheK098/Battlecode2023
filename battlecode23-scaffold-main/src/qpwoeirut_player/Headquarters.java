@@ -23,9 +23,10 @@ public class Headquarters extends BaseBot {
 
         if (!itsAnchorTime()) {
             RobotType[] spawnPriority = {RobotType.CARRIER, RobotType.LAUNCHER};
-            if ((rc.getRoundNum() > 10 && rc.getRoundNum() % 2 == 0) || rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) {
+            if ((rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) ||
+                    (10 <= rc.getRoundNum() && rc.getRoundNum() <= 50 && rc.getRoundNum() % 2 == 0) ||
+                    (50 < rc.getRoundNum() && FastRandom.nextInt(50 * Communications.getKnownWells(rc).length) < rc.getRobotCount()))
                 spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
-            }
 
             int spawnIdx = 0;
             int failures = 0;
@@ -57,6 +58,6 @@ public class Headquarters extends BaseBot {
             if (rc.canBuildRobot(robotType, loc)) possibleLocations.add(loc);
         }
         int nearbyRobots = rc.senseNearbyRobots(RobotType.HEADQUARTERS.actionRadiusSquared).length;
-        return possibleLocations.size() <= nearbyRobots / 12 ? null : possibleLocations.get(FastRandom.nextInt(possibleLocations.size()));
+        return possibleLocations.size() <= nearbyRobots / 14 ? null : possibleLocations.get(FastRandom.nextInt(possibleLocations.size()));
     }
 }
