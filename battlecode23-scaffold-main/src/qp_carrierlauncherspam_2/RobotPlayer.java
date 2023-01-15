@@ -32,11 +32,11 @@ public strictfp class RobotPlayer {
             try {
                 bot.processRound();
             } catch (GameActionException e) {
-                System.out.println("GameActionException: " + rc.getType());
-                e.printStackTrace();
+//                System.out.println("GameActionException: " + rc.getType());
+//                e.printStackTrace();
             } catch (Exception e) {
-                System.out.println("Exception: " + rc.getType());
-                e.printStackTrace();
+//                System.out.println("Exception: " + rc.getType());
+//                e.printStackTrace();
             } finally {  // end turn
                 Clock.yield();
             }
