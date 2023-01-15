@@ -85,15 +85,15 @@ public class Util {
     }
 
     public static Direction similarDirection(RobotController rc, Direction dir) throws GameActionException {
-        if (directionOkay(rc, dir)) return dir;
-        if (directionOkay(rc, dir.rotateLeft())) return dir.rotateLeft();
-        if (directionOkay(rc, dir.rotateRight())) return dir.rotateRight();
-        if (directionOkay(rc, dir.rotateLeft().rotateLeft())) return dir.rotateLeft().rotateLeft();
+        if (directionOkay(rc, dir, dir)) return dir;
+        if (directionOkay(rc, dir, dir.rotateLeft())) return dir.rotateLeft();
+        if (directionOkay(rc, dir, dir.rotateRight())) return dir.rotateRight();
+        if (directionOkay(rc, dir, dir.rotateLeft().rotateLeft())) return dir.rotateLeft().rotateLeft();
         return Direction.CENTER;
     }
 
-    private static boolean directionOkay(RobotController rc, Direction dir) throws GameActionException {
-        return rc.canMove(dir) && currentMatchesDirection(rc, rc.getLocation().add(dir), dir);
+    private static boolean directionOkay(RobotController rc, Direction targetDir, Direction actualDir) throws GameActionException {
+        return rc.canMove(actualDir) && currentMatchesDirection(rc, rc.getLocation().add(actualDir), targetDir);
     }
 
     private static boolean currentMatchesDirection(RobotController rc, MapLocation location, Direction targetDir) throws GameActionException {
