@@ -21,11 +21,11 @@ abstract public class BaseBot {
         return false;
     }
 
-    // once we have enough bots to fill one-fourth of the map, the anchoring process can kick in
+    // once we have enough bots to fill one-third of the map, the anchoring process can kick in
     // TODO: reduce threshold to start if the 2000th round is soon
     protected static boolean itsAnchorTime() {
         int mapSize = rc.getMapWidth() * rc.getMapHeight();
         int ourRobots = rc.getRobotCount();
-        return ourRobots * 4 >= mapSize;
+        return ourRobots * 3 >= mapSize;
     }
 }
