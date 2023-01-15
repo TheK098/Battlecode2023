@@ -40,7 +40,7 @@ public class Carrier extends BaseBot {
         boolean shouldReturn = handleCombat();
         if (shouldReturn) return;
 
-        if (rc.getID() % 3 == 0 && itsAnchorTime()) {
+        if (rc.getID() % 4 == 0 && itsAnchorTime()) {
             if (getCurrentResources() > 0) returnResources();
             else handleAnchor();
         } else if ((getCurrentResources() > 0 && adjacentToHeadquarters(rc, rc.getLocation())) || getCurrentResources() >= 39) {
