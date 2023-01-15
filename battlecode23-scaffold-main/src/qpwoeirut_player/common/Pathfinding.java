@@ -128,8 +128,8 @@ public class Pathfinding {
             float dx = robot.location.x - x;
             float dy = robot.location.y - y;
             // subtract since we want to move away
-            weightX -= Math.pow(dx / dist, settings.ally_dist_exp);
-            weightY -= Math.pow(dy / dist, settings.ally_dist_exp);
+            weightX -= settings.ally_dist_factor * dx / dist;
+            weightY -= settings.ally_dist_factor * dy / dist;
         }
 //        rc.setIndicatorString(weightX + " " + weightY);
 
