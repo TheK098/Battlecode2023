@@ -19,6 +19,10 @@ public class Carrier extends BaseBot {
     private static MapLocation currentTarget = null;
     private static int timeRemaining = 100;
     private static MapLocation enemySighting = null;
+    private static int adamantiumCooldown = 0, manaCooldown = 0;
+
+    // save the well we're collecting from so that we can collect the same resource
+    private static MapLocation targetWell = null;
 
     public Carrier(RobotController rc) {
         super(rc);
@@ -46,10 +50,14 @@ public class Carrier extends BaseBot {
         boolean shouldReturn = handleCombat();
         if (shouldReturn) return;
 
+        boolean adjacentToHq = adjacentToHeadquarters(rc, rc.getLocation());
         if (rc.getID() % 4 == 0 && itsAnchorTime()) {
             if (getCurrentResources() > 0) returnResources();
             else handleAnchor();
-        } else if (getCurrentResources() >= 39 || (getCurrentResources() > 0 && adjacentToHeadquarters(rc, rc.getLocation()) && !adjacentToWell(rc, rc.getLocation()))) {
+        } else if (adjacentToHq && ((rc.getResourceAmount(ResourceType.ADAMANTIUM) > 0 && adamantiumCooldown <= 0) || (rc.getResourceAmount(ResourceType.MANA) > 0 && manaCooldown <= 0))) {
+            // ensure we don't hold on to a resource that takes up capacity
+            returnResources();
+        } else if (getCurrentResources() >= 39 || (getCurrentResources() > 0 && adjacentToHq && !adjacentToWell(rc, rc.getLocation()))) {
             returnResources();
         } else {
             collectResources();
@@ -135,7 +143,9 @@ public class Carrier extends BaseBot {
 
     private static void collectResources() throws GameActionException {
 //        debugBytecode("2.0");
-        MapLocation targetWell = Util.pickNearest(rc, Communications.getKnownWells(rc), blacklist);
+        if (targetWell == null || !rc.getLocation().isAdjacentTo(targetWell))
+            targetWell = Util.pickNearest(rc, Communications.getKnownWells(rc), blacklist);
+
         if (targetWell == null) {
             rc.setIndicatorString("All wells blacklisted");
             tryMove(randomDirection(rc));
@@ -152,6 +162,10 @@ public class Carrier extends BaseBot {
                 rc.setIndicatorString("Collecting " + toCollect + " from " + targetWell);
                 rc.collectResource(targetWell, toCollect);
                 lastMoveOrAction = rc.getRoundNum();
+                switch (rc.senseWell(targetWell).getResourceType()) {
+                    case ADAMANTIUM: adamantiumCooldown = 10; break;
+                    case MANA: manaCooldown = 10; break;
+                }
             } else {
                 rc.setIndicatorString("Could not collect " + toCollect + " from " + targetWell);
             }
@@ -162,6 +176,7 @@ public class Carrier extends BaseBot {
 
     private static void returnResources() throws GameActionException {
 //        debugBytecode("3.0");
+        targetWell = null;
 
         MapLocation targetHq = Util.pickNearest(rc, Communications.getHqs(rc), blacklist);
         rc.setIndicatorString("Returning to " + targetHq);
@@ -192,7 +207,7 @@ public class Carrier extends BaseBot {
             assert nearestHq != null;
             if (rc.getLocation().isWithinDistanceSquared(nearestHq, 16)) {
                 tryMove(directionAway(rc, nearestHq));
-            }
+            } else tryMove(randomDirection(rc));
 //            debugBytecode("3.4");
         }
     }
