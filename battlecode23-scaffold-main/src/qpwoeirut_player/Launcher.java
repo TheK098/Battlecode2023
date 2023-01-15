@@ -28,6 +28,7 @@ public class Launcher extends BaseBot {
             MapLocation toAttack = target.location;
             if (rc.canAttack(toAttack)) {  // TODO: hide in a cloud?
                 rc.attack(toAttack);
+                lastMoveOrAction = rc.getRoundNum();
                 Direction dir = directionAway(rc, toAttack);
                 tryMove(dir);
                 rc.setIndicatorString("Attack and run");
@@ -36,6 +37,7 @@ public class Launcher extends BaseBot {
                 tryMove(dir);
                 if (rc.canAttack(toAttack)) {
                     rc.attack(toAttack);
+                    lastMoveOrAction = rc.getRoundNum();
                 }
                 rc.setIndicatorString("Charge and attack");
             }
@@ -74,7 +76,7 @@ public class Launcher extends BaseBot {
                 if (targetIdx != -1) {
                     weightX = targetScore * (enemySightings[targetIdx].location.x - rc.getLocation().x);
                     weightY = targetScore * (enemySightings[targetIdx].location.y - rc.getLocation().y);
-                }
+                } else rc.setIndicatorString("Spreading out");
                 // move towards target if exists and spread out
                 Direction dir = spreadOut(rc, weightX, weightY, SpreadSettings.LAUNCHER);
                 MapLocation newLoc = rc.getLocation().add(dir);
@@ -91,9 +93,14 @@ public class Launcher extends BaseBot {
             // try attacking again
             target = pickTarget();
             if (target != null) {
-                if (rc.canAttack(target.location)) rc.attack(target.location);
+                if (rc.canAttack(target.location)) {
+                    rc.attack(target.location);
+                    lastMoveOrAction = rc.getRoundNum();
+                }
             }
         }
+
+        dieIfStuck();
     }
 
     private static RobotInfo pickTarget() throws GameActionException {
@@ -110,5 +117,9 @@ public class Launcher extends BaseBot {
             return target;
         }
         return null;
+    }
+
+    private static void dieIfStuck() {  // desperate times call for desperate measures
+        if (rc.getRoundNum() - lastMoveOrAction >= 200) rc.disintegrate();
     }
 }
