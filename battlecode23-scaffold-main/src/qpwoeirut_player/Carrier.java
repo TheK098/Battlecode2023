@@ -3,10 +3,8 @@ package qpwoeirut_player;
 import battlecode.common.*;
 import qpwoeirut_player.common.Communications;
 import qpwoeirut_player.common.SpreadSettings;
-import qpwoeirut_player.common.TileType;
+import qpwoeirut_player.common.EntityType;
 import qpwoeirut_player.utilities.Util;
-
-import java.util.Arrays;
 
 import static qpwoeirut_player.common.Pathfinding.*;
 import static qpwoeirut_player.utilities.Util.*;
@@ -20,6 +18,7 @@ public class Carrier extends BaseBot {
     private static int[][] blacklist;
     private static MapLocation currentTarget = null;
     private static int timeRemaining = 100;
+    private static MapLocation enemySighting = null;
 
     public Carrier(RobotController rc) {
         super(rc);
@@ -32,6 +31,10 @@ public class Carrier extends BaseBot {
         for (WellInfo wellInfo : nearbyWells) {
             Communications.addWell(rc, wellInfo.getMapLocation());
         }
+        if (enemySighting != null && Communications.reportEnemySighting(rc, enemySighting)) {
+            enemySighting = null;
+        }
+
 //        debugBytecode("1.0");
 
         boolean shouldReturn = handleCombat();
@@ -51,27 +54,30 @@ public class Carrier extends BaseBot {
     private static boolean handleCombat() throws GameActionException {
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         if (enemies.length > 0) {
-            RobotInfo nearestEnemy = pickNearest(rc, enemies);
-            assert nearestEnemy != null;
-            boolean launchersNearby = false;
-            for (RobotInfo enemy : enemies) launchersNearby |= enemy.type == RobotType.LAUNCHER;
+            RobotInfo nearestEnemy = pickNearest(rc, enemies, false);
+            if (nearestEnemy == null) return false;  // only visible enemy was HQ
+            if (!Communications.reportEnemySighting(rc, nearestEnemy.location)) enemySighting = nearestEnemy.location;
 
-            // attack if possible; otherwise run if launchers nearby
+            boolean onlyCarriersNearby = true;
+            for (RobotInfo enemy : enemies) onlyCarriersNearby &= enemy.type == RobotType.CARRIER;
+
+            if (onlyCarriersNearby) return false;  // continue as normal, report enemy location when depositing resources
+
+            // dump resources in an attack and then run away
+            // TODO: prioritize attacking launchers
             Direction toward = directionToward(rc, nearestEnemy.location);
-            if (getCurrentResources() >= Math.max(5, rc.getHealth()) &&
-                    rc.getLocation().add(toward).isWithinDistanceSquared(nearestEnemy.location, rc.getType().actionRadiusSquared)) {
-                if (!rc.canAttack(nearestEnemy.location)) {
-                    tryMove(toward);
-                }
-                if (rc.canAttack(nearestEnemy.location)) rc.attack(nearestEnemy.location);
-                tryMove(directionAway(rc, nearestEnemy.location));
-                rc.setIndicatorString("Attacking " + nearestEnemy.location);
-                return true;
-            } else if (launchersNearby) {
-                tryMove(directionAway(rc, nearestEnemy.location));  // assume enemies are in same direction
-                rc.setIndicatorString("Running away from " + nearestEnemy.location);
-                return true;
+            MapLocation closer = rc.getLocation().add(toward);
+            if (!rc.canAttack(nearestEnemy.location) && closer.isWithinDistanceSquared(nearestEnemy.location, rc.getType().actionRadiusSquared)) {
+                tryMove(toward);
             }
+            if (rc.canAttack(nearestEnemy.location)) rc.attack(nearestEnemy.location);
+            else if (rc.canAttack(closer)) rc.attack(closer);  // just toss the resources so we can move faster
+
+            MapLocation nearestHq = Util.pickNearest(rc, Communications.getHqs(rc));
+            assert nearestHq != null;
+            tryMove(directionToward(rc, nearestHq));
+            tryMove(directionToward(rc, nearestHq));
+            return true;
         }
          return false;
     }
@@ -105,7 +111,7 @@ public class Carrier extends BaseBot {
             }
             if (!foundTargetIsland) {
                 // spread out from other anchor bots
-                tryMove(spreadOut(rc, SpreadSettings.CARRIER_ANCHOR));
+                tryMove(spreadOut(rc, 0, 0, SpreadSettings.CARRIER_ANCHOR));
             }
         }
     }
@@ -114,7 +120,7 @@ public class Carrier extends BaseBot {
 //        debugBytecode("2.0");
         MapLocation targetWell = Util.pickNearest(rc, Communications.getKnownWells(rc), blacklist);
         if (targetWell == null) return;
-        handleBlacklist(targetWell, TileType.WELL);
+        handleBlacklist(targetWell, EntityType.WELL);
 
 //        Direction dir = pickDirectionForCollection(rc, targetWell);
         moveTowardsWell(targetWell);
@@ -137,7 +143,7 @@ public class Carrier extends BaseBot {
 
         MapLocation targetHq = Util.pickNearest(rc, Communications.getHqs(rc), blacklist);
         if (targetHq != null) {
-            handleBlacklist(targetHq, TileType.HQ);
+            handleBlacklist(targetHq, EntityType.HQ);
 
 //            debugBytecode("3.1");
             moveTowardHeadquarters(targetHq);
@@ -168,9 +174,9 @@ public class Carrier extends BaseBot {
     private static void moveTowardHeadquarters(MapLocation targetHq) throws GameActionException {
         Direction dir;
         if (adjacentToHeadquarters(rc, rc.getLocation())) {
-            resetBlacklistTimer(TileType.HQ);
+            resetBlacklistTimer(EntityType.HQ);
             dir = moveWhileStayingAdjacent(rc, targetHq);
-        } else if (timeRemaining <= TileType.HQ.randomMoveCutoff && timeRemaining % TileType.HQ.randomMovePeriod == 0) {
+        } else if (timeRemaining <= EntityType.HQ.randomMoveCutoff && timeRemaining % EntityType.HQ.randomMovePeriod == 0) {
             dir = randomDirection(rc);
         } else {
             dir = moveToward(rc, targetHq);
@@ -182,9 +188,9 @@ public class Carrier extends BaseBot {
     private static void moveTowardsWell(MapLocation targetWell) throws GameActionException {
         Direction dir;
         if (adjacentToWell(rc, rc.getLocation())) {
-            resetBlacklistTimer(TileType.WELL);
+            resetBlacklistTimer(EntityType.WELL);
             dir = moveWhileStayingAdjacent(rc, targetWell);
-        } else if (timeRemaining <= TileType.WELL.randomMoveCutoff && timeRemaining % TileType.WELL.randomMovePeriod == 0) {
+        } else if (timeRemaining <= EntityType.WELL.randomMoveCutoff && timeRemaining % EntityType.WELL.randomMovePeriod == 0) {
             dir = randomDirection(rc);
         } else {
             dir = moveToward(rc, targetWell);
@@ -193,7 +199,7 @@ public class Carrier extends BaseBot {
 //        debugBytecode("2.1");
 
         if (tryMove(dir)) {
-            tryMove(similarDirection(rc, dir));
+            if (!adjacentToWell(rc, rc.getLocation())) tryMove(similarDirection(rc, dir));
         } else if (!adjacentToWell(rc, rc.getLocation())) {
             // just try moving away from HQ
             MapLocation nearestHq = Util.pickNearest(rc, Communications.getHqs(rc));
@@ -202,18 +208,18 @@ public class Carrier extends BaseBot {
         }
     }
 
-    private static void handleBlacklist(MapLocation target, TileType tileType) {
+    private static void handleBlacklist(MapLocation target, EntityType entityType) {
         if (currentTarget == null || !currentTarget.equals(target)) {
             currentTarget = target;
-            timeRemaining = tileType.blacklistTimer;
+            timeRemaining = entityType.blacklistTimer;
         } else if (--timeRemaining == 0) {
-            blacklist[target.x][target.y] = rc.getRoundNum() + tileType.blacklistLength;
+            blacklist[target.x][target.y] = rc.getRoundNum() + entityType.blacklistLength;
 //            System.out.println("Blacklisted " + target);
         }
     }
 
-    private static void resetBlacklistTimer(TileType tileType) {
-        timeRemaining = tileType.blacklistTimer;
+    private static void resetBlacklistTimer(EntityType entityType) {
+        timeRemaining = entityType.blacklistTimer;
     }
 
     private static int getCurrentResources() {

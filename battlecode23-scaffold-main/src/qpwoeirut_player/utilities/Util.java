@@ -31,12 +31,12 @@ public class Util {
         }
         return closestIndex == -1 ? null : locations[closestIndex];
     }
-    public static RobotInfo pickNearest(RobotController rc, RobotInfo[] robots) {
+    public static RobotInfo pickNearest(RobotController rc, RobotInfo[] robots, boolean includeHeadquarters) {
         int closestIndex = -1;
         int closestDistance = INF_DIST;
         for (int i = robots.length; i --> 0;) {
             int distance = robots[i].location.distanceSquaredTo(rc.getLocation());
-            if (closestDistance > distance) {
+            if (closestDistance > distance && (includeHeadquarters || robots[i].getType() != RobotType.HEADQUARTERS)) {
                 closestDistance = distance;
                 closestIndex = i;
             }
@@ -66,7 +66,7 @@ public class Util {
         return false;
     }
 
-    public static Direction randomDirection(RobotController rc) throws GameActionException {
+    public static Direction randomDirection(RobotController rc) {
         Direction dir;
 
         for (int i = 15; i --> 0;) {

@@ -2,7 +2,7 @@ package qpwoeirut_player.common;
 
 public enum SpreadSettings {
     CARRIER_ANCHOR(25, 1.5f, 100),
-    LAUNCHER(18, 1.0f, 100);
+    LAUNCHER(16, 1.0f, 20);
 
     public final int ally_dist_cutoff;
     public final float ally_dist_exp;

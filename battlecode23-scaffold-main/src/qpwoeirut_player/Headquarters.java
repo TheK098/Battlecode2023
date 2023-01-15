@@ -16,8 +16,10 @@ public class Headquarters extends BaseBot {
 
     @Override
     public void processRound() throws GameActionException {
-        // report HQ position
-        Communications.addHq(rc, rc.getLocation());
+        if (rc.getRoundNum() == 1) Communications.addHq(rc, rc.getLocation()); // report HQ position
+
+        if (rc.getRoundNum() % 20 == rc.getID() % 20) Communications.decreaseUrgencies(rc);
+        // urgencies will decrease faster if there are multiple HQs; consider that a feature i guess?
 
         if (!itsAnchorTime()) {
             RobotType[] spawnPriority = {RobotType.CARRIER, RobotType.LAUNCHER};
@@ -28,6 +30,8 @@ public class Headquarters extends BaseBot {
             int spawnIdx = 0;
             int failures = 0;
             while (failures < spawnPriority.length) {
+                // TODO: spawn carriers closer to wells
+                // TODO: don't spawn if entire vision range is almost full to prevent clogging
                 MapLocation newCarrierLoc = pickEmptySpawnLocation(spawnPriority[spawnIdx]);
                 if (newCarrierLoc != null) {
                     rc.buildRobot(spawnPriority[spawnIdx], newCarrierLoc);  // it's guaranteed that we can build

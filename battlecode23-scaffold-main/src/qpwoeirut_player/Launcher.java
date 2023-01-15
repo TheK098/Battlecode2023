@@ -2,7 +2,9 @@ package qpwoeirut_player;
 
 import battlecode.common.*;
 import qpwoeirut_player.common.Communications;
+import qpwoeirut_player.common.Communications.EnemySighting;
 import qpwoeirut_player.common.SpreadSettings;
+import qpwoeirut_player.utilities.FastRandom;
 import qpwoeirut_player.utilities.IntHashMap;
 import qpwoeirut_player.utilities.Util;
 
@@ -62,14 +64,36 @@ public class Launcher extends BaseBot {
                 tryMove(directionToward(rc, rc.senseRobot(allyToFollow).location));
                 rc.setIndicatorString("Trying to help" + allyToFollow);
             } else {  // TODO: try to put carriers between this launcher and nearest HQ
-                // for now, just spread out
-                Direction dir = spreadOut(rc, SpreadSettings.LAUNCHER);
+                EnemySighting[] enemySightings = Communications.getEnemySightings(rc);
+                int targetIdx = -1;
+                int targetScore = 20;
+                int factor = 10 * rc.getMapWidth() * rc.getMapHeight();
+                for (int i = enemySightings.length; i --> 0;) {
+                    if (enemySightings[i].urgency > 0) {
+                        int score = factor * enemySightings[i].urgency / Math.max(1, rc.getLocation().distanceSquaredTo(enemySightings[i].location));
+                        if (targetScore < score) {
+                            targetScore = score;
+                            targetIdx = i;
+                            rc.setIndicatorString(score + " " + enemySightings[i].urgency + " " + enemySightings[i].location);
+                        }
+                    }
+                }
+                float weightX = 0, weightY = 0;
+                if (targetIdx != -1) {
+                    weightX = targetScore * (enemySightings[targetIdx].location.x - rc.getLocation().x);
+                    weightY = targetScore * (enemySightings[targetIdx].location.y - rc.getLocation().y);
+                }
+                // move towards target if exists and spread out
+                Direction dir = spreadOut(rc, weightX, weightY, SpreadSettings.LAUNCHER);
                 MapLocation newLoc = rc.getLocation().add(dir);
                 // maintain space for carriers
-                if (adjacentToHeadquarters(rc, newLoc)) tryMove(directionAway(rc, Util.pickNearest(rc, Communications.getHqs(rc))));
-                else if (adjacentToWell(rc, newLoc)) tryMove(directionAway(rc, Util.pickNearest(rc, Communications.getKnownWells(rc))));
+                if (adjacentToHeadquarters(rc, newLoc) && FastRandom.nextInt(8) != 0)
+                    tryMove(directionAway(rc, Util.pickNearest(rc, Communications.getHqs(rc))));
+                else if (adjacentToWell(rc, newLoc) && FastRandom.nextInt(8) != 0)
+                    if (rc.senseWell(rc.getLocation()) != null) tryMove(randomDirection(rc));
+                    else tryMove(directionAway(rc, Util.pickNearest(rc, Communications.getKnownWells(rc))));
                 else tryMove(dir);  // do tryMove because a round may have passed from running out of bytecode
-//                rc.setIndicatorString("Spreading out");
+//                rc.setIndicatorString("Spreading out");\
             }
         }
     }

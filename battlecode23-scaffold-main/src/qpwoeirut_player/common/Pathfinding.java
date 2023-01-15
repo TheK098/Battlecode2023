@@ -20,7 +20,7 @@ public class Pathfinding {
             Direction.WEST, Direction.NORTH, Direction.EAST, Direction.SOUTH
     };
 
-    public static Direction moveWhileStayingAdjacent(RobotController rc, MapLocation target) throws GameActionException {
+    public static Direction moveWhileStayingAdjacent(RobotController rc, MapLocation target) {
         for (Direction dir: DIRECTIONS) {
             if (rc.canMove(dir) && (rc.getLocation().add(dir).isAdjacentTo(target) || rc.getLocation().add(dir).equals(target))) return dir;
         }
@@ -111,14 +111,15 @@ public class Pathfinding {
 
     private static final int EDGE_PUSH = 6;
 
-    public static Direction spreadOut(RobotController rc, SpreadSettings settings) throws GameActionException {
+    public static Direction spreadOut(RobotController rc, float weightX, float weightY, SpreadSettings settings) throws GameActionException {
         int x = rc.getLocation().x, y = rc.getLocation().y;
         // push away from edges
-        float weightX = Math.max(0, cube(EDGE_PUSH - x)) - Math.max(0, cube(x - (rc.getMapWidth() - EDGE_PUSH - 1)));
-        float weightY = Math.max(0, cube(EDGE_PUSH - y)) - Math.max(0, cube(y - (rc.getMapHeight() - EDGE_PUSH - 1)));
+        weightX += (Math.max(0, cube(EDGE_PUSH - x)) - Math.max(0, cube(x - (rc.getMapWidth() - EDGE_PUSH - 1)))) / 10f;
+        weightY += (Math.max(0, cube(EDGE_PUSH - y)) - Math.max(0, cube(y - (rc.getMapHeight() - EDGE_PUSH - 1)))) / 10f;
 
         RobotInfo[] nearbyRobots = rc.senseNearbyRobots(settings.ally_dist_cutoff, rc.getTeam());
         for (RobotInfo robot : nearbyRobots) {
+            if (rc.getType() != robot.getType()) continue;
             // when spreading out anchoring carriers, we only care about other anchor carriers
             if (settings == SpreadSettings.CARRIER_ANCHOR && robot.getNumAnchors(Anchor.STANDARD) == 0) continue;
 
@@ -130,7 +131,7 @@ public class Pathfinding {
             weightX -= Math.pow(dx / dist, settings.ally_dist_exp);
             weightY -= Math.pow(dy / dist, settings.ally_dist_exp);
         }
-        rc.setIndicatorString(weightX + " " + weightY);
+//        rc.setIndicatorString(weightX + " " + weightY);
 
         int finalDx = FastRandom.nextInt(settings.random_bound) - settings.random_cutoff > weightX ? -1 : 1;
         int finalDy = FastRandom.nextInt(settings.random_bound) - settings.random_cutoff > weightY ? -1 : 1;
