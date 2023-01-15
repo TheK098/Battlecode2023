@@ -226,10 +226,7 @@ public class Carrier extends BaseBot {
         return rc.getResourceAmount(ResourceType.ADAMANTIUM) + rc.getResourceAmount(ResourceType.ELIXIR) + rc.getResourceAmount(ResourceType.MANA);
     }
 
-    private static int getCurrentCapacity() throws GameActionException {
-        return rc.getAnchor() != null ? 40 : getCurrentResources();
-    }
-
+    @SuppressWarnings("unused")
     public static void debugBytecode(String s) {
         if (rc.getID() == 12141 && rc.getRoundNum() <= 60) System.out.println(s + ": " + Clock.getBytecodeNum());
     }
