@@ -21,16 +21,31 @@ public class Util {
         return closestIndex == -1 ? null : locations[closestIndex];
     }
     public static MapLocation pickNearest(RobotController rc, MapLocation[] locations) {
+        return pickNearest(rc.getLocation(), locations);
+    }
+    public static MapLocation pickNearest(MapLocation origin, MapLocation[] locations) {
         int closestIndex = -1;
         int closestDistance = INF_DIST;
         for (int i = locations.length; i --> 0;) {
-            int distance = locations[i].distanceSquaredTo(rc.getLocation());
+            int distance = locations[i].distanceSquaredTo(origin);
             if (closestDistance > distance) {
                 closestDistance = distance;
                 closestIndex = i;
             }
         }
         return closestIndex == -1 ? null : locations[closestIndex];
+    }
+    public static WellLocation pickNearest(MapLocation origin, WellLocation[] wells) {
+        int closestIndex = -1;
+        int closestDistance = INF_DIST;
+        for (int i = wells.length; i --> 0;) {
+            int distance = wells[i].location.distanceSquaredTo(origin);
+            if (closestDistance > distance) {
+                closestDistance = distance;
+                closestIndex = i;
+            }
+        }
+        return closestIndex == -1 ? null : wells[closestIndex];
     }
     public static RobotInfo pickNearest(RobotController rc, RobotInfo[] robots, boolean includeHeadquarters) {
         int closestIndex = -1;
