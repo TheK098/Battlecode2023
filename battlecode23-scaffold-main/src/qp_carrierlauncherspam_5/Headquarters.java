@@ -24,7 +24,7 @@ public class Headquarters extends BaseBot {
         if (!itsAnchorTime()) {
             RobotType[] spawnPriority = {RobotType.CARRIER, RobotType.LAUNCHER};
             if ((rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) ||
-                    (5 <= rc.getRoundNum() && rc.getRoundNum() <= 50 && rc.getRoundNum() % 2 == 0) ||
+                    (10 <= rc.getRoundNum() && rc.getRoundNum() <= 50 && rc.getRoundNum() % 2 == 0) ||
                     (50 < rc.getRoundNum() && FastRandom.nextInt(50 * Communications.getKnownWells(rc).length) < rc.getRobotCount()))
                 spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
 
