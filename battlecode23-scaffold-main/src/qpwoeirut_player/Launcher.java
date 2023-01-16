@@ -74,7 +74,6 @@ public class Launcher extends BaseBot {
                             if (targetScore < score) {
                                 targetScore = score;
                                 targetIdx = i;
-                                rc.setIndicatorString(score + " " + enemySightings[i].urgency + " " + enemySightings[i].location);
                             }
                         }
                     }
@@ -82,14 +81,17 @@ public class Launcher extends BaseBot {
                     if (targetIdx != -1) {
                         weightX = targetScore * (enemySightings[targetIdx].location.x - rc.getLocation().x);
                         weightY = targetScore * (enemySightings[targetIdx].location.y - rc.getLocation().y);
+                        rc.setIndicatorString(targetScore + " " + enemySightings[targetIdx] + " " + weightX + " " + weightY);
                     } else rc.setIndicatorString("Spreading out");
                     // move towards target if exists and spread out
                     Direction dir = spreadOut(rc, weightX, weightY, SpreadSettings.LAUNCHER);
                     MapLocation newLoc = rc.getLocation().add(dir);
+
+                    RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
                     // maintain space for carriers
-                    if (adjacentToHeadquarters(rc, newLoc) && FastRandom.nextInt(8) != 0)
+                    if (adjacentToHeadquarters(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
                         tryMove(directionAway(rc, Util.pickNearest(rc, Communications.getHqs(rc))));
-                    else if (adjacentToWell(rc, newLoc) && FastRandom.nextInt(8) != 0)
+                    else if (adjacentToWell(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
                         if (rc.senseWell(rc.getLocation()) != null) tryMove(randomDirection(rc));
                         else tryMove(directionAway(rc, pickNearest(rc, Communications.getKnownWells(rc)).location));
                     else tryMove(dir);  // do tryMove because a round may have passed from running out of bytecode
