@@ -35,8 +35,16 @@ public class Carrier extends BaseBot {
         for (WellInfo wellInfo : nearbyWells) {
             Communications.addWell(rc, wellInfo.getMapLocation());
         }
-        if (enemySighting != null && Communications.reportEnemySighting(rc, enemySighting)) {
-            enemySighting = null;
+        if (enemySighting != null) {
+            if (Communications.reportEnemySighting(rc, enemySighting)) {
+                enemySighting = null;
+            }
+            else {
+                MapLocation nearestHq = Util.pickNearest(rc, Communications.getHqs(rc));
+                tryMove(directionToward(rc, nearestHq));
+                rc.setIndicatorString("Running to HQ to report enemy sighting");
+                return;
+            }
         }
 
         // deal with issue where carriers with resources sometimes end up next to blacklisted headquarters
