@@ -56,7 +56,7 @@ public class Launcher extends BaseBot {
 
             if (allyToFollow != -1) {  // support hurt ally
                 tryMove(directionToward(rc, rc.senseRobot(allyToFollow).location));
-                rc.setIndicatorString("Trying to help" + allyToFollow);
+                rc.setIndicatorString("Trying to help " + allyToFollow);
             } else {  // TODO: try to put carriers between this launcher and nearest HQ
                 EnemySighting[] enemySightings = Communications.getEnemySightings(rc);
                 int targetIdx = -1;
