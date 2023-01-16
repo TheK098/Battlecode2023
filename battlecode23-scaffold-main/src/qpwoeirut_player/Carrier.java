@@ -144,26 +144,12 @@ public class Carrier extends BaseBot {
             }
         }
         if (rc.getAnchor() == Anchor.STANDARD) {
-            int[] islands = rc.senseNearbyIslands();  // TODO: add comms to make anchoring more efficient
-            boolean foundTargetIsland = false;
-            if (islands.length > 0) {
-                MapLocation irrelevantLocation = new MapLocation(-10000, -10000);
-                assert !rc.getLocation().isWithinDistanceSquared(irrelevantLocation, INF_DIST);
-
-                MapLocation[] nearestIslandLocations = new MapLocation[islands.length];
-                for (int i = islands.length; i --> 0;) {
-                    nearestIslandLocations[i] = (rc.senseTeamOccupyingIsland(islands[i]) != rc.getTeam()) ?
-                         pickNearest(rc, rc.senseNearbyIslandLocations(islands[i])) : irrelevantLocation;
-                }
-                MapLocation target = pickNearest(rc, nearestIslandLocations);
-                if (target != null) {
-                    tryMove(directionToward(rc, target));  // no-op if we're at target already
-                    if (rc.getLocation().equals(target) && rc.canPlaceAnchor()) rc.placeAnchor();
-                    foundTargetIsland = true;
-                }
+            MapLocation target = findNearestIslandLocation(Team.NEUTRAL);
+            if (target != null) {
+                tryMove(directionToward(rc, target));  // no-op if we're at target already
+                if (rc.getLocation().equals(target) && rc.canPlaceAnchor()) rc.placeAnchor();
                 rc.setIndicatorString("Trying to place anchor at " + target);
-            }
-            if (!foundTargetIsland) {
+            } else {
                 // spread out from other anchor bots
                 tryMove(spreadOut(rc, 0, 0, SpreadSettings.CARRIER_ANCHOR));
                 rc.setIndicatorString("Spreading out with anchor");
