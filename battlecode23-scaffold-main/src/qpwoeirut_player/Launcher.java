@@ -44,14 +44,15 @@ public class Launcher extends BaseBot {
                 }
             }
         } else {
-            if (allyToFollow != -1 && (--allyFollowTimer == 0 || !rc.canSenseRobot(allyToFollow))) allyToFollow = -1;
-            if (allyToFollow == -1) {  // check if any allies were recently hurt
-                RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
+            int allyToFollowLocal = allyToFollow;
+            if (allyToFollowLocal != -1 && (--allyFollowTimer == 0 || !rc.canSenseRobot(allyToFollowLocal))) allyToFollowLocal = -1;
+            if (allyToFollowLocal == -1) {  // check if any allies were recently hurt
+                RobotInfo[] allies = rc.senseNearbyRobots(allyHealth.isEmpty() ? 16 : -1, rc.getTeam());
                 int added = 0;
                 for (int i = allies.length; i --> 0;) {
                     int storedHealth = allyHealth.get(allies[i].ID);
                     if (allies[i].health < storedHealth) {  // ally took damage, go help them
-                        allyToFollow = allies[i].ID;
+                        allyToFollowLocal = allies[i].ID;
                         allyFollowTimer = ALLY_FOLLOW_TIME;
                         allyHealth.put(allies[i].ID, allies[i].health);
                     } else if (storedHealth == 0 && added++ <= 20) {  // don't add too many in one round for bytecode reasons
@@ -60,10 +61,11 @@ public class Launcher extends BaseBot {
                     }
                 }
             }
+            allyToFollow = allyToFollowLocal;
 
-            if (allyToFollow != -1) {  // support hurt ally
-                tryMove(directionToward(rc, rc.senseRobot(allyToFollow).location));
-                rc.setIndicatorString("Trying to help " + allyToFollow);
+            if (allyToFollowLocal != -1) {  // support hurt ally
+                tryMove(directionToward(rc, rc.senseRobot(allyToFollowLocal).location));
+                rc.setIndicatorString("Trying to help " + allyToFollowLocal);
             } else {
                 MapLocation enemyIsland = itsAnchorTime() ? findNearestIslandLocation(rc.getTeam().opponent()) : null;
                 if (enemyIsland != null) {  // find nearest enemy island and kill it
@@ -119,8 +121,7 @@ public class Launcher extends BaseBot {
 
     private static RobotInfo pickTarget() throws GameActionException {
         if (rc.isActionReady()) {
-            int actionRadius = rc.getType().actionRadiusSquared;
-            RobotInfo[] enemies = rc.senseNearbyRobots(actionRadius, rc.getTeam().opponent());
+            RobotInfo[] enemies = rc.senseNearbyRobots(16, rc.getTeam().opponent());
             RobotInfo target = null;
             for (int i = enemies.length; i --> 0;) {
                 if (canAttack(enemies[i].location) && enemies[i].type != RobotType.HEADQUARTERS) target = target == null ? enemies[i] : chooseTarget(target, enemies[i]);
@@ -133,9 +134,9 @@ public class Launcher extends BaseBot {
     private static boolean canAttack(MapLocation location) throws GameActionException {
         if (rc.isMovementReady()) {
             MapLocation closer = rc.getLocation().add(directionTowardImmediate(rc, location));
-            if (closer.isWithinDistanceSquared(location, rc.getType().actionRadiusSquared)) return true;
+            if (closer.isWithinDistanceSquared(location, 16)) return true;
         }
-        return rc.getLocation().isWithinDistanceSquared(location, rc.getType().actionRadiusSquared);
+        return rc.getLocation().isWithinDistanceSquared(location, 16);
     }
 
     // assume both robots are within attacking range
