@@ -38,7 +38,7 @@ public class Launcher extends Base {
             MapLocation well_one = findNearestWell();
             currLoc = rc.getLocation();
             Direction dir = currLoc.directionTo(well_one.add(Direction.NORTHEAST).add(Direction.NORTHEAST));
-            if (rc.canMove(dir) && !withinRange(rc.getLocation(), well_one, 9)) { // checks if too close to well
+            if (rc.canMove(dir) && !withinRange(currLoc, well_one, 20)) { // checks if too close to well
                 rc.move(dir);
             } else if (rc.canMove(dir.rotateLeft())) {
                 rc.move(dir.rotateLeft());

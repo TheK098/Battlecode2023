@@ -33,10 +33,10 @@ public class Headquarters extends Base{
             rc.buildRobot(RobotType.CARRIER, newLoc);
             rc.setIndicatorString("building carrier");
         }
-//        if(rc.canBuildRobot(RobotType.LAUNCHER, newLoc)){
-//            rc.buildRobot(RobotType.LAUNCHER, newLoc);
-//            rc.setIndicatorString("building launcher");
-//        }
+        if(rc.canBuildRobot(RobotType.LAUNCHER, newLoc)){
+            rc.buildRobot(RobotType.LAUNCHER, newLoc);
+            rc.setIndicatorString("building launcher");
+        }
 
     }
 
