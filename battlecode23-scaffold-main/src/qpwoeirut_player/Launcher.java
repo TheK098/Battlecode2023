@@ -33,7 +33,7 @@ public class Launcher extends BaseBot {
                 tryMove(dir);
                 rc.setIndicatorString("Attack and run");
             } else {
-                Direction dir = directionToward(rc, toAttack);
+                Direction dir = directionTowardImmediate(rc, toAttack);
                 tryMove(dir);
                 if (rc.canAttack(toAttack)) {
                     rc.attack(toAttack);
@@ -106,17 +106,30 @@ public class Launcher extends BaseBot {
     private static RobotInfo pickTarget() throws GameActionException {
         if (rc.isActionReady()) {
             int actionRadius = rc.getType().actionRadiusSquared;
-            int closestDist = 3600;
+            RobotInfo[] enemies = rc.senseNearbyRobots(actionRadius, rc.getTeam().opponent());
             RobotInfo target = null;
-            for (RobotInfo enemy : rc.senseNearbyRobots(actionRadius, rc.getTeam().opponent())) {
-                if (enemy.type != RobotType.HEADQUARTERS && closestDist > rc.getLocation().distanceSquaredTo(enemy.location)) {
-                    closestDist = rc.getLocation().distanceSquaredTo(enemy.location);
-                    target = enemy;
-                }
+            for (int i = enemies.length; i --> 0;) {
+                if (canAttack(enemies[i].location)) target = target == null ? enemies[i] : chooseTarget(target, enemies[i]);
             }
             return target;
         }
         return null;
+    }
+
+    private static boolean canAttack(MapLocation location) throws GameActionException {
+        if (rc.isMovementReady()) {
+            MapLocation closer = rc.getLocation().add(directionTowardImmediate(rc, location));
+            if (closer.isWithinDistanceSquared(location, rc.getType().actionRadiusSquared)) return true;
+        }
+        return rc.getLocation().isWithinDistanceSquared(location, rc.getType().actionRadiusSquared);
+    }
+
+    // assume both robots are within attacking range
+    private static RobotInfo chooseTarget(RobotInfo robot1, RobotInfo robot2) {
+        return (robot1.type != robot2.type) ? (robot1.type == RobotType.LAUNCHER ? robot1 : (robot2.type == RobotType.LAUNCHER ? robot2 : null)) :
+                (robot1.health != robot2.health) ? (robot1.health < robot2.health ? robot1 : robot2) :
+                        (robot1.ID < robot2.ID) ? robot1 : robot2;  // tiebreak by IDs instead of distance to eliminate a single robot quickly
+        // TODO: test tiebreak by distance, test distance cutoff (needing to move vs not move)
     }
 
     private static void dieIfStuck() {  // desperate times call for desperate measures

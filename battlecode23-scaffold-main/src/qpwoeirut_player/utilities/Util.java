@@ -164,6 +164,18 @@ public class Util {
         return currentOppositeDir != targetDir && currentOppositeDir.rotateLeft() != targetDir && currentOppositeDir.rotateRight() != targetDir;
     }
 
+    public static Direction directionTowardImmediate(RobotController rc, MapLocation target) throws GameActionException {
+        return similarDirectionImmediate(rc, rc.getLocation().directionTo(target));
+    }
+
+    public static Direction similarDirectionImmediate(RobotController rc, Direction dir) {
+        if (rc.canMove(dir)) return dir;
+        if (rc.canMove(dir.rotateLeft())) return dir.rotateLeft();
+        if (rc.canMove(dir.rotateRight())) return dir.rotateRight();
+        if (rc.canMove(dir.rotateLeft().rotateLeft())) return dir.rotateLeft().rotateLeft();
+        return Direction.CENTER;
+    }
+
     public static boolean locationInArray(MapLocation[] array, MapLocation loc) {
         for (int i = array.length; i-- > 0; ) {
             if (array[i].equals(loc)) return true;
