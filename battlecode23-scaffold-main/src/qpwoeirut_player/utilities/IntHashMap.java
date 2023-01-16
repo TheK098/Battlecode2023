@@ -12,7 +12,7 @@ import java.util.Iterator;
 public class IntHashMap implements Iterable<IntHashMap.Entry> {
     private static final int INITIAL_BIN_CAPACITY = 4;
     private final int n;
-    private int size;
+//    private int size;
     private final int[] ind;
     private final int[][] keys, values;
 
@@ -34,7 +34,7 @@ public class IntHashMap implements Iterable<IntHashMap.Entry> {
                 return;
             }
         }
-        size++;
+//        size++;
         int len;
         if (cind == (len = ckeys.length)) {
             keys[hash] = Arrays.copyOf(keys[hash], len *= 2);
@@ -60,20 +60,20 @@ public class IntHashMap implements Iterable<IntHashMap.Entry> {
         return 0;
     }
 
-    public void remove(int key) {
-        int hash = key % n;
-        int cind = ind[hash];
-        int[] ckeys = keys[hash];
-        int[] cvalues = values[hash];
-        for (int i = 0; i < cind; i++) {
-            if (ckeys[i] == key) {
-                System.arraycopy(ckeys, i + 1, ckeys, i, --ind[hash] - i);
-                System.arraycopy(cvalues, i + 1, cvalues, i, ind[hash] - i);
-                size--;
-                return;
-            }
-        }
-    }
+//    public void remove(int key) {
+//        int hash = key % n;
+//        int cind = ind[hash];
+//        int[] ckeys = keys[hash];
+//        int[] cvalues = values[hash];
+//        for (int i = 0; i < cind; i++) {
+//            if (ckeys[i] == key) {
+//                System.arraycopy(ckeys, i + 1, ckeys, i, --ind[hash] - i);
+//                System.arraycopy(cvalues, i + 1, cvalues, i, ind[hash] - i);
+//                size--;
+//                return;
+//            }
+//        }
+//    }
 
     public static class Entry {
         public final int key, value;
@@ -116,11 +116,11 @@ public class IntHashMap implements Iterable<IntHashMap.Entry> {
         return new Itr();
     }
 
-    public int size() {
-        return size;
-    }
-
-    public boolean isEmpty() {
-        return size == 0;
-    }
+//    public int size() {
+//        return size;
+//    }
+//
+//    public boolean isEmpty() {
+//        return size == 0;
+//    }
 }

@@ -47,7 +47,7 @@ public class Launcher extends BaseBot {
             int allyToFollowLocal = allyToFollow;
             if (allyToFollowLocal != -1 && (--allyFollowTimer == 0 || !rc.canSenseRobot(allyToFollowLocal))) allyToFollowLocal = -1;
             if (allyToFollowLocal == -1) {  // check if any allies were recently hurt
-                RobotInfo[] allies = rc.senseNearbyRobots(allyHealth.isEmpty() ? 16 : -1, rc.getTeam());
+                RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
                 int added = 0;
                 for (int i = allies.length; i --> 0;) {
                     int storedHealth = allyHealth.get(allies[i].ID);
