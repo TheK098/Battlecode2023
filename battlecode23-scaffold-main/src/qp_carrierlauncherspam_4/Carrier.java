@@ -159,17 +159,17 @@ public class Carrier extends BaseBot {
         if (rc.canSenseLocation(targetWell)) {
             int toCollect = Math.min(CAPACITY - getCurrentResources(), rc.senseWell(targetWell).getRate());
             if (rc.canCollectResource(targetWell, toCollect)) {
-                rc.setIndicatorString("Collecting " + toCollect + " from " + targetWell);
+//                rc.setIndicatorString("Collecting " + toCollect + " from " + targetWell);
                 rc.collectResource(targetWell, toCollect);
                 lastMoveOrAction = rc.getRoundNum();
                 switch (rc.senseWell(targetWell).getResourceType()) {
                     case ADAMANTIUM: adamantiumCooldown = 10; break;
                     case MANA: manaCooldown = 10; break;
                 }
-            } else {
-                rc.setIndicatorString("Could not collect " + toCollect + " from " + targetWell);
+//            } else {
+//                rc.setIndicatorString("Could not collect " + toCollect + " from " + targetWell);
             }
-        } else rc.setIndicatorString("Could not sense " + targetWell);
+        } //else rc.setIndicatorString("Could not sense " + targetWell);
 
 //        debugBytecode("2.2");
     }
@@ -179,7 +179,7 @@ public class Carrier extends BaseBot {
         targetWell = null;
 
         MapLocation targetHq = Util.pickNearest(rc, Communications.getHqs(rc), blacklist);
-        rc.setIndicatorString("Returning to " + targetHq);
+//        rc.setIndicatorString("Returning to " + targetHq);
         if (targetHq != null) {
             handleBlacklist(targetHq, EntityType.HQ);
 

@@ -43,7 +43,7 @@ public class Pathfinding {
 //        debugBytecode("4.0");
         Direction dir = directionToward(rc, target);
         if (dir != Direction.CENTER) {
-            rc.setIndicatorString("Shortcut move " + dir);
+//            rc.setIndicatorString("Shortcut move " + dir);
             return dir;
         }
 
