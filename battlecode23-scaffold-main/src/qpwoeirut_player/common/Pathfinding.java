@@ -72,7 +72,7 @@ public class Pathfinding {
             distanceRemaining = Math.max(
                     Math.abs(target.x - (x + minX)),
                     Math.abs(target.y - (y + minY))
-            ) * 3 / 2;
+            ) * 5;
             totalDistance = distance[x][y] + distanceRemaining;
 
             if (closestDistance > totalDistance) {
