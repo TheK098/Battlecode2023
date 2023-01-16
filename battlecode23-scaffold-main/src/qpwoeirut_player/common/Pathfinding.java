@@ -31,6 +31,7 @@ public class Pathfinding {
     // declare arrays once whenever possible to save bytecode
     private static final Direction[][] startingDir = new Direction[MAX_SIZE][MAX_SIZE];
     private static final int[][] distance = new int[MAX_SIZE][MAX_SIZE];
+    private static boolean resetDistanceNeeded = true;
 //    private static final MapLocation[] locations = new MapLocation[MAX_IN_RANGE];
 //    private static final int[][] cost = new int[MAX_IN_RANGE][DIRECTIONS.length];
 
@@ -38,22 +39,26 @@ public class Pathfinding {
 
 
     // BFS, only handles passability
-    // TODO eventually optimize by declaring all variables outside loop
     public static Direction moveToward(RobotController rc, MapLocation target) throws GameActionException {
 //        debugBytecode("4.0");
+        int visionLength = (int)(Math.sqrt(rc.getType().visionRadiusSquared) + 0.00001);
+        if (resetDistanceNeeded) {  // reset distance array preemptively so that we save bytecode on rounds that need pathing
+            resetDistanceNeeded = false;
+            for (int x = visionLength + visionLength + 1; x --> 0;) {
+                Arrays.fill(distance[x], INF_DIST);
+            }
+        }
+
         Direction dir = directionToward(rc, target);
         if (dir != Direction.CENTER) {
             rc.setIndicatorString("Shortcut move " + dir);
             return dir;
         }
 
-        int visionLength = (int)(Math.sqrt(rc.getType().visionRadiusSquared) + 0.00001);
+        resetDistanceNeeded = true;
+
         int minX = rc.getLocation().x - visionLength, minY = rc.getLocation().y - visionLength;
 
-        // note that indexing is [x][y]
-        for (int x = visionLength + visionLength + 1; x --> 0;) {
-            Arrays.fill(distance[x], INF_DIST);
-        }
 //        debugBytecode("4.1");
 
         int queueStart = 0, queueEnd = 0;
@@ -64,7 +69,7 @@ public class Pathfinding {
         Direction closestDir = rc.getLocation().directionTo(target);
         int closestDistance = INF_DIST;
 
-        MapLocation nextLoc; int x, y, d, nx, ny, distanceRemaining, totalDistance;  // declare once at top to save bytecode
+        MapLocation nextLoc, trueNextLoc; int x, y, d, nx, ny, distanceRemaining, totalDistance;  // declare once at top to save bytecode
         while (queueStart < queueEnd) {
 //            debugBytecode("4.2");
             x = queue[queueStart].x; y = queue[queueStart].y;
@@ -88,7 +93,7 @@ public class Pathfinding {
                 nx = nextLoc.x; ny = nextLoc.y;
 
                 if (nx >= 0 && nx < MAX_SIZE && ny >= 0 && ny < MAX_SIZE && distance[nx][ny] == INF_DIST) {
-                    MapLocation trueNextLoc = nextLoc.translate(minX, minY);
+                    trueNextLoc = nextLoc.translate(minX, minY);
                     if (rc.canSenseLocation(trueNextLoc) && rc.sensePassability(trueNextLoc)) {
                         // check if we're processing starting location and trying to move to adjacent
                         if (startingDir[x][y] != Direction.CENTER) {
