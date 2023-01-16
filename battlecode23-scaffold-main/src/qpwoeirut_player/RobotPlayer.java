@@ -42,7 +42,7 @@ public strictfp class RobotPlayer {
 //                if (startingRound != rc.getRoundNum()) {
 //                    System.out.println("Started on round " + startingRound + " but ended on round " + rc.getRoundNum() + " with " + Clock.getBytecodeNum() + " bytecode used");
 //                }
-                Clock.yield();
+                if (Clock.getBytecodeNum() >= 500) Clock.yield();
             }
         }
     }
