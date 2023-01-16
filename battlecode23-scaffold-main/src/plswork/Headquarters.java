@@ -11,6 +11,7 @@ public class Headquarters extends Base{
     public void runPls() throws GameActionException {
         if(turnCount <= 3){
             initializeComms();
+            findWellsUpdateComms();
         }
         for(int i=0; i<64; i++){
             System.out.print(rc.readSharedArray(i));
@@ -39,6 +40,25 @@ public class Headquarters extends Base{
 
     }
 
+    static void findWellsUpdateComms() throws GameActionException{
+        //TODO: this is complete brute force — will optimize later (also implement caches)
+        WellInfo wells[] = rc.senseNearbyWells();
+        if(wells.length>0){
+            for(WellInfo well: wells){
+                int wellCoords = combineCoords(well.getMapLocation());
+                for(int i=0; i<60; i++){
+                    int currCoords = rc.readSharedArray(i);
+                    if(currCoords == wellCoords){
+                        break;
+                    }
+                    else if(currCoords == 65535){
+                        rc.writeSharedArray(i, wellCoords);
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
     void initializeComms() throws GameActionException{
         for(int i=0; i<64; i++){
@@ -53,6 +73,7 @@ public class Headquarters extends Base{
             }
         }
     }
+
     public static int combineCoords(MapLocation loc) {
         return (loc.x << 8) | loc.y;
     }
