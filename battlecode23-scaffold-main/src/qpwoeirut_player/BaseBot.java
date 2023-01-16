@@ -13,6 +13,7 @@ abstract public class BaseBot {
 
     public BaseBot(RobotController rc) {
         BaseBot.rc = rc;
+        for (int i = rc.getID() % 23; i --> 0;) FastRandom.nextInt();  // try to spread out the seeding a bit
     }
 
     abstract public void processRound() throws GameActionException;
