@@ -17,6 +17,7 @@ public class Communications {
     private static final int MAP_SIZE = 60;
     private static final int MAX_LOCATION = MAP_SIZE * MAP_SIZE + 1;
     private static final int MAX_VALUE = 17;
+    private static final int RESOURCE_INDEX = 63;
 
     private static final int MAX_COUNT = Math.max(6 * 6 * 4, EntityType.ENEMY.count);
 
@@ -197,5 +198,15 @@ public class Communications {
     }
     private static int pack(MapLocation loc, ResourceType resourceType) {
         return resourceType.ordinal() * MAX_LOCATION + pack(loc);
+    }
+
+    public static int getAdamantiumPriority(RobotController rc) throws GameActionException {
+        return rc.readSharedArray(RESOURCE_INDEX) / 256;
+    }
+    public static int getManaPriority(RobotController rc) throws GameActionException {
+        return rc.readSharedArray(RESOURCE_INDEX) % 256;
+    }
+    public static void setResourcePriorities(RobotController rc, int adamantiumPriority, int manaPriority) throws GameActionException {
+        rc.writeSharedArray(RESOURCE_INDEX, (adamantiumPriority << 8) | manaPriority);
     }
 }

@@ -160,7 +160,7 @@ public class Carrier extends BaseBot {
     private static void collectResources() throws GameActionException {
 //        debugBytecode("2.0");
         if (targetWell == null || !rc.getLocation().isAdjacentTo(targetWell)) {
-            WellLocation well = Util.pickNearest(rc, Communications.getKnownWells(rc), blacklist);
+            WellLocation well = pickWell();
             if (well != null) targetWell = well.location;
         }
 
@@ -190,6 +190,25 @@ public class Carrier extends BaseBot {
         } else rc.setIndicatorString("Could not sense " + targetWell);
 
 //        debugBytecode("2.2");
+    }
+
+    private static WellLocation pickWell() throws GameActionException {
+        int adamantiumPriority = Communications.getAdamantiumPriority(rc);
+        int manaPriority = Communications.getManaPriority(rc);
+
+        WellLocation[] wells = Communications.getKnownWells(rc);
+
+        int closestIndex = -1;
+        int closestDistance = INF_DIST;
+        for (int i = wells.length; i --> 0;) {
+            int prioritizationDiscount = wells[i].resourceType == ResourceType.ADAMANTIUM ? adamantiumPriority : (wells[i].resourceType == ResourceType.MANA ? manaPriority : 0);
+            int distance = wells[i].location.distanceSquaredTo(rc.getLocation()) - prioritizationDiscount;
+            if (closestDistance > distance && blacklist[wells[i].location.x][wells[i].location.y] <= rc.getRoundNum()) {
+                closestDistance = distance;
+                closestIndex = i;
+            }
+        }
+        return closestIndex == -1 ? null : wells[closestIndex];
     }
 
     private static void returnResources() throws GameActionException {

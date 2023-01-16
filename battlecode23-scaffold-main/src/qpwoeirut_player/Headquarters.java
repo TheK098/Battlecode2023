@@ -22,6 +22,7 @@ public class Headquarters extends BaseBot {
             Communications.addWells(rc, rc.senseNearbyWells());
         }
         updateEnemyComms();
+        Communications.setResourcePriorities(rc, 0, 1);
 
         if (rc.getRoundNum() % 20 == rc.getID() % 20) Communications.decreaseUrgencies(rc);
         // urgencies will decrease faster if there are multiple HQs; consider that a feature i guess?
