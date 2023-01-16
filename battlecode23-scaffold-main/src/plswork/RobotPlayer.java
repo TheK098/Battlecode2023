@@ -36,7 +36,7 @@ public strictfp class RobotPlayer {
             case CARRIER:
                 bot = new Carrier2(rc);   break;
             case LAUNCHER:
-                plswork.Launcher.runLauncher(rc); break;
+                bot = new Launcher(rc); break;
             case BOOSTER:
             case DESTABILIZER:
             case AMPLIFIER:       break;

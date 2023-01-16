@@ -43,12 +43,13 @@ public class Carrier2 extends Base{
                     }
                     else if(currCoords == 65535){
                         rc.writeSharedArray(i, wellCoords);
+                        break;
                     }
                 }
-
             }
         }
     }
+
     public static int combineCoords(MapLocation loc) {
         return (loc.x << 8) | loc.y;
     }
@@ -56,6 +57,7 @@ public class Carrier2 extends Base{
     public static MapLocation separateCoords(int loc) {
         return new MapLocation(loc >> 8, loc & 0b11111111);
     }
+
     public static void tryPickAnchor() throws GameActionException{
         //WHEN SPAWN TRY TO PICK UP THE ANCHOR AT ALL TIMES
         rc.setIndicatorString(rc.readSharedArray(60) + " f " + rc.readSharedArray(61) + " f " + rc.readSharedArray(62) + " f " + rc.readSharedArray(63)+ " f ");
