@@ -60,14 +60,17 @@ public class Communications {
 
     public static WellLocation[] getKnownWells(RobotController rc) throws GameActionException {
         int locationsIdx = loadSharedLocations(rc, EntityType.WELL);
-        WellLocation[] wells = new WellLocation[locationsIdx];
-        for (int i = locationsIdx; i --> 0;) {
-            wells[i] = new WellLocation(locations[i], wellType[i]);
-        }
+        int n = locationsIdx + wellCacheSize;
+        WellLocation[] wells = new WellLocation[n];
+        for (int i = locationsIdx; i --> 0;) wells[i] = new WellLocation(locations[i], wellType[i]);
+        for (int i = wellCacheSize; i --> 0;) wells[locationsIdx + i] = new WellLocation(wellCache[i], wellTypeCache[i]);
         return wells;
     }
     public static MapLocation[] getHqs(RobotController rc) throws GameActionException {
-        return getLocations(rc, EntityType.HQ);
+        int locationsIdx = loadSharedLocations(rc, EntityType.HQ);
+        MapLocation[] ret = new MapLocation[locationsIdx];
+        System.arraycopy(locations, 0, ret, 0, locationsIdx);
+        return ret;
     }
     public static EnemySighting[] getEnemySightings(RobotController rc) throws GameActionException {
         int locationsIdx = loadSharedLocations(rc, EntityType.ENEMY);
@@ -76,19 +79,6 @@ public class Communications {
             sightings[i] = new EnemySighting(locations[i], urgencies[i]);
         }
         return sightings;
-    }
-
-    private static MapLocation[] getLocations(RobotController rc, EntityType entityType) throws GameActionException {
-        int locationsIdx = loadSharedLocations(rc, entityType);
-        if (entityType == EntityType.WELL) {
-            for (int i = wellCacheSize; i --> 0;) {
-                locations[locationsIdx++] = wellCache[i];
-            }
-        }
-
-        MapLocation[] ret = new MapLocation[locationsIdx];
-        System.arraycopy(locations, 0, ret, 0, locationsIdx);
-        return ret;
     }
 
     private static int loadSharedLocations(RobotController rc, EntityType entityType) throws GameActionException {
