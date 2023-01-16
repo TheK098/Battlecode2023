@@ -19,7 +19,7 @@ public class Headquarters extends BaseBot {
     public void processRound() throws GameActionException {
         if (rc.getRoundNum() == 1) {
             Communications.addHq(rc, rc.getLocation()); // report HQ position
-            updateWellComms();
+            Communications.addWells(rc, rc.senseNearbyWells());
         }
         updateEnemyComms();
 
@@ -34,8 +34,6 @@ public class Headquarters extends BaseBot {
                 spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
 
             for (RobotType robotType: spawnPriority) {
-                // TODO: spawn carriers closer to wells
-                // TODO: don't spawn if entire vision range is almost full to prevent clogging
                 MapLocation newCarrierLoc = pickEmptySpawnLocation(robotType);
                 if (newCarrierLoc != null) {
                     rc.buildRobot(robotType, newCarrierLoc);  // it's guaranteed that we can build

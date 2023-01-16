@@ -1,9 +1,6 @@
 package qpwoeirut_player.common;
 
-import battlecode.common.GameActionException;
-import battlecode.common.MapLocation;
-import battlecode.common.ResourceType;
-import battlecode.common.RobotController;
+import battlecode.common.*;
 
 import static qpwoeirut_player.utilities.Util.locationInArray;
 
@@ -95,13 +92,15 @@ public class Communications {
         return locationsIdx;
     }
 
-    public static void addWell(RobotController rc, MapLocation wellLoc, ResourceType resourceType) throws GameActionException {
+    public static void addWells(RobotController rc, WellInfo[] wells) throws GameActionException {
         int n = loadSharedLocations(rc, EntityType.WELL);
-        if (!locationInArray(locations, n, wellLoc) && !locationInArray(wellCache, wellCacheSize, wellLoc)) {
-            wellTypeCache[wellCacheSize] = resourceType;
-            wellCache[wellCacheSize++] = wellLoc;
-            tryPushCache(rc);
+        for (int i = wells.length; i --> 0;) {
+            if (!locationInArray(locations, n, wells[i].getMapLocation()) && !locationInArray(wellCache, wellCacheSize, wells[i].getMapLocation())) {
+                wellTypeCache[wellCacheSize] = wells[i].getResourceType();
+                wellCache[wellCacheSize++] = wells[i].getMapLocation();
+            }
         }
+        tryPushCache(rc);
     }
     public static void addHq(RobotController rc, MapLocation hqLoc) throws GameActionException {
         MapLocation[] knownLocations = getHqs(rc);
