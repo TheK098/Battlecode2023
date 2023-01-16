@@ -77,11 +77,37 @@ public class Util {
     }
 
     public static Direction directionToward(RobotController rc, MapLocation target) throws GameActionException {
-        return similarDirection(rc, rc.getLocation().directionTo(target));
+        int bestIdx = 8, bestDist = INF_DIST * 100;
+        for (int d = 9; d --> 0;) {
+            Direction dir = Direction.allDirections()[d];
+            if (!rc.canMove(dir)) continue;
+            MapLocation immediateLocation = rc.getLocation().add(dir);
+            MapInfo mapInfo = rc.senseMapInfo(immediateLocation);
+            MapLocation result = immediateLocation.add(mapInfo.getCurrentDirection());
+            int dist = (int)(10 * (result.distanceSquaredTo(target) * 10 + mapInfo.getCooldownMultiplier(rc.getTeam())));
+            if (bestDist > dist) {
+                bestDist = dist;
+                bestIdx = d;
+            }
+        }
+        return Direction.allDirections()[bestIdx];  // CENTER should always be allowed
     }
 
     public static Direction directionAway(RobotController rc, MapLocation target) throws GameActionException {
-        return similarDirection(rc, rc.getLocation().directionTo(target).opposite());
+        int bestIdx = 8, bestDist = 0;
+        for (int d = 9; d --> 0;) {
+            Direction dir = Direction.allDirections()[d];
+            if (!rc.canMove(dir)) continue;
+            MapLocation immediateLocation = rc.getLocation().add(dir);
+            MapInfo mapInfo = rc.senseMapInfo(immediateLocation);
+            MapLocation result = immediateLocation.add(mapInfo.getCurrentDirection());
+            int dist = (int)(10 * (result.distanceSquaredTo(target) * 10 + mapInfo.getCooldownMultiplier(rc.getTeam())));
+            if (bestDist < dist) {
+                bestDist = dist;
+                bestIdx = d;
+            }
+        }
+        return Direction.allDirections()[bestIdx];  // CENTER should always be allowed
     }
 
     public static Direction similarDirection(RobotController rc, Direction dir) throws GameActionException {
