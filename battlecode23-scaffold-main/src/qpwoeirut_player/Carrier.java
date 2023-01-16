@@ -59,7 +59,7 @@ public class Carrier extends BaseBot {
         if (shouldReturn) return;
 
         boolean adjacentToHq = adjacentToHeadquarters(rc, rc.getLocation());
-        if (rc.getID() % 4 == 0 && itsAnchorTime()) {
+        if (rc.getID() % 5 == 0 && itsAnchorTime()) {
             if (getCurrentResources() > 0) returnResources();
             else handleAnchor();
         } else if (adjacentToHq && ((rc.getResourceAmount(ResourceType.ADAMANTIUM) > 0 && adamantiumCooldown <= 0) || (rc.getResourceAmount(ResourceType.MANA) > 0 && manaCooldown <= 0))) {
