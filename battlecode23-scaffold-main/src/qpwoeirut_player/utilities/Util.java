@@ -170,6 +170,12 @@ public class Util {
         }
         return false;
     }
+    public static boolean locationInArray(MapLocation[] array, int n, MapLocation loc) {
+        for (int i = n; i-- > 0; ) {
+            if (array[i].equals(loc)) return true;
+        }
+        return false;
+    }
 
     public static int cube(int x) {
         return x * x * x;

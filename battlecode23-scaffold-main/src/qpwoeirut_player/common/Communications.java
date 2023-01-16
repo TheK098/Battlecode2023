@@ -106,8 +106,8 @@ public class Communications {
     }
 
     public static void addWell(RobotController rc, MapLocation wellLoc, ResourceType resourceType) throws GameActionException {
-        loadSharedLocations(rc, EntityType.WELL);
-        if (!locationInArray(locations, wellLoc) && !locationInArray(wellCache, wellLoc)) {
+        int n = loadSharedLocations(rc, EntityType.WELL);
+        if (!locationInArray(locations, n, wellLoc) && !locationInArray(wellCache, wellCacheSize, wellLoc)) {
             wellTypeCache[wellCacheSize] = resourceType;
             wellCache[wellCacheSize++] = wellLoc;
             tryPushCache(rc);

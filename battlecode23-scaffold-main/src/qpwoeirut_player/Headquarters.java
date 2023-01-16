@@ -17,6 +17,7 @@ public class Headquarters extends BaseBot {
     @Override
     public void processRound() throws GameActionException {
         if (rc.getRoundNum() == 1) Communications.addHq(rc, rc.getLocation()); // report HQ position
+        updateWellComms();
 
         if (rc.getRoundNum() % 20 == rc.getID() % 20) Communications.decreaseUrgencies(rc);
         // urgencies will decrease faster if there are multiple HQs; consider that a feature i guess?

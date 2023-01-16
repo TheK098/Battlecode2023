@@ -32,10 +32,8 @@ public class Carrier extends BaseBot {
 
     @Override
     public void processRound() throws GameActionException {
-        WellInfo[] nearbyWells = rc.senseNearbyWells();
-        for (WellInfo wellInfo : nearbyWells) {
-            Communications.addWell(rc, wellInfo.getMapLocation(), wellInfo.getResourceType());
-        }
+        updateWellComms();
+
         if (enemySighting != null) {
             if (Communications.reportEnemySighting(rc, enemySighting)) {
                 enemySighting = null;

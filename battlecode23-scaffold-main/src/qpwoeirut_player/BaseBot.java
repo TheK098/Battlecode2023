@@ -3,6 +3,8 @@ package qpwoeirut_player;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
+import battlecode.common.WellInfo;
+import qpwoeirut_player.common.Communications;
 
 abstract public class BaseBot {
     protected static RobotController rc;
@@ -28,5 +30,12 @@ abstract public class BaseBot {
         double threshold = mapSize / Math.pow(Math.max(1, rc.getRoundNum() * rc.getRoundNum() - 3_200_000), 0.15);
         int ourRobots = rc.getRobotCount();
         return ourRobots * 3 >= threshold;
+    }
+
+    protected static void updateWellComms() throws GameActionException {
+        WellInfo[] nearbyWells = rc.senseNearbyWells();
+        for (WellInfo wellInfo : nearbyWells) {
+            Communications.addWell(rc, wellInfo.getMapLocation(), wellInfo.getResourceType());
+        }
     }
 }
