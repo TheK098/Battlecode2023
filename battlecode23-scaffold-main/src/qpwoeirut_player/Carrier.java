@@ -77,29 +77,38 @@ public class Carrier extends BaseBot {
     private static boolean handleCombat() throws GameActionException {
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         if (enemies.length > 0) {
-            RobotInfo nearestEnemy = pickNearest(rc, enemies, false);
-            if (nearestEnemy == null) return false;  // only visible enemy was HQ
-            if (!Communications.reportEnemySighting(rc, nearestEnemy.location)) enemySighting = nearestEnemy.location;
-
+            int closestEnemy = -1, closestLauncher = -1;
+            int closestEnemyDist = INF_DIST, closestLauncherDist = INF_DIST;
             boolean onlyCarriersNearby = true;
-            for (RobotInfo enemy : enemies) onlyCarriersNearby &= enemy.type == RobotType.CARRIER;
+            for (int i = enemies.length; i --> 0;) {
+                onlyCarriersNearby &= enemies[i].type == RobotType.CARRIER;
 
-            if (onlyCarriersNearby) return false;  // continue as normal, report enemy location when depositing resources
+                int distance = enemies[i].location.distanceSquaredTo(rc.getLocation());
+                if (closestEnemyDist > distance && enemies[i].type != RobotType.HEADQUARTERS) {
+                    closestEnemyDist = distance;
+                    closestEnemy = i;
+                }
+                if (closestLauncherDist > distance && enemies[i].type == RobotType.LAUNCHER) {
+                    closestLauncherDist = distance;
+                    closestLauncher = i;
+                }
+            }
 
-            // dump resources in an attack and then run away
-            // TODO: prioritize attacking launchers
-            Direction toward = directionToward(rc, nearestEnemy.location);
-            MapLocation closer = rc.getLocation().add(toward);
-            if (!rc.canAttack(nearestEnemy.location) && closer.isWithinDistanceSquared(nearestEnemy.location, rc.getType().actionRadiusSquared)) {
-                tryMove(toward);
-            }
-            if (rc.canAttack(nearestEnemy.location)) {
-                rc.attack(nearestEnemy.location);
-                rc.setIndicatorString("Attacking " + nearestEnemy.location);
-            }
-            else if (rc.canAttack(closer)) {
-                rc.attack(closer);  // just toss the resources so we can move faster
-                rc.setIndicatorString("Tossing resources to " + closer);
+            if (closestEnemy == -1) return false;  // only visible enemy was HQ
+
+            if (onlyCarriersNearby && rc.getHealth() == rc.getType().health) return false;  // continue as normal, report enemy location when depositing resources
+
+            // record enemy location and run away
+            if (!Communications.reportEnemySighting(rc, enemies[closestEnemy].location))
+                enemySighting = enemies[closestEnemy].location;
+
+            if ((closestLauncher == -1 || !tryToAttack(enemies[closestLauncher].location)) && !tryToAttack(enemies[closestEnemy].location)) {
+                // dump resources and then run away
+                if (rc.canAttack(rc.getLocation())) {
+                    rc.attack(rc.getLocation());  // just toss the resources so we can move faster
+                    rc.setIndicatorString("Tossing resources to " + rc.getLocation());
+                    return true;
+                }
             }
 
             MapLocation nearestHq = Util.pickNearest(rc, Communications.getHqs(rc));
@@ -109,6 +118,20 @@ public class Carrier extends BaseBot {
             return true;
         }
          return false;
+    }
+
+    private static boolean tryToAttack(MapLocation location) throws GameActionException {
+        Direction toward = directionToward(rc, location);
+        MapLocation closer = rc.getLocation().add(toward);
+        if (!rc.canAttack(location) && closer.isWithinDistanceSquared(location, rc.getType().actionRadiusSquared)) {
+            tryMove(toward);
+        }
+        if (rc.canAttack(location)) {
+            rc.attack(location);
+            rc.setIndicatorString("Attacking " + location);
+            return true;
+        }
+        return false;
     }
 
     private static void handleAnchor() throws GameActionException {
