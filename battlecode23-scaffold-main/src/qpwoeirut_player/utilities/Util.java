@@ -1,6 +1,7 @@
 package qpwoeirut_player.utilities;
 
 import battlecode.common.*;
+import qpwoeirut_player.common.Communications.WellLocation;
 
 import static qpwoeirut_player.common.Pathfinding.DIRECTIONS;
 import static qpwoeirut_player.common.Pathfinding.INF_DIST;
@@ -42,6 +43,42 @@ public class Util {
             }
         }
         return closestIndex == -1 ? null : robots[closestIndex];
+    }
+    public static WellLocation pickNearest(RobotController rc, WellLocation[] wells, ResourceType resourceType, int[][] blacklist) {
+        int closestIndex = -1;
+        int closestDistance = INF_DIST;
+        for (int i = wells.length; i --> 0;) {
+            int distance = wells[i].location.distanceSquaredTo(rc.getLocation());
+            if (closestDistance > distance && wells[i].resourceType == resourceType && blacklist[wells[i].location.x][wells[i].location.y] <= rc.getRoundNum()) {
+                closestDistance = distance;
+                closestIndex = i;
+            }
+        }
+        return closestIndex == -1 ? null : wells[closestIndex];
+    }
+    public static WellLocation pickNearest(RobotController rc, WellLocation[] wells) {
+        int closestIndex = -1;
+        int closestDistance = INF_DIST;
+        for (int i = wells.length; i --> 0;) {
+            int distance = wells[i].location.distanceSquaredTo(rc.getLocation());
+            if (closestDistance > distance) {
+                closestDistance = distance;
+                closestIndex = i;
+            }
+        }
+        return closestIndex == -1 ? null : wells[closestIndex];
+    }
+    public static WellLocation pickNearest(RobotController rc, WellLocation[] wells, int[][] blacklist) {
+        int closestIndex = -1;
+        int closestDistance = INF_DIST;
+        for (int i = wells.length; i --> 0;) {
+            int distance = wells[i].location.distanceSquaredTo(rc.getLocation());
+            if (closestDistance > distance && blacklist[wells[i].location.x][wells[i].location.y] <= rc.getRoundNum()) {
+                closestDistance = distance;
+                closestIndex = i;
+            }
+        }
+        return closestIndex == -1 ? null : wells[closestIndex];
     }
 
     public static boolean adjacentToHeadquarters(RobotController rc, MapLocation location) throws GameActionException {

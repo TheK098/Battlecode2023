@@ -2,6 +2,7 @@ package qpwoeirut_player.common;
 
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
+import battlecode.common.ResourceType;
 import battlecode.common.RobotController;
 
 import static qpwoeirut_player.utilities.Util.locationInArray;
@@ -25,9 +26,24 @@ public class Communications {
     private static final int[] indexes = new int[MAX_COUNT];
     private static final MapLocation[] locations = new MapLocation[MAX_COUNT];
     private static final int[] urgencies = new int[EntityType.ENEMY.count];
+    private static final ResourceType[] wellType = new ResourceType[EntityType.WELL.count];
 
     private static final MapLocation[] wellCache = new MapLocation[6 * 6 * 4];
+    private static final ResourceType[] wellTypeCache = new ResourceType[6 * 6 * 4];
     private static int wellCacheSize = 0;
+
+    public static class WellLocation {
+        public MapLocation location;
+        public ResourceType resourceType;
+        WellLocation(MapLocation location, ResourceType resourceType) {
+            this.location = location;
+            this.resourceType = resourceType;
+        }
+        @Override
+        public String toString() {
+            return "WellLocation(" + location.toString() + ", " + resourceType + ")";
+        }
+    }
 
     public static class EnemySighting {
         public MapLocation location;
@@ -42,10 +58,14 @@ public class Communications {
         }
     }
 
-    public static MapLocation[] getKnownWells(RobotController rc) throws GameActionException {
-        return getLocations(rc, EntityType.WELL);
+    public static WellLocation[] getKnownWells(RobotController rc) throws GameActionException {
+        int locationsIdx = loadSharedLocations(rc, EntityType.WELL);
+        WellLocation[] wells = new WellLocation[locationsIdx];
+        for (int i = locationsIdx; i --> 0;) {
+            wells[i] = new WellLocation(locations[i], wellType[i]);
+        }
+        return wells;
     }
-
     public static MapLocation[] getHqs(RobotController rc) throws GameActionException {
         return getLocations(rc, EntityType.HQ);
     }
@@ -77,6 +97,7 @@ public class Communications {
             int value = rc.readSharedArray(entityType.offset + i);
             if (value != INVALID) {
                 if (entityType == EntityType.ENEMY) urgencies[locationsIdx] = value / MAX_LOCATION;
+                else if (entityType == EntityType.WELL) wellType[locationsIdx] = ResourceType.values()[value / MAX_LOCATION];
                 indexes[locationsIdx] = entityType.offset + i;
                 locations[locationsIdx++] = unpackLocation(value);
             }
@@ -84,9 +105,10 @@ public class Communications {
         return locationsIdx;
     }
 
-    public static void addWell(RobotController rc, MapLocation wellLoc) throws GameActionException {
-        MapLocation[] knownLocations = getKnownWells(rc);
-        if (!locationInArray(knownLocations, wellLoc)) {
+    public static void addWell(RobotController rc, MapLocation wellLoc, ResourceType resourceType) throws GameActionException {
+        loadSharedLocations(rc, EntityType.WELL);
+        if (!locationInArray(locations, wellLoc) && !locationInArray(wellCache, wellLoc)) {
+            wellTypeCache[wellCacheSize] = resourceType;
             wellCache[wellCacheSize++] = wellLoc;
             tryPushCache(rc);
         }
@@ -156,16 +178,16 @@ public class Communications {
     }
 
     public static void tryPushCache(RobotController rc) throws GameActionException {
-        MapLocation[] knownWells = getKnownWells(rc);
+        WellLocation[] knownWells = getKnownWells(rc);
         while (wellCacheSize --> 0) {
             int ct = 0;
-            for (int j = knownWells.length; j --> 0;) if (knownWells[j].equals(wellCache[wellCacheSize])) ++ct;
+            for (int j = knownWells.length; j --> 0;) if (knownWells[j].location.equals(wellCache[wellCacheSize])) ++ct;
 
             if (ct > 1) continue;  // value has already been pushed by another bot
 
             int index = findEmptySpot(rc, EntityType.WELL);
-            if (index != -1 && rc.canWriteSharedArray(index, pack(wellCache[wellCacheSize]))) {
-                rc.writeSharedArray(index, pack(wellCache[wellCacheSize]));
+            if (index != -1 && rc.canWriteSharedArray(index, pack(wellCache[wellCacheSize], wellTypeCache[wellCacheSize]))) {
+                rc.writeSharedArray(index, pack(wellCache[wellCacheSize], wellTypeCache[wellCacheSize]));
             } else {
                 ++wellCacheSize;
                 break;
@@ -181,7 +203,10 @@ public class Communications {
         x = (x % MAX_LOCATION) - 1;
         return new MapLocation(x / MAP_SIZE, x % MAP_SIZE);
     }
-    private static int pack(MapLocation loc, int count) {
-        return Math.min(MAX_VALUE, count) * MAX_LOCATION + pack(loc);
+    private static int pack(MapLocation loc, int urgency) {
+        return Math.min(MAX_VALUE, urgency) * MAX_LOCATION + pack(loc);
+    }
+    private static int pack(MapLocation loc, ResourceType resourceType) {
+        return resourceType.ordinal() * MAX_LOCATION + pack(loc);
     }
 }

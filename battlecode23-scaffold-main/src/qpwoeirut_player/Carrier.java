@@ -2,6 +2,7 @@ package qpwoeirut_player;
 
 import battlecode.common.*;
 import qpwoeirut_player.common.Communications;
+import qpwoeirut_player.common.Communications.WellLocation;
 import qpwoeirut_player.common.SpreadSettings;
 import qpwoeirut_player.common.EntityType;
 import qpwoeirut_player.utilities.Util;
@@ -33,7 +34,7 @@ public class Carrier extends BaseBot {
     public void processRound() throws GameActionException {
         WellInfo[] nearbyWells = rc.senseNearbyWells();
         for (WellInfo wellInfo : nearbyWells) {
-            Communications.addWell(rc, wellInfo.getMapLocation());
+            Communications.addWell(rc, wellInfo.getMapLocation(), wellInfo.getResourceType());
         }
         if (enemySighting != null) {
             if (Communications.reportEnemySighting(rc, enemySighting)) {
@@ -151,8 +152,10 @@ public class Carrier extends BaseBot {
 
     private static void collectResources() throws GameActionException {
 //        debugBytecode("2.0");
-        if (targetWell == null || !rc.getLocation().isAdjacentTo(targetWell))
-            targetWell = Util.pickNearest(rc, Communications.getKnownWells(rc), blacklist);
+        if (targetWell == null || !rc.getLocation().isAdjacentTo(targetWell)) {
+            WellLocation well = Util.pickNearest(rc, Communications.getKnownWells(rc), blacklist);
+            if (well != null) targetWell = well.location;
+        }
 
         if (targetWell == null) {
             rc.setIndicatorString("All wells blacklisted");

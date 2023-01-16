@@ -85,7 +85,7 @@ public class Launcher extends BaseBot {
                     tryMove(directionAway(rc, Util.pickNearest(rc, Communications.getHqs(rc))));
                 else if (adjacentToWell(rc, newLoc) && FastRandom.nextInt(8) != 0)
                     if (rc.senseWell(rc.getLocation()) != null) tryMove(randomDirection(rc));
-                    else tryMove(directionAway(rc, Util.pickNearest(rc, Communications.getKnownWells(rc))));
+                    else tryMove(directionAway(rc, pickNearest(rc, Communications.getKnownWells(rc)).location));
                 else tryMove(dir);  // do tryMove because a round may have passed from running out of bytecode
 //                rc.setIndicatorString("Spreading out");\
             }
