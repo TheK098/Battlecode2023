@@ -12,7 +12,7 @@ import static qpwoeirut_player.common.Pathfinding.spreadOut;
 import static qpwoeirut_player.utilities.Util.*;
 
 public class Launcher extends BaseBot {
-    private static final IntHashMap allyHealth = new IntHashMap(40);
+    private static final IntHashMap allyHealth = new IntHashMap(20);
     private static int allyToFollow = -1;
     private static int allyFollowTimer = 0;
     private static final int ALLY_FOLLOW_TIME = 8;
@@ -47,13 +47,15 @@ public class Launcher extends BaseBot {
             if (allyToFollow != -1 && (--allyFollowTimer == 0 || !rc.canSenseRobot(allyToFollow))) allyToFollow = -1;
             if (allyToFollow == -1) {  // check if any allies were recently hurt
                 RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
+                int added = 0;
                 for (int i = allies.length; i --> 0;) {
                     int storedHealth = allyHealth.get(allies[i].ID);
                     if (allies[i].health < storedHealth) {  // ally took damage, go help them
                         allyToFollow = allies[i].ID;
                         allyFollowTimer = ALLY_FOLLOW_TIME;
                         allyHealth.put(allies[i].ID, allies[i].health);
-                    } else if (storedHealth == 0) {  // haven't seen this ally before, record their health
+                    } else if (storedHealth == 0 && added++ <= 20) {  // don't add too many in one round for bytecode reasons
+                        // haven't seen this ally before, record their health
                         allyHealth.put(allies[i].ID, allies[i].health);
                     }
                 }
