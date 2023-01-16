@@ -3,8 +3,8 @@ package qpwoeirut_player;
 import battlecode.common.*;
 import qpwoeirut_player.common.Communications;
 import qpwoeirut_player.common.Communications.WellLocation;
-import qpwoeirut_player.common.SpreadSettings;
 import qpwoeirut_player.common.EntityType;
+import qpwoeirut_player.common.SpreadSettings;
 import qpwoeirut_player.utilities.Util;
 
 import static qpwoeirut_player.common.Pathfinding.*;
@@ -121,7 +121,7 @@ public class Carrier extends BaseBot {
     }
 
     private static boolean tryToAttack(MapLocation location) throws GameActionException {
-        Direction toward = directionToward(rc, location);
+        Direction toward = directionTowardImmediate(rc, location);
         MapLocation closer = rc.getLocation().add(toward);
         if (!rc.canAttack(location) && closer.isWithinDistanceSquared(location, rc.getType().actionRadiusSquared)) {
             tryMove(toward);
