@@ -1,9 +1,7 @@
 package plswork;
 
-import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
-import qp_carrierlauncherspam_2.BaseBot;
 
 abstract public class Base {
     protected static RobotController rc;
