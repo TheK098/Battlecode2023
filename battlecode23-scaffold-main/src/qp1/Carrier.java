@@ -47,10 +47,7 @@ public class Carrier extends BaseBot {
         }
 
         // deal with issue where carriers with resources sometimes end up next to blacklisted headquarters
-        for (Direction dir: Direction.allDirections()) {
-            MapLocation loc = rc.getLocation().add(dir);
-            if (rc.onTheMap(loc)) blacklist[loc.x][loc.y] = 0;
-        }
+        whitelistAdjacent();
 
 //        debugBytecode("1.0");
 
@@ -293,6 +290,26 @@ public class Carrier extends BaseBot {
         } else if (--timeRemaining == 0) {
             blacklist[target.x][target.y] = rc.getRoundNum() + entityType.blacklistLength;
 //            System.out.println("Blacklisted " + target);
+        }
+    }
+
+    private static void whitelistAdjacent() {
+        int x = rc.getLocation().x, y = rc.getLocation().y;
+
+        if (0 < x) {
+            if (0 < y) blacklist[x - 1][y - 1] = 0;
+            blacklist[x - 1][y] = 0;
+            if (y + 1 < rc.getMapHeight()) blacklist[x - 1][y + 1] = 0;
+        }
+
+        if (0 < y) blacklist[x][y - 1] = 0;
+        blacklist[x][y] = 0;
+        if (y + 1 < rc.getMapHeight()) blacklist[x][y + 1] = 0;
+
+        if (x + 1 < rc.getMapWidth()) {
+            if (0 < y) blacklist[x + 1][y - 1] = 0;
+            blacklist[x + 1][y] = 0;
+            if (y + 1 < rc.getMapHeight()) blacklist[x + 1][y + 1] = 0;
         }
     }
 

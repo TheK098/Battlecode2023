@@ -34,8 +34,9 @@ public class Headquarters extends BaseBot {
                     (50 < rc.getRoundNum() && FastRandom.nextInt(50 * Communications.getKnownWells(rc).length) < rc.getRobotCount()))
                 spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
 
-            for (RobotType robotType: spawnPriority) {
-                MapLocation newCarrierLoc = pickEmptySpawnLocation(robotType);
+            MapLocation newCarrierLoc;
+            for (RobotType robotType : spawnPriority) {  // order of this loop is important
+                newCarrierLoc = pickEmptySpawnLocation(robotType);
                 if (newCarrierLoc != null) {
                     rc.buildRobot(robotType, newCarrierLoc);  // it's guaranteed that we can build
                 }

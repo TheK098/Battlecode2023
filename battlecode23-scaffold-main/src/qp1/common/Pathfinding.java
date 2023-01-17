@@ -21,9 +21,22 @@ public class Pathfinding {
     };
 
     public static Direction moveWhileStayingAdjacent(RobotController rc, MapLocation target) {
-        for (Direction dir: DIRECTIONS) {
-            if (rc.canMove(dir) && (rc.getLocation().add(dir).isAdjacentTo(target) || rc.getLocation().add(dir).equals(target))) return dir;
-        }
+        if (rc.canMove(Direction.NORTHWEST) && (rc.getLocation().add(Direction.NORTHWEST).isAdjacentTo(target) || rc.getLocation().add(Direction.NORTHWEST).equals(target)))
+            return Direction.NORTHWEST;
+        if (rc.canMove(Direction.NORTHEAST) && (rc.getLocation().add(Direction.NORTHEAST).isAdjacentTo(target) || rc.getLocation().add(Direction.NORTHEAST).equals(target)))
+            return Direction.NORTHEAST;
+        if (rc.canMove(Direction.SOUTHEAST) && (rc.getLocation().add(Direction.SOUTHEAST).isAdjacentTo(target) || rc.getLocation().add(Direction.SOUTHEAST).equals(target)))
+            return Direction.SOUTHEAST;
+        if (rc.canMove(Direction.SOUTHWEST) && (rc.getLocation().add(Direction.SOUTHWEST).isAdjacentTo(target) || rc.getLocation().add(Direction.SOUTHWEST).equals(target)))
+            return Direction.SOUTHWEST;
+        if (rc.canMove(Direction.NORTH) && (rc.getLocation().add(Direction.NORTH).isAdjacentTo(target) || rc.getLocation().add(Direction.NORTH).equals(target)))
+            return Direction.NORTH;
+        if (rc.canMove(Direction.EAST) && (rc.getLocation().add(Direction.EAST).isAdjacentTo(target) || rc.getLocation().add(Direction.EAST).equals(target)))
+            return Direction.EAST;
+        if (rc.canMove(Direction.SOUTH) && (rc.getLocation().add(Direction.SOUTH).isAdjacentTo(target) || rc.getLocation().add(Direction.SOUTH).equals(target)))
+            return Direction.SOUTH;
+        if (rc.canMove(Direction.WEST) && (rc.getLocation().add(Direction.WEST).isAdjacentTo(target) || rc.getLocation().add(Direction.WEST).equals(target)))
+            return Direction.WEST;
         return Direction.CENTER;
     }
 

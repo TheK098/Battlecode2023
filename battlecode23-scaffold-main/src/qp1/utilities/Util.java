@@ -107,11 +107,33 @@ public class Util {
 
     public static Direction randomDirection(RobotController rc) {
         Direction dir;
+        // Tries 25 times, (7/8)^25 ≈ 3.55% chance of missing available move, worst case
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
+        dir = DIRECTIONS[FastRandom.nextInt(8)]; if (rc.canMove(dir)) return dir;
 
-        for (int i = 15; i --> 0;) {
-            dir = DIRECTIONS[FastRandom.nextInt(DIRECTIONS.length)];
-            if (rc.canMove(dir)) return dir;
-        }
         return Direction.CENTER;
     }
 
