@@ -1,6 +1,7 @@
 package qp1.utilities;
 
 import battlecode.common.*;
+import qp1.common.Communications;
 import qp1.common.Communications.WellLocation;
 
 import static qp1.common.Pathfinding.DIRECTIONS;
@@ -85,12 +86,9 @@ public class Util {
     }
 
     public static boolean adjacentToHeadquarters(RobotController rc, MapLocation location) throws GameActionException {
-        for (Direction dir: DIRECTIONS) {
-            MapLocation loc = location.add(dir);
-            if (rc.canSenseLocation(loc)) {
-                RobotInfo robot = rc.senseRobotAtLocation(loc);
-                if (robot != null && robot.team == rc.getTeam() && robot.type == RobotType.HEADQUARTERS) return true;
-            }
+        MapLocation[] allHqs = Communications.getHqs(rc);
+        for (int i = allHqs.length; i --> 0;) {
+            if (location.isAdjacentTo(allHqs[i])) return true;
         }
         return false;
     }
