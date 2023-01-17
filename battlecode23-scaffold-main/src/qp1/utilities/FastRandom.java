@@ -12,7 +12,6 @@ public class FastRandom {
     // [0, bound)
     public static int nextInt(int bound) {  // technically the probability isn't uniform, but it shouldn't really matter
         final int ret = nextInt() % bound;
-        if (ret < 0) return ret + bound;
-        return ret;
+        return ret < 0 ? ret + bound : ret;
     }
 }
