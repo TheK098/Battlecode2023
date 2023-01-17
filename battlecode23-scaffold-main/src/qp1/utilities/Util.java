@@ -94,14 +94,15 @@ public class Util {
     }
 
     public static boolean adjacentToWell(RobotController rc, MapLocation location) throws GameActionException {
-        for (Direction dir: Direction.allDirections()) {  // include current location
-            MapLocation loc = location.add(dir);
-            if (rc.canSenseLocation(loc)) {
-                WellInfo well = rc.senseWell(loc);
-                if (well != null) return true;
-            }
-        }
-        return false;
+        return (rc.canSenseLocation(location)                          && rc.senseWell(location)                          != null) ||
+               (rc.canSenseLocation(location.add(Direction.NORTH))     && rc.senseWell(location.add(Direction.NORTH))     != null) ||
+               (rc.canSenseLocation(location.add(Direction.NORTHEAST)) && rc.senseWell(location.add(Direction.NORTHEAST)) != null) ||
+               (rc.canSenseLocation(location.add(Direction.EAST))      && rc.senseWell(location.add(Direction.EAST))      != null) ||
+               (rc.canSenseLocation(location.add(Direction.SOUTHEAST)) && rc.senseWell(location.add(Direction.SOUTHEAST)) != null) ||
+               (rc.canSenseLocation(location.add(Direction.SOUTH))     && rc.senseWell(location.add(Direction.SOUTH))     != null) ||
+               (rc.canSenseLocation(location.add(Direction.SOUTHWEST)) && rc.senseWell(location.add(Direction.SOUTHWEST)) != null) ||
+               (rc.canSenseLocation(location.add(Direction.WEST))      && rc.senseWell(location.add(Direction.WEST))      != null) ||
+               (rc.canSenseLocation(location.add(Direction.NORTHWEST)) && rc.senseWell(location.add(Direction.NORTHWEST)) != null);
     }
 
     public static Direction randomDirection(RobotController rc) {
