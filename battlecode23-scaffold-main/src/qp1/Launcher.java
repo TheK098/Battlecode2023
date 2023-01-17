@@ -23,27 +23,8 @@ public class Launcher extends BaseBot {
 
     @Override
     public void processRound() throws GameActionException {
-        RobotInfo target = pickTarget();
-        if (target != null) {
-            MapLocation toAttack = target.location;
-            if (rc.canAttack(toAttack)) {  // TODO: hide in a cloud?
-                rc.attack(toAttack);
-                lastMoveOrAction = rc.getRoundNum();
-                Direction dir = directionAway(rc, toAttack);
-                tryMove(dir);
-                rc.setIndicatorString("Attack and run");
-            } else {
-                Direction dir = directionTowardImmediate(rc, toAttack);
-                tryMove(dir);
-                if (rc.canAttack(toAttack)) {
-                    rc.attack(toAttack);
-                    lastMoveOrAction = rc.getRoundNum();
-                    rc.setIndicatorString("Charged " + toAttack + " with direction " + dir);
-                } else {
-                    rc.setIndicatorString("Charging " + toAttack + " with direction " + dir + " didn't work");
-                }
-            }
-        } else {
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+        if (!handleCombat(enemies)) {
             int allyToFollowLocal = allyToFollow;
             if (allyToFollowLocal != -1 && (--allyFollowTimer == 0 || !rc.canSenseRobot(allyToFollowLocal))) allyToFollowLocal = -1;
             if (allyToFollowLocal == -1) {  // check if any allies were recently hurt
@@ -67,7 +48,7 @@ public class Launcher extends BaseBot {
                 tryMove(directionToward(rc, rc.senseRobot(allyToFollowLocal).location));
                 rc.setIndicatorString("Trying to help " + allyToFollowLocal);
             } else {
-                MapLocation enemyIsland = itsAnchorTime() ? findNearestIslandLocation(rc.getTeam().opponent()) : null;
+                MapLocation enemyIsland = findNearestIslandLocation(rc.getTeam().opponent());
                 if (enemyIsland != null) {  // find nearest enemy island and kill it
                     tryMove(directionToward(rc, enemyIsland));
                 } else {  // TODO: try to put carriers between this launcher and nearest HQ
@@ -84,7 +65,7 @@ public class Launcher extends BaseBot {
                             }
                         }
                     }
-                    float weightX = 0, weightY = 0;
+                    float weightX = (rc.getMapWidth() / 2f) - rc.getLocation().x, weightY = (rc.getMapHeight() / 2f) - rc.getLocation().y;  // default drift to center
                     if (targetIdx != -1) {
                         weightX = targetScore * (enemySightings[targetIdx].location.x - rc.getLocation().x);
                         weightY = targetScore * (enemySightings[targetIdx].location.y - rc.getLocation().y);
@@ -107,7 +88,7 @@ public class Launcher extends BaseBot {
             }
 
             // try attacking again
-            target = pickTarget();
+            RobotInfo target = pickTarget(enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent()));
             if (target != null) {
                 if (rc.canAttack(target.location)) {
                     rc.attack(target.location);
@@ -119,19 +100,59 @@ public class Launcher extends BaseBot {
         dieIfStuck();
     }
 
-    private static RobotInfo pickTarget() throws GameActionException {
+    private static boolean handleCombat(RobotInfo[] enemies) throws GameActionException {
+        RobotInfo target = pickTarget(enemies);
+        if (target == null) target = pickNearest(rc, enemies, false);
+        if (target == null) return false;
+
+        MapLocation toAttack = target.location;
+        if (rc.canAttack(toAttack)) {
+            rc.attack(toAttack);
+            lastMoveOrAction = rc.getRoundNum();
+
+            // if we're already in a cloud, the enemy can probably see us anyway so just run away
+            // otherwise duck into a cloud if possible
+            tryMove(rc.senseCloud(rc.getLocation()) ? directionAway(rc, toAttack) : directionAwayOrCloud(rc, toAttack));
+            rc.setIndicatorString("Attack and run");
+        } else {
+            RobotInfo[] allies = rc.senseNearbyRobots(toAttack, 20, rc.getTeam());
+            int desperationScore = 0, allyLaunchers = 0;
+            for (int i = allies.length; i --> 0;) {
+                desperationScore += allies[i].type == RobotType.CARRIER ? 1 : (allies[i].type == RobotType.HEADQUARTERS ? 5 : 0);
+                allyLaunchers += allies[i].type == RobotType.LAUNCHER ? 1 : 0;
+            }
+
+            int enemyLaunchers = 0;
+            for (int i = enemies.length; i --> 0;) enemyLaunchers += enemies[i].type == RobotType.LAUNCHER ? 1 : 0;
+            if (allyLaunchers >= enemyLaunchers || desperationScore >= 3) {
+                Direction dir = directionTowardImmediate(rc, toAttack);
+                tryMove(dir);
+                if (rc.canAttack(toAttack)) {
+                    rc.attack(toAttack);
+                    lastMoveOrAction = rc.getRoundNum();
+                }
+                rc.setIndicatorString("Fighting, desperation=" + desperationScore + ". " + allyLaunchers + " vs " + enemyLaunchers + ". Charging " + dir + " to " + toAttack);
+            } else {
+                tryMove(directionAway(rc, toAttack));
+                rc.setIndicatorString("Retreating, outnumbered " + allyLaunchers + " vs " + enemyLaunchers);
+            }
+        }
+        return true;
+    }
+
+    private static RobotInfo pickTarget(RobotInfo[] enemies) {
         if (rc.isActionReady()) {
-            RobotInfo[] enemies = rc.senseNearbyRobots(16, rc.getTeam().opponent());
             RobotInfo target = null;
             for (int i = enemies.length; i --> 0;) {
-                if (canAttack(enemies[i].location) && enemies[i].type != RobotType.HEADQUARTERS) target = target == null ? enemies[i] : chooseTarget(target, enemies[i]);
+                if (canAttack(enemies[i].location) && enemies[i].type != RobotType.HEADQUARTERS)
+                    target = target == null ? enemies[i] : chooseTarget(target, enemies[i]);
             }
             return target;
         }
         return null;
     }
 
-    private static boolean canAttack(MapLocation location) throws GameActionException {
+    private static boolean canAttack(MapLocation location) {
         if (rc.isMovementReady()) {
             MapLocation closer = rc.getLocation().add(directionTowardImmediate(rc, location));
             if (closer.isWithinDistanceSquared(location, 16)) return true;

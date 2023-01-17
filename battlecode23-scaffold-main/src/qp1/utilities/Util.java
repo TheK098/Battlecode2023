@@ -160,9 +160,24 @@ public class Util {
             Direction dir = Direction.allDirections()[d];
             if (!rc.canMove(dir)) continue;
             MapLocation immediateLocation = rc.getLocation().add(dir);
+            MapLocation result = immediateLocation.add(rc.senseMapInfo(immediateLocation).getCurrentDirection());
+            if (bestDist < result.distanceSquaredTo(target)) {
+                bestDist = result.distanceSquaredTo(target);
+                bestIdx = d;
+            }
+        }
+        return Direction.allDirections()[bestIdx];  // CENTER should always be allowed
+    }
+
+    public static Direction directionAwayOrCloud(RobotController rc, MapLocation target) throws GameActionException {
+        int bestIdx = 8, bestDist = 0;
+        for (int d = 9; d --> 0;) {
+            Direction dir = Direction.allDirections()[d];
+            if (!rc.canMove(dir)) continue;
+            MapLocation immediateLocation = rc.getLocation().add(dir);
             MapInfo mapInfo = rc.senseMapInfo(immediateLocation);
             MapLocation result = immediateLocation.add(mapInfo.getCurrentDirection());
-            int dist = (int)(10 * (result.distanceSquaredTo(target) * 10 + mapInfo.getCooldownMultiplier(rc.getTeam())));
+            int dist = result.distanceSquaredTo(target) + (mapInfo.hasCloud() ? 10 : 0);
             if (bestDist < dist) {
                 bestDist = dist;
                 bestIdx = d;
