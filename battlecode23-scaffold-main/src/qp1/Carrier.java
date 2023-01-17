@@ -143,7 +143,7 @@ public class Carrier extends BaseBot {
         if (rc.getAnchor() == Anchor.STANDARD) {
             MapLocation target = findNearestIslandLocation(Team.NEUTRAL);
             if (target != null) {
-                tryMove(directionToward(rc, target));  // no-op if we're at target already
+                moveToward(rc, target);  // no-op if we're at target already
                 if (rc.getLocation().equals(target) && rc.canPlaceAnchor()) rc.placeAnchor();
                 rc.setIndicatorString("Trying to place anchor at " + target);
             } else {
