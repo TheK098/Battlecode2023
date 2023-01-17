@@ -135,19 +135,18 @@ public class Pathfinding {
         weightX += (Math.max(0, cube(EDGE_PUSH - x)) - Math.max(0, cube(x - (rc.getMapWidth() - EDGE_PUSH - 1)))) / 10f;
         weightY += (Math.max(0, cube(EDGE_PUSH - y)) - Math.max(0, cube(y - (rc.getMapHeight() - EDGE_PUSH - 1)))) / 10f;
 
-        RobotInfo[] nearbyRobots = rc.senseNearbyRobots(settings.ally_dist_cutoff, rc.getTeam());
-        for (RobotInfo robot : nearbyRobots) {
-            if (rc.getType() != robot.getType()) continue;
+        RobotInfo[] robots = rc.senseNearbyRobots(settings.ally_dist_cutoff, rc.getTeam());
+        int dist;
+        for (int i = robots.length; i --> 0;) {
+            if (rc.getType() != robots[i].getType()) continue;
             // when spreading out anchoring carriers, we only care about other anchor carriers
-            if (settings == SpreadSettings.CARRIER_ANCHOR && robot.getNumAnchors(Anchor.STANDARD) == 0) continue;
+            if (settings == SpreadSettings.CARRIER_ANCHOR && robots[i].getNumAnchors(Anchor.STANDARD) == 0) continue;
 
             // add one to avoid div by 0 when running out of bytecode
-            int dist = rc.getLocation().distanceSquaredTo(robot.location) + 1;
-            float dx = robot.location.x - x;
-            float dy = robot.location.y - y;
+            dist = rc.getLocation().distanceSquaredTo(robots[i].location) + 1;
             // subtract since we want to move away
-            weightX -= settings.ally_dist_factor * dx / dist;
-            weightY -= settings.ally_dist_factor * dy / dist;
+            weightX -= settings.ally_dist_factor * (robots[i].location.x - x) / dist;
+            weightY -= settings.ally_dist_factor * (robots[i].location.y - y) / dist;
         }
 //        rc.setIndicatorString(weightX + " " + weightY);
 
