@@ -73,15 +73,6 @@ public class IntHashMap {
 //        }
 //    }
 
-    public static class Entry {
-        public final int key, value;
-
-        public Entry(int key, int value) {
-            this.key = key;
-            this.value = value;
-        }
-    }
-
 //    public int size() {
 //        return size;
 //    }
