@@ -1,11 +1,11 @@
 package qp1.utilities;
 
 import battlecode.common.*;
-import qp1.common.Communications;
-import qp1.common.Communications.WellLocation;
+import qp1.communications.Comms;
+import qp1.communications.Comms.WellLocation;
 
-import static qp1.common.Pathfinding.DIRECTIONS;
-import static qp1.common.Pathfinding.INF_DIST;
+import static qp1.navigation.Pathfinding.DIRECTIONS;
+import static qp1.navigation.Pathfinding.INF_DIST;
 
 public class Util {
     // TODO: include pathfinding in the future
@@ -86,7 +86,7 @@ public class Util {
     }
 
     public static boolean adjacentToHeadquarters(RobotController rc, MapLocation location) throws GameActionException {
-        MapLocation[] allHqs = Communications.getHqs(rc);
+        MapLocation[] allHqs = Comms.getHqs(rc);
         for (int i = allHqs.length; i --> 0;) {
             if (location.isAdjacentTo(allHqs[i])) return true;
         }

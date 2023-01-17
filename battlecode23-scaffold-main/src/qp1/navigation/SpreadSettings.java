@@ -1,4 +1,4 @@
-package qp1.common;
+package qp1.navigation;
 
 public enum SpreadSettings {
     CARRIER_ANCHOR(25, 30, 100),

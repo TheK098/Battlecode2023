@@ -1,14 +1,14 @@
 package qp1;
 
 import battlecode.common.*;
-import qp1.common.Communications;
-import qp1.common.Communications.EnemySighting;
-import qp1.common.SpreadSettings;
+import qp1.communications.Comms;
+import qp1.communications.Comms.EnemySighting;
+import qp1.navigation.SpreadSettings;
 import qp1.utilities.FastRandom;
 import qp1.utilities.IntHashMap;
 import qp1.utilities.Util;
 
-import static qp1.common.Pathfinding.spreadOut;
+import static qp1.navigation.Pathfinding.spreadOut;
 import static qp1.utilities.Util.*;
 
 public class Launcher extends BaseBot {
@@ -71,7 +71,7 @@ public class Launcher extends BaseBot {
                 if (enemyIsland != null) {  // find nearest enemy island and kill it
                     tryMove(directionToward(rc, enemyIsland));
                 } else {  // TODO: try to put carriers between this launcher and nearest HQ
-                    EnemySighting[] enemySightings = Communications.getEnemySightings(rc);
+                    EnemySighting[] enemySightings = Comms.getEnemySightings(rc);
                     int targetIdx = -1;
                     int targetScore = 20;
                     int factor = 10 * rc.getMapWidth() * rc.getMapHeight();
@@ -97,10 +97,10 @@ public class Launcher extends BaseBot {
                     RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
                     // maintain space for carriers
                     if (adjacentToHeadquarters(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
-                        tryMove(directionAway(rc, Util.pickNearest(rc, Communications.getHqs(rc))));
+                        tryMove(directionAway(rc, Util.pickNearest(rc, Comms.getHqs(rc))));
                     else if (adjacentToWell(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
                         if (rc.senseWell(rc.getLocation()) != null) tryMove(randomDirection(rc));
-                        else tryMove(directionAway(rc, pickNearest(rc, Communications.getKnownWells(rc)).location));
+                        else tryMove(directionAway(rc, pickNearest(rc, Comms.getKnownWells(rc)).location));
                     else tryMove(dir);  // do tryMove because a round may have passed from running out of bytecode
 //                rc.setIndicatorString("Spreading out");
                 }

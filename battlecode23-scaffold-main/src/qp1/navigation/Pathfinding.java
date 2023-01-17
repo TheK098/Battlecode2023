@@ -1,4 +1,4 @@
-package qp1.common;
+package qp1.navigation;
 
 import battlecode.common.*;
 import qp1.utilities.FastRandom;

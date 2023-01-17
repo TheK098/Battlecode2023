@@ -1,4 +1,4 @@
-package qp1.common;
+package qp1.communications;
 
 public enum EntityType {
     WELL(0, 20, 20, 200, 12, 3),

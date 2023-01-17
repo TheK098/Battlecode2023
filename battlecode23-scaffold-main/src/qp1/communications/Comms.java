@@ -1,4 +1,4 @@
-package qp1.common;
+package qp1.communications;
 
 import battlecode.common.*;
 
@@ -11,7 +11,7 @@ import static qp1.utilities.Util.locationInArray;
  * Array spots are allocated in EntityType.java
  * Locations are stored as x * 60 + y + 1. 0 represents no data.
  */
-public class Communications {
+public class Comms {
     private static final int INVALID = 0;
 
     private static final int MAP_SIZE = 60;

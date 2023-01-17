@@ -1,11 +1,11 @@
 package qp1;
 
 import battlecode.common.*;
-import qp1.common.Communications;
-import qp1.common.Communications.WellLocation;
+import qp1.communications.Comms;
+import qp1.communications.Comms.WellLocation;
 import qp1.utilities.FastRandom;
 
-import static qp1.common.Pathfinding.INF_DIST;
+import static qp1.navigation.Pathfinding.INF_DIST;
 import static qp1.utilities.Util.pickNearest;
 
 public class Headquarters extends BaseBot {
@@ -18,20 +18,20 @@ public class Headquarters extends BaseBot {
     @Override
     public void processRound() throws GameActionException {
         if (rc.getRoundNum() == 1) {
-            Communications.addHq(rc, rc.getLocation()); // report HQ position
-            Communications.addWells(rc, rc.senseNearbyWells());
+            Comms.addHq(rc, rc.getLocation()); // report HQ position
+            Comms.addWells(rc, rc.senseNearbyWells());
         }
         updateEnemyComms();
-        Communications.setResourcePriorities(rc, 0, 1);
+        Comms.setResourcePriorities(rc, 0, 1);
 
-        if (rc.getRoundNum() % 20 == rc.getID() % 20) Communications.decreaseUrgencies(rc);
+        if (rc.getRoundNum() % 20 == rc.getID() % 20) Comms.decreaseUrgencies(rc);
         // urgencies will decrease faster if there are multiple HQs; consider that a feature i guess?
 
         if (!itsAnchorTime()) {
             RobotType[] spawnPriority = {RobotType.CARRIER, RobotType.LAUNCHER};
             if ((rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) ||
                     (5 < rc.getRoundNum() && rc.getRoundNum() <= 50 && rc.getRoundNum() % 2 == 0) ||
-                    (50 < rc.getRoundNum() && FastRandom.nextInt(50 * Communications.getKnownWells(rc).length) < rc.getRobotCount()))
+                    (50 < rc.getRoundNum() && FastRandom.nextInt(50 * Comms.getKnownWells(rc).length) < rc.getRobotCount()))
                 spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
 
             MapLocation newCarrierLoc;
@@ -75,7 +75,7 @@ public class Headquarters extends BaseBot {
                     }
                     return bestIdx == -1 || availableSpots * 12 < nearbyRobots ? null : possibleLocations[bestIdx];
                 case CARRIER:  // spawn close to well, with some random variation
-                    WellLocation[] wells = Communications.getKnownWells(rc);
+                    WellLocation[] wells = Comms.getKnownWells(rc);
                     if (wells.length == 0) {  // can happen in HQ in cloud, just pick random spot
                         int[] validIndexes = new int[possibleLocations.length];
                         int n = 0;
@@ -111,7 +111,7 @@ public class Headquarters extends BaseBot {
         if (lastEnemyCommUpdate + 5 <= rc.getRoundNum()) {
             RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
             RobotInfo nearestEnemy = pickNearest(rc, enemies, false);
-            if (nearestEnemy != null && Communications.reportEnemySighting(rc, nearestEnemy.location))
+            if (nearestEnemy != null && Comms.reportEnemySighting(rc, nearestEnemy.location))
                 lastEnemyCommUpdate = rc.getRoundNum();
         }
     }
