@@ -55,7 +55,7 @@ eclipse {
 //////// Versions ////////
 
 ext.versions = [
-  battlecode: new File(projectDir, "version.txt").text.trim()
+        battlecode: new File(projectDir, "version.txt").text.trim()
 ]
 
 configurations.all {
@@ -112,7 +112,7 @@ task update {
     def version = getVersionFromWeb((project.findProperty("onSaturn") ?: "false").toBoolean())
     if (version == null) {
       throw new Exception(
-        "Could not find new version number. Are you connected to the internet?"
+              "Could not find new version number. Are you connected to the internet?"
       )
     }
     if (versions.battlecode != version) {
@@ -162,8 +162,8 @@ configurations {
 
 def os = System.getProperty("os.name").toLowerCase()
 def clientName = os.startsWith('windows') ? 'battlecode23-client-win' :
-                 os.startsWith('mac') ? 'battlecode23-client-mac' :
-                 'battlecode23-client-linux'
+        os.startsWith('mac') ? 'battlecode23-client-mac' :
+                'battlecode23-client-linux'
 
 dependencies {
   testImplementation group: 'junit', name: 'junit', version: '4.13.2'
@@ -184,11 +184,15 @@ dependencies {
 
 def arch64 = System.getProperty("os.arch").matches("^(x86_64|amd64|ia32e|em64t|x64)\$")
 def arch32 = System.getProperty("os.arch").matches("^(x86_32|x86|i[3-6]86|ia32|x32)\$")
+def client32Name = (
+        arch32
+                ? os.startsWith('windows') ? 'battlecode23-client-win-32' :
+                os.startsWith('mac')     ? 'UNSUPPORTED' :
+                        'battlecode23-client-linux-32'
+                : 'UNSUPPORTED'
+)
 
 if (arch32) {
-  def client32Name = os.startsWith('windows') ? 'battlecode23-client-win-32' :
-                     os.startsWith('mac') ? 'UNSUPPORTED' :
-                     'battlecode23-client-linux-32'
   if (client32Name.equals('UNSUPPORTED')) {
     logger.error('Sorry, the Battlecode client does not support 32-bit architectures for OS X.')
   }
@@ -245,8 +249,8 @@ task verify(type: JavaExec) {
   mainClass = 'battlecode.instrumenter.Verifier'
   classpath = sourceSets.main.runtimeClasspath
   args = [
-    project.findProperty("team") ?: "examplefuncsplayer",
-    project.findProperty("url") ?: sourceSets.main.output.classesDirs.getAsPath(),
+          project.findProperty("team") ?: "examplefuncsplayer",
+          project.findProperty("url") ?: sourceSets.main.output.classesDirs.getAsPath(),
   ]
 }
 
@@ -265,22 +269,24 @@ task run(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   args = ['-c=-']
   jvmArgs = [
-    '-Dbc.server.wait-for-client=' + (project.findProperty('waitForClient') ?: 'false'),
-    '-Dbc.server.mode=headless',
-    '-Dbc.server.map-path=maps',
-    '-Dbc.server.robot-player-to-system-out=' + (project.findProperty('outputVerbose') ?: 'true'),
-    '-Dbc.server.debug=false',
-    '-Dbc.engine.debug-methods=' + (project.findProperty('debug') ?: 'false'),
-    '-Dbc.engine.enable-profiler=' + (project.findProperty('enableProfiler') ?: 'false'),
-    '-Dbc.engine.show-indicators=' + (project.findProperty('showIndicators') ?: 'true'),
-    '-Dbc.game.team-a=' + project.property('teamA'),
-    '-Dbc.game.team-b=' + project.property('teamB'),
-    '-Dbc.game.team-a.url=' + (project.findProperty('classLocationA') ?: defaultClassLocation),
-    '-Dbc.game.team-b.url=' + (project.findProperty('classLocationB') ?: defaultClassLocation),
-    '-Dbc.game.team-a.package=' + (project.findProperty('packageNameA') ?: project.property('teamA')),
-    '-Dbc.game.team-b.package=' + (project.findProperty('packageNameB') ?: project.property('teamB')),
-    '-Dbc.game.maps=' + project.property('maps'),
-    '-Dbc.server.save-file=' + (project.findProperty('replay') ?: defaultReplay),
+          '-Dbc.server.wait-for-client=' + (project.findProperty('waitForClient') ?: 'false'),
+          '-Dbc.server.mode=headless',
+          '-Dbc.server.map-path=maps',
+          '-Dbc.server.robot-player-to-system-out=' + (project.findProperty('outputVerbose') ?: 'true'),
+          '-Dbc.server.debug=false',
+          '-Dbc.engine.debug-methods=' + (project.findProperty('debug') ?: 'false'),
+          '-Dbc.engine.enable-profiler=' + (project.findProperty('enableProfiler') ?: 'false'),
+          '-Dbc.engine.show-indicators=' + (project.findProperty('showIndicators') ?: 'true'),
+          '-Dbc.game.team-a=' + project.property('teamA'),
+          '-Dbc.game.team-b=' + project.property('teamB'),
+          '-Dbc.game.team-a.url=' + (project.findProperty('classLocationA') ?: defaultClassLocation),
+          '-Dbc.game.team-b.url=' + (project.findProperty('classLocationB') ?: defaultClassLocation),
+          '-Dbc.game.team-a.package=' + (project.findProperty('packageNameA') ?: project.property('teamA')),
+          '-Dbc.game.team-b.package=' + (project.findProperty('packageNameB') ?: project.property('teamB')),
+          '-Dbc.game.maps=' + project.property('maps'),
+          '-Dbc.server.validate-maps=' + project.property('validateMaps'),
+          '-Dbc.server.alternate-order=' + project.property('alternateOrder'),
+          '-Dbc.server.save-file=' + (project.findProperty('replay') ?: defaultReplay),
   ]
 }
 
