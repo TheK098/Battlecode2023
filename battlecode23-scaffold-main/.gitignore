@@ -1,8 +1,0 @@
-.gradle
-.idea
-
-/build
-/client
-/matches
-
-credentials.txt
