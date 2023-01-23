@@ -2,6 +2,7 @@ package qp1;
 
 import battlecode.common.*;
 import qp1.communications.Comms;
+import qp1.communications.Comms.EnemySighting;
 import qp1.communications.Comms.WellLocation;
 import qp1.utilities.FastRandom;
 
@@ -22,26 +23,34 @@ public class Headquarters extends BaseBot {
             Comms.addWells(rc, rc.senseNearbyWells());
         }
         updateEnemyComms();
-        Comms.setResourcePriorities(rc, 0, 1);
+        RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
+        EnemySighting[] sightings = Comms.getEnemySightings(rc);
+        int adamantiumPriority = 0, manaPriority = 1800 / (rc.getMapWidth() * rc.getMapHeight());
+        for (int i = allies.length; i--> 0;) adamantiumPriority += allies[i].type == RobotType.CARRIER ? 1 : 0;
+        for (int i = sightings.length; i--> 0;) manaPriority += sightings[i].urgency;
+        Comms.setResourcePriorities(rc, adamantiumPriority, Math.min(30, manaPriority / 10));
 
         if (rc.getRoundNum() % 20 == rc.getID() % 20) Comms.decreaseUrgencies(rc);
         // urgencies will decrease faster if there are multiple HQs; consider that a feature i guess?
 
-        if (!itsAnchorTime()) {
+        if (!itsAnchorTime() || (rc.getResourceAmount(ResourceType.ADAMANTIUM) >= 300 && rc.getResourceAmount(ResourceType.MANA) >= 300)) {
             RobotType[] spawnPriority = {RobotType.CARRIER, RobotType.LAUNCHER};
             if ((rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) ||
                     (5 < rc.getRoundNum() && rc.getRoundNum() <= 50 && rc.getRoundNum() % 2 == 0) ||
                     (50 < rc.getRoundNum() && FastRandom.nextInt(50 * Comms.getKnownWells(rc).length) < rc.getRobotCount()))
                 spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
 
-            MapLocation newCarrierLoc;
-            for (RobotType robotType : spawnPriority) {  // order of this loop is important
-                newCarrierLoc = pickEmptySpawnLocation(robotType);
-                if (newCarrierLoc != null) {
-                    rc.buildRobot(robotType, newCarrierLoc);  // it's guaranteed that we can build
-                }
+            MapLocation newCarrierLoc  = pickEmptySpawnLocation(spawnPriority[0]);
+            int typeIdx = 0;
+            while (newCarrierLoc != null) {
+                rc.buildRobot(spawnPriority[typeIdx], newCarrierLoc);  // it's guaranteed that we can build
+                typeIdx ^= 1;
+                newCarrierLoc = pickEmptySpawnLocation(spawnPriority[typeIdx]);
             }
-        } else if (rc.canBuildAnchor(Anchor.STANDARD)) {
+            newCarrierLoc = pickEmptySpawnLocation(spawnPriority[typeIdx]);
+            if (newCarrierLoc != null) rc.buildRobot(spawnPriority[typeIdx], newCarrierLoc);  // try again with other type
+        }
+        if (itsAnchorTime() && rc.canBuildAnchor(Anchor.STANDARD)) {
             // stick with Standard anchors for now, chances are we're already overrunning the map
             rc.buildAnchor(Anchor.STANDARD);
         }
@@ -89,12 +98,14 @@ public class Headquarters extends BaseBot {
 
                     bestDist = INF_DIST;
                     bestIdx = -1;
-                    int randomness = 1 + (int)(Math.sqrt(rc.getRoundNum()));
+                    int adamantiumPriority = Comms.getAdamantiumPriority(rc), manaPriority = Comms.getManaPriority(rc);
+                    int typeBonus;
                     for (int i = possibleLocations.length; i --> 0;) {
                         WellLocation nearestWell = pickNearest(possibleLocations[i], wells);
                         if (rc.canBuildRobot(robotType, possibleLocations[i]) && nearestWell != null) {
                             ++availableSpots;
-                            if (possibleLocations[i].isWithinDistanceSquared(nearestWell.location, bestDist + FastRandom.nextInt(randomness))) {
+                            typeBonus = nearestWell.resourceType == ResourceType.ADAMANTIUM ? adamantiumPriority : manaPriority;
+                            if (possibleLocations[i].isWithinDistanceSquared(nearestWell.location, bestDist + typeBonus)) {
                                 bestDist = possibleLocations[i].distanceSquaredTo(nearestWell.location);
                                 bestIdx = i;
                             }

@@ -85,6 +85,19 @@ public class Util {
         return closestIndex == -1 ? null : wells[closestIndex];
     }
 
+    public static RobotInfo pickNearestEnemyHq(RobotController rc, RobotInfo[] robots) {
+        int closestIndex = -1;
+        int closestDistance = INF_DIST;
+        for (int i = robots.length; i --> 0;) {
+            int distance = robots[i].location.distanceSquaredTo(rc.getLocation());
+            if (closestDistance > distance && robots[i].type == RobotType.HEADQUARTERS && robots[i].team != rc.getTeam()) {
+                closestDistance = distance;
+                closestIndex = i;
+            }
+        }
+        return closestIndex == -1 ? null : robots[closestIndex];
+    }
+
     public static boolean adjacentToHeadquarters(RobotController rc, MapLocation location) throws GameActionException {
         MapLocation[] allHqs = Comms.getHqs(rc);
         for (int i = allHqs.length; i --> 0;) {

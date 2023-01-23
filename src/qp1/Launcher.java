@@ -8,6 +8,7 @@ import qp1.utilities.FastRandom;
 import qp1.utilities.IntHashMap;
 import qp1.utilities.Util;
 
+import static qp1.navigation.Pathfinding.moveToward;
 import static qp1.navigation.Pathfinding.spreadOut;
 import static qp1.utilities.Util.*;
 
@@ -54,8 +55,8 @@ public class Launcher extends BaseBot {
                 } else {  // TODO: try to put carriers between this launcher and nearest HQ
                     EnemySighting[] enemySightings = Comms.getEnemySightings(rc);
                     int targetIdx = -1;
-                    int targetScore = 20;
-                    int factor = 10 * rc.getMapWidth() * rc.getMapHeight();
+                    int targetScore = 10;
+                    int factor = rc.getMapWidth() * rc.getMapHeight();
                     for (int i = enemySightings.length; i --> 0;) {
                         if (enemySightings[i].urgency > 0) {
                             int score = factor * enemySightings[i].urgency / Math.max(1, rc.getLocation().distanceSquaredTo(enemySightings[i].location));
@@ -65,30 +66,36 @@ public class Launcher extends BaseBot {
                             }
                         }
                     }
-                    float weightX = (rc.getMapWidth() / 2f) - rc.getLocation().x, weightY = (rc.getMapHeight() / 2f) - rc.getLocation().y;  // default drift to center
                     if (targetIdx != -1) {
-                        weightX = targetScore * (enemySightings[targetIdx].location.x - rc.getLocation().x);
-                        weightY = targetScore * (enemySightings[targetIdx].location.y - rc.getLocation().y);
-                        rc.setIndicatorString(targetScore + " " + enemySightings[targetIdx] + " " + weightX + " " + weightY);
-                    } else rc.setIndicatorString("Spreading out");
-                    // move towards target if exists and spread out
-                    Direction dir = spreadOut(rc, weightX, weightY, SpreadSettings.LAUNCHER);
-                    MapLocation newLoc = rc.getLocation().add(dir);
-
-                    RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
-                    // maintain space for carriers
-                    if (adjacentToHeadquarters(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
-                        tryMove(directionAway(rc, Util.pickNearest(rc, Comms.getHqs(rc))));
-                    else if (adjacentToWell(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
-                        if (rc.senseWell(rc.getLocation()) != null) tryMove(randomDirection(rc));
-                        else tryMove(directionAway(rc, pickNearest(rc, Comms.getKnownWells(rc)).location));
-                    else tryMove(dir);  // do tryMove because a round may have passed from running out of bytecode
+                        tryMove(moveToward(rc, enemySightings[targetIdx].location));
+                        rc.setIndicatorString(targetScore + " " + enemySightings[targetIdx]);
+                    } else {
+                        float weightX = (rc.getMapWidth() / 2f) - rc.getLocation().x, weightY = (rc.getMapHeight() / 2f) - rc.getLocation().y;  // default drift to center
+                        rc.setIndicatorString("Spreading out");
+                        // move towards target if exists and spread out
+                        Direction dir = spreadOut(rc, weightX, weightY, SpreadSettings.LAUNCHER);
+                        MapLocation newLoc = rc.getLocation().add(dir);
+                        RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
+                        // maintain space for carriers
+                        if (adjacentToHeadquarters(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
+                            tryMove(directionAway(rc, Util.pickNearest(rc, Comms.getHqs(rc))));
+                        else if (adjacentToWell(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
+                            if (rc.senseWell(rc.getLocation()) != null) tryMove(randomDirection(rc));
+                            else tryMove(directionAway(rc, pickNearest(rc, Comms.getKnownWells(rc)).location));
+                        else {
+                            RobotInfo nearestEnemyHq = pickNearestEnemyHq(rc, enemies);
+                            if (nearestEnemyHq != null && rc.getLocation().isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
+                                tryMove(directionAway(rc, nearestEnemyHq.location));
+                            else
+                                tryMove(dir);  // do tryMove because a round may have passed from running out of bytecode
+                        }
+                    }
 //                rc.setIndicatorString("Spreading out");
                 }
             }
 
             // try attacking again
-            RobotInfo target = pickTarget(enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent()));
+            RobotInfo target = pickTarget(rc.senseNearbyRobots(-1, rc.getTeam().opponent()));
             if (target != null) {
                 if (rc.canAttack(target.location)) {
                     rc.attack(target.location);
