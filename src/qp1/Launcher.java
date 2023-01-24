@@ -73,7 +73,7 @@ public class Launcher extends BaseBot {
                         float weightX = (rc.getMapWidth() / 2f) - rc.getLocation().x, weightY = (rc.getMapHeight() / 2f) - rc.getLocation().y;  // default drift to center
                         rc.setIndicatorString("Spreading out");
                         // move towards target if exists and spread out
-                        Direction dir = spreadOut(rc, weightX, weightY, SpreadSettings.LAUNCHER);
+                        Direction dir = spreadOut(rc, weightX / 10, weightY / 10, SpreadSettings.LAUNCHER);
                         MapLocation newLoc = rc.getLocation().add(dir);
                         RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
                         // maintain space for carriers
