@@ -10,7 +10,7 @@ public strictfp class RobotPlayer {
      *            information on its current status. Essentially your portal to interacting with the world.
      **/
     @SuppressWarnings({"unused", "InfiniteLoopStatement"})
-    public static void run(RobotController rc) {
+    public static void run(RobotController rc) throws GameActionException {
         BaseBot bot = null;
         // switch assignments don't work in 1.8 smh
         switch (rc.getType()) {

@@ -11,9 +11,11 @@ import static qp1.utilities.Util.pickNearest;
 
 public class Headquarters extends BaseBot {
     private static int lastEnemyCommUpdate = 0;
+    private static MapLocation[] possibleLocations;
 
-    public Headquarters(RobotController rc) {
+    public Headquarters(RobotController rc) throws GameActionException {
         super(rc);
+        possibleLocations = rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), RobotType.HEADQUARTERS.actionRadiusSquared);
     }
 
     @Override
@@ -25,10 +27,13 @@ public class Headquarters extends BaseBot {
         updateEnemyComms();
         RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
         EnemySighting[] sightings = Comms.getEnemySightings(rc);
-        int adamantiumPriority = 0, manaPriority = 1800 / (rc.getMapWidth() * rc.getMapHeight());
-        for (int i = allies.length; i--> 0;) adamantiumPriority += allies[i].type == RobotType.CARRIER ? 1 : 0;
+        int adamantiumPriority, manaPriority = 3600 / (rc.getMapWidth() * rc.getMapHeight());
+        int carrierDensity = 1;
+        for (int i = allies.length; i--> 0;) carrierDensity += allies[i].type == RobotType.CARRIER ? 1 : 0;
         for (int i = sightings.length; i--> 0;) manaPriority += sightings[i].urgency;
+        adamantiumPriority = possibleLocations.length / carrierDensity;  // locations is action radius, carrierDensity is vision radius
         Comms.setResourcePriorities(rc, adamantiumPriority, Math.min(30, manaPriority / 10));
+        rc.setIndicatorString(adamantiumPriority + " " + manaPriority);
 
         if (rc.getRoundNum() % 20 == rc.getID() % 20) Comms.decreaseUrgencies(rc);
         // urgencies will decrease faster if there are multiple HQs; consider that a feature i guess?
@@ -64,7 +69,6 @@ public class Headquarters extends BaseBot {
     private static MapLocation pickEmptySpawnLocation(RobotType robotType) throws GameActionException {
         if (rc.isActionReady()) {
             int nearbyRobots = rc.senseNearbyRobots(RobotType.HEADQUARTERS.actionRadiusSquared).length;
-            MapLocation[] possibleLocations = rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), RobotType.HEADQUARTERS.actionRadiusSquared);
             int availableSpots = 0;
             int bestDist, bestIdx;
 
