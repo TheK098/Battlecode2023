@@ -286,7 +286,7 @@ public class Carrier extends BaseBot {
     private static void handleBlacklist(MapLocation target, EntityType entityType) {
         if (currentTarget == null || !currentTarget.equals(target)) {
             currentTarget = target;
-            timeRemaining = entityType.blacklistTimer;
+            timeRemaining = entityType.blacklistBaseTimer + (int)(2 * Math.sqrt(rc.getLocation().distanceSquaredTo(target)));
         } else if (--timeRemaining == 0) {
             blacklist[target.x][target.y] = rc.getRoundNum() + entityType.blacklistLength;
 //            System.out.println("Blacklisted " + target);
@@ -318,7 +318,7 @@ public class Carrier extends BaseBot {
     }
 
     private static void resetBlacklistTimer(EntityType entityType) {
-        timeRemaining = entityType.blacklistTimer;
+        timeRemaining = entityType.blacklistBaseTimer;
     }
 
     private static int getCurrentResources() {
