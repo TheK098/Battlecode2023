@@ -26,32 +26,11 @@ public class Launcher extends BaseBot {
     public void processRound() throws GameActionException {
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         if (!handleCombat(enemies)) {
-            int allyToFollowLocal = allyToFollow;
-            if (allyToFollowLocal != -1 && (--allyFollowTimer == 0 || !rc.canSenseRobot(allyToFollowLocal))) allyToFollowLocal = -1;
-            if (allyToFollowLocal == -1) {  // check if any allies were recently hurt
-                RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
-                int added = 0;
-                for (int i = allies.length; i --> 0;) {
-                    int storedHealth = allyHealth.get(allies[i].ID);
-                    if (allies[i].health < storedHealth) {  // ally took damage, go help them
-                        allyToFollowLocal = allies[i].ID;
-                        allyFollowTimer = ALLY_FOLLOW_TIME;
-                        allyHealth.put(allies[i].ID, allies[i].health);
-                    } else if (storedHealth == 0 && added++ <= 20) {  // don't add too many in one round for bytecode reasons
-                        // haven't seen this ally before, record their health
-                        allyHealth.put(allies[i].ID, allies[i].health);
-                    }
-                }
-            }
-            allyToFollow = allyToFollowLocal;
-
-            if (allyToFollowLocal != -1) {  // support hurt ally
-                tryMove(directionToward(rc, rc.senseRobot(allyToFollowLocal).location));
-                rc.setIndicatorString("Trying to help " + allyToFollowLocal);
-            } else {
+            if (!supportAlly(enemies)) {
                 MapLocation enemyIsland = findNearestIslandLocation(rc.getTeam().opponent());
                 if (enemyIsland != null) {  // find nearest enemy island and kill it
                     tryMove(directionToward(rc, enemyIsland));
+                    rc.setIndicatorString("Attacking island " + enemyIsland);
                 } else {  // TODO: try to put carriers between this launcher and nearest HQ
                     EnemySighting[] enemySightings = Comms.getEnemySightings(rc);
                     int targetIdx = -1;
@@ -145,6 +124,38 @@ public class Launcher extends BaseBot {
             }
         }
         return true;
+    }
+
+    private static boolean supportAlly(RobotInfo[] enemies) throws GameActionException {
+        int allyToFollowLocal = allyToFollow;
+        if (allyToFollowLocal != -1 && (--allyFollowTimer == 0 || !rc.canSenseRobot(allyToFollowLocal))) allyToFollowLocal = -1;
+        if (allyToFollowLocal == -1) {  // check if any allies were recently hurt
+            RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
+            int added = 0;
+            for (int i = allies.length; i --> 0;) {
+                int storedHealth = allyHealth.get(allies[i].ID);
+                if (allies[i].health < storedHealth) {  // ally took damage, go help them
+                    allyToFollowLocal = allies[i].ID;
+                    allyFollowTimer = ALLY_FOLLOW_TIME;
+                    allyHealth.put(allies[i].ID, allies[i].health);
+                } else if (storedHealth == 0 && added++ <= 15) {  // don't add too many in one round for bytecode reasons
+                    // haven't seen this ally before, record their health
+                    allyHealth.put(allies[i].ID, allies[i].health);
+                }
+            }
+        }
+        allyToFollow = allyToFollowLocal;
+
+        if (allyToFollowLocal != -1) {  // support hurt ally
+            Direction dir = directionToward(rc, rc.senseRobot(allyToFollowLocal).location);
+            RobotInfo nearestEnemyHq = pickNearestEnemyHq(rc, enemies);
+            if (enemies.length > 0 || nearestEnemyHq == null || !rc.getLocation().add(dir).isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
+                tryMove(dir);
+            else tryMove(directionAway(rc, nearestEnemyHq.location));
+            rc.setIndicatorString("Trying to help " + allyToFollowLocal);
+            return true;
+        }
+        return false;
     }
 
     private static RobotInfo pickTarget(RobotInfo[] enemies) {
