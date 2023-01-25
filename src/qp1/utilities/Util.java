@@ -5,12 +5,13 @@ import qp1.communications.Comms;
 import qp1.communications.Comms.WellLocation;
 
 import static qp1.navigation.Pathfinding.DIRECTIONS;
+import static qp1.navigation.Pathfinding.INF_DIST;
 
 public class Util {
     // TODO: include pathfinding in the future
     public static MapLocation pickNearest(RobotController rc, MapLocation[] locations, int[][] blacklist) {
         int closestIndex = -1;
-        int closestDistance = 1_000_000;
+        int closestDistance = INF_DIST;
         for (int i = locations.length; i --> 0;) {
             int distance = locations[i].distanceSquaredTo(rc.getLocation());
             if (closestDistance > distance && blacklist[locations[i].x][locations[i].y] <= rc.getRoundNum()) {
@@ -25,7 +26,7 @@ public class Util {
     }
     public static MapLocation pickNearest(MapLocation origin, MapLocation[] locations) {
         int closestIndex = -1;
-        int closestDistance = 1_000_000;
+        int closestDistance = INF_DIST;
         for (int i = locations.length; i --> 0;) {
             int distance = locations[i].distanceSquaredTo(origin);
             if (closestDistance > distance) {
@@ -37,7 +38,7 @@ public class Util {
     }
     public static WellLocation pickNearest(MapLocation origin, WellLocation[] wells) {
         int closestIndex = -1;
-        int closestDistance = 1_000_000;
+        int closestDistance = INF_DIST;
         for (int i = wells.length; i --> 0;) {
             int distance = wells[i].location.distanceSquaredTo(origin);
             if (closestDistance > distance) {
@@ -49,7 +50,7 @@ public class Util {
     }
     public static RobotInfo pickNearest(RobotController rc, RobotInfo[] robots, boolean includeHeadquarters) {
         int closestIndex = -1;
-        int closestDistance = 1_000_000;
+        int closestDistance = INF_DIST;
         for (int i = robots.length; i --> 0;) {
             int distance = robots[i].location.distanceSquaredTo(rc.getLocation());
             if (closestDistance > distance && (includeHeadquarters || robots[i].getType() != RobotType.HEADQUARTERS)) {
@@ -61,7 +62,7 @@ public class Util {
     }
     public static WellLocation pickNearest(RobotController rc, WellLocation[] wells, ResourceType resourceType, int[][] blacklist) {
         int closestIndex = -1;
-        int closestDistance = 1_000_000;
+        int closestDistance = INF_DIST;
         for (int i = wells.length; i --> 0;) {
             int distance = wells[i].location.distanceSquaredTo(rc.getLocation());
             if (closestDistance > distance && wells[i].resourceType == resourceType && blacklist[wells[i].location.x][wells[i].location.y] <= rc.getRoundNum()) {
@@ -73,7 +74,7 @@ public class Util {
     }
     public static WellLocation pickNearest(RobotController rc, WellLocation[] wells) {
         int closestIndex = -1;
-        int closestDistance = 1_000_000;
+        int closestDistance = INF_DIST;
         for (int i = wells.length; i --> 0;) {
             int distance = wells[i].location.distanceSquaredTo(rc.getLocation());
             if (closestDistance > distance) {
@@ -86,7 +87,7 @@ public class Util {
 
     public static RobotInfo pickNearestEnemyHq(RobotController rc, RobotInfo[] robots) {
         int closestIndex = -1;
-        int closestDistance = 1_000_000;
+        int closestDistance = INF_DIST;
         for (int i = robots.length; i --> 0;) {
             int distance = robots[i].location.distanceSquaredTo(rc.getLocation());
             if (closestDistance > distance && robots[i].type == RobotType.HEADQUARTERS && robots[i].team != rc.getTeam()) {
@@ -150,7 +151,7 @@ public class Util {
     }
 
     public static Direction directionToward(RobotController rc, MapLocation target) throws GameActionException {
-        int bestIdx = 8, bestDist = 1_000_000_000;
+        int bestIdx = 8, bestDist = INF_DIST * 100;
         for (int d = 9; d --> 0;) {
             Direction dir = Direction.allDirections()[d];
             if (!rc.canMove(dir)) continue;
