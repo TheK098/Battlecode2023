@@ -28,7 +28,7 @@ abstract public class BaseBot {
 
     protected static boolean itsAnchorTime() {
         double mapSize = rc.getMapWidth() * rc.getMapHeight();
-        double threshold = mapSize / Math.pow(Math.max(1, rc.getRoundNum() * rc.getRoundNum() - 3_200_000), 0.15);
+        double threshold = mapSize / Math.pow(Math.max(1, rc.getRoundNum() * rc.getRoundNum() - 2_500_000), 0.15);
         int ourRobots = rc.getRobotCount();
         return ourRobots * 3 >= threshold;
     }
