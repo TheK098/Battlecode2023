@@ -116,13 +116,15 @@ public class Headquarters extends BaseBot {
             int dist;
             WellLocation nearestWell;
             for (int i = possibleLocations.length; i --> 0;) {
-                nearestWell = pickNearest(possibleLocations[i], wells);  // reduce search size to only precomputed "relevant" wells
-                if (rc.canBuildRobot(RobotType.CARRIER, possibleLocations[i]) && nearestWell != null) {
-                    ++availableSpots;
-                    dist = possibleLocations[i].distanceSquaredTo(nearestWell.location) + (nearestWell.resourceType == ResourceType.ADAMANTIUM ? adamantiumPriority : manaPriority);
-                    if (bestDist > dist) {
-                        bestDist = dist;
-                        bestIdx = i;
+                if (rc.canBuildRobot(RobotType.CARRIER, possibleLocations[i])) {
+                    nearestWell = pickNearest(possibleLocations[i], wells);  // TODO: reduce search size to only precomputed "relevant" wells
+                    if (nearestWell != null) {
+                        ++availableSpots;
+                        dist = possibleLocations[i].distanceSquaredTo(nearestWell.location) + (nearestWell.resourceType == ResourceType.ADAMANTIUM ? adamantiumPriority : manaPriority);
+                        if (bestDist > dist) {
+                            bestDist = dist;
+                            bestIdx = i;
+                        }
                     }
                 }
             }
