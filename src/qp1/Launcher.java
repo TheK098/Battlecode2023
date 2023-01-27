@@ -29,7 +29,7 @@ public class Launcher extends BaseBot {
             if (!supportAlly(enemies)) {
                 MapLocation enemyIsland = findNearestIslandLocation(rc.getTeam().opponent());
                 if (enemyIsland != null) {  // find nearest enemy island and kill it
-                    tryMove(directionToward(rc, enemyIsland));
+                    tryMove(moveToward(rc, enemyIsland));
                     rc.setIndicatorString("Attacking island " + enemyIsland);
                 } else {  // TODO: try to put carriers between this launcher and nearest HQ
                     EnemySighting[] enemySightings = Comms.getEnemySightings(rc);

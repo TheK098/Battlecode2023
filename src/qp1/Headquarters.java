@@ -27,6 +27,7 @@ public class Headquarters extends BaseBot {
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
         EnemySighting[] sightings = Comms.getEnemySightings(rc);
+        WellLocation[] wells = Comms.getKnownWells(rc);
 
         updateEnemyComms(enemies);
         updateResourcePriorities(allies, sightings);
@@ -38,17 +39,17 @@ public class Headquarters extends BaseBot {
             RobotType[] spawnPriority = {RobotType.CARRIER, RobotType.LAUNCHER};
             if ((rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) ||
                     (5 < rc.getRoundNum() && rc.getRoundNum() <= 50 && rc.getRoundNum() % 2 == 0) ||
-                    (50 < rc.getRoundNum() && FastRandom.nextInt(50 * Comms.getKnownWells(rc).length) < rc.getRobotCount()))
+                    (50 < rc.getRoundNum() && wells.length > 0 && FastRandom.nextInt(50 * wells.length) < rc.getRobotCount()))
                 spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
 
-            MapLocation newCarrierLoc = pickEmptySpawnLocation(spawnPriority[0]);
+            MapLocation newCarrierLoc = pickEmptySpawnLocation(spawnPriority[0], wells);
             int typeIdx = 0;
             while (newCarrierLoc != null) {
                 rc.buildRobot(spawnPriority[typeIdx], newCarrierLoc);  // it's guaranteed that we can build
                 typeIdx ^= 1;
-                newCarrierLoc = pickEmptySpawnLocation(spawnPriority[typeIdx]);
+                newCarrierLoc = pickEmptySpawnLocation(spawnPriority[typeIdx], wells);
             }
-            newCarrierLoc = pickEmptySpawnLocation(spawnPriority[typeIdx]);
+            newCarrierLoc = pickEmptySpawnLocation(spawnPriority[typeIdx], wells);
             if (newCarrierLoc != null) rc.buildRobot(spawnPriority[typeIdx], newCarrierLoc);  // try again with other type
         }
         if (itsAnchorTime() && rc.canBuildAnchor(Anchor.STANDARD)) {
@@ -62,7 +63,7 @@ public class Headquarters extends BaseBot {
      * Avoids spawning if most locations (relative to # of passable locations) are already full to prevent clogging
      * Returns null if cannot/should not be built
      */
-    private static MapLocation pickEmptySpawnLocation(RobotType robotType) throws GameActionException {
+    private static MapLocation pickEmptySpawnLocation(RobotType robotType, WellLocation[] wells) throws GameActionException {
         if (rc.isActionReady()) {
             int nearbyRobots = rc.senseNearbyRobots(RobotType.HEADQUARTERS.actionRadiusSquared).length;
             int availableSpots = 0;
@@ -84,7 +85,6 @@ public class Headquarters extends BaseBot {
                     }
                     return bestIdx == -1 || availableSpots * 12 < nearbyRobots ? null : possibleLocations[bestIdx];
                 case CARRIER:  // spawn close to well, with some random variation
-                    WellLocation[] wells = Comms.getKnownWells(rc);
                     if (wells.length == 0) {  // can happen in HQ in cloud, just pick random spot
                         int[] validIndexes = new int[possibleLocations.length];
                         int n = 0;

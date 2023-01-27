@@ -40,7 +40,7 @@ public class Carrier extends BaseBot {
             }
             else {
                 MapLocation nearestHq = Util.pickNearest(rc, Comms.getHqs(rc));
-                tryMove(directionToward(rc, nearestHq));
+                tryMove(moveToward(rc, nearestHq));
                 rc.setIndicatorString("Running to HQ to report enemy sighting");
                 return;
             }
@@ -110,8 +110,8 @@ public class Carrier extends BaseBot {
 
             MapLocation nearestHq = Util.pickNearest(rc, Comms.getHqs(rc));
             assert nearestHq != null;
-            tryMove(directionToward(rc, nearestHq));
-            tryMove(directionToward(rc, nearestHq));
+            tryMove(moveToward(rc, nearestHq));
+            tryMove(moveToward(rc, nearestHq));
             return true;
         }
          return false;
