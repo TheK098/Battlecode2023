@@ -1,6 +1,8 @@
 package qp1;
 
-import battlecode.common.*;
+import battlecode.common.Clock;
+import battlecode.common.GameActionException;
+import battlecode.common.RobotController;
 
 @SuppressWarnings("unused")
 public strictfp class RobotPlayer {
@@ -28,9 +30,11 @@ public strictfp class RobotPlayer {
             case AMPLIFIER:
                 throw new IllegalArgumentException("Type " + rc.getType() + " is not handled!");
         }
+
         while (true) {
 //            int startingRound = rc.getRoundNum();
             try {
+                BaseBot.updateCommsOffsets();
                 bot.processRound();
             } catch (GameActionException e) {
                 System.out.println("GameActionException: " + rc.getType());

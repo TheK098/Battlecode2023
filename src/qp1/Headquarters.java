@@ -24,19 +24,15 @@ public class Headquarters extends BaseBot {
             Comms.addHq(rc, rc.getLocation()); // report HQ position
             Comms.addWells(rc, rc.senseNearbyWells());
         }
-        updateEnemyComms();
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
         EnemySighting[] sightings = Comms.getEnemySightings(rc);
-        int adamantiumPriority, manaPriority = 3600 / (rc.getMapWidth() * rc.getMapHeight());
-        int carrierDensity = 1;
-        for (int i = allies.length; i--> 0;) carrierDensity += allies[i].type == RobotType.CARRIER ? 1 : 0;
-        for (int i = sightings.length; i--> 0;) manaPriority += sightings[i].urgency;
-        adamantiumPriority = possibleLocations.length / carrierDensity;  // locations is action radius, carrierDensity is vision radius
-        Comms.setResourcePriorities(rc, adamantiumPriority, Math.min(30, manaPriority / 10));
-        rc.setIndicatorString(adamantiumPriority + " " + manaPriority);
 
-        if (rc.getRoundNum() % 20 == rc.getID() % 20) Comms.decreaseUrgencies(rc);
-        // urgencies will decrease faster if there are multiple HQs; consider that a feature i guess?
+        updateEnemyComms(enemies);
+        updateResourcePriorities(allies, sightings);
+
+        if ((rc.getRoundNum() - rc.getID()) % (18 / Comms.getHqs(rc).length) == 0) Comms.decreaseUrgencies(rc);
+        if (enemies.length >= 8 && allies.length == 0) return;  // save resources, any bots will get spawnkilled
 
         if (!itsAnchorTime() || (rc.getResourceAmount(ResourceType.ADAMANTIUM) >= 300 && rc.getResourceAmount(ResourceType.MANA) >= 300)) {
             RobotType[] spawnPriority = {RobotType.CARRIER, RobotType.LAUNCHER};
@@ -45,7 +41,7 @@ public class Headquarters extends BaseBot {
                     (50 < rc.getRoundNum() && FastRandom.nextInt(50 * Comms.getKnownWells(rc).length) < rc.getRobotCount()))
                 spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
 
-            MapLocation newCarrierLoc  = pickEmptySpawnLocation(spawnPriority[0]);
+            MapLocation newCarrierLoc = pickEmptySpawnLocation(spawnPriority[0]);
             int typeIdx = 0;
             while (newCarrierLoc != null) {
                 rc.buildRobot(spawnPriority[typeIdx], newCarrierLoc);  // it's guaranteed that we can build
@@ -122,12 +118,22 @@ public class Headquarters extends BaseBot {
         return null;
     }
 
-    private static void updateEnemyComms() throws GameActionException {
+    private static void updateEnemyComms(RobotInfo[] enemies) throws GameActionException {
         if (lastEnemyCommUpdate + 5 <= rc.getRoundNum()) {
-            RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
             RobotInfo nearestEnemy = pickNearest(rc, enemies, false);
             if (nearestEnemy != null && Comms.reportEnemySighting(rc, nearestEnemy.location))
                 lastEnemyCommUpdate = rc.getRoundNum();
         }
+    }
+
+    private static void updateResourcePriorities(RobotInfo[] allies, EnemySighting[] sightings) throws GameActionException {
+        // TODO: might be issue if one HQ has few carriers around it and the other has many
+        int adamantiumPriority, manaPriority = 3600 / (rc.getMapWidth() * rc.getMapHeight());
+        int carrierDensity = 1;
+        for (int i = allies.length; i--> 0;) carrierDensity += allies[i].type == RobotType.CARRIER ? 1 : 0;
+        for (int i = sightings.length; i--> 0;) manaPriority += sightings[i].urgency;
+        adamantiumPriority = possibleLocations.length / carrierDensity;  // locations is action radius, carrierDensity is vision radius
+        Comms.setResourcePriorities(rc, adamantiumPriority, Math.min(30, manaPriority / 10));
+        rc.setIndicatorString(adamantiumPriority + " " + manaPriority + " " + Comms.getEnemySightings(rc).length);
     }
 }

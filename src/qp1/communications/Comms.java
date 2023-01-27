@@ -2,6 +2,7 @@ package qp1.communications;
 
 import battlecode.common.*;
 
+import static qp1.utilities.Util.islandInArray;
 import static qp1.utilities.Util.locationInArray;
 
 // TODO: consider cycling through writing data so that all the bots can eventually know everything
@@ -16,15 +17,16 @@ public class Comms {
 
     private static final int MAP_SIZE = 60;
     private static final int MAX_LOCATION = MAP_SIZE * MAP_SIZE + 1;
-    private static final int MAX_VALUE = 17;
+    private static final int MAX_URGENCY = 17;
+    private static final int MAX_ISLAND_ID = 35;
     private static final int RESOURCE_INDEX = 63;
 
-    private static final int MAX_COUNT = Math.max(6 * 6 * 4, EntityType.ENEMY.count);
+    private static final int MAX_COUNT = 6 * 6 * 4;
 
     private static final int[] indexes = new int[MAX_COUNT];
     private static final MapLocation[] locations = new MapLocation[MAX_COUNT];
-    private static final int[] urgencies = new int[EntityType.ENEMY.count];
-    private static final ResourceType[] wellType = new ResourceType[EntityType.WELL.count];
+    private static final int[] additionalValues = new int[MAX_COUNT];
+    private static final ResourceType[] wellType = new ResourceType[MAX_COUNT];
 
     private static final MapLocation[] wellCache = new MapLocation[6 * 6 * 4];
     private static final ResourceType[] wellTypeCache = new ResourceType[6 * 6 * 4];
@@ -56,6 +58,23 @@ public class Comms {
         }
     }
 
+    public static class IslandInfo {
+        public MapLocation baseLocation;
+        public int id;
+        public Team team;
+        public int lastUpdate;
+        IslandInfo(MapLocation baseLocation, int id, Team team, int lastUpdate) {
+            this.baseLocation = baseLocation;
+            this.id = id;
+            this.team = team;
+            this.lastUpdate = lastUpdate;
+        }
+        @Override
+        public String toString() {
+            return "IslandInfo(" + id + ", " + baseLocation.toString() + ")";
+        }
+    }
+
     public static WellLocation[] getKnownWells(RobotController rc) throws GameActionException {
         int locationsIdx = loadSharedLocations(rc, EntityType.WELL);
         int n = locationsIdx + wellCacheSize;
@@ -74,9 +93,22 @@ public class Comms {
         int locationsIdx = loadSharedLocations(rc, EntityType.ENEMY);
         EnemySighting[] sightings = new EnemySighting[locationsIdx];
         for (int i = locationsIdx; i --> 0;) {
-            sightings[i] = new EnemySighting(locations[i], urgencies[i]);
+            sightings[i] = new EnemySighting(locations[i], additionalValues[i]);
         }
         return sightings;
+    }
+    public static IslandInfo[] getIslands(RobotController rc) throws GameActionException {
+        int locationsIdx = loadSharedLocations(rc, EntityType.ISLAND);
+        IslandInfo[] islands = new IslandInfo[locationsIdx];
+        for (int i = locationsIdx; i --> 0;) {
+            int value = additionalValues[i];
+            islands[i] = new IslandInfo(
+                    locations[i],
+                    (value % MAX_ISLAND_ID) + 1,
+                    Team.values()[(value / MAX_ISLAND_ID) % 3],
+                    value / MAX_ISLAND_ID / 3);
+        }
+        return islands;
     }
 
     private static int loadSharedLocations(RobotController rc, EntityType entityType) throws GameActionException {
@@ -84,10 +116,11 @@ public class Comms {
         for (int i = entityType.count; i --> 0;) {
             int value = rc.readSharedArray(entityType.offset + i);
             if (value != INVALID) {
-                if (entityType == EntityType.ENEMY) urgencies[locationsIdx] = value / MAX_LOCATION;
-                else if (entityType == EntityType.WELL) wellType[locationsIdx] = ResourceType.values()[value / MAX_LOCATION];
+                additionalValues[locationsIdx] = value / MAX_LOCATION;
                 indexes[locationsIdx] = entityType.offset + i;
-                locations[locationsIdx++] = unpackLocation(value);
+                locations[locationsIdx] = unpackLocation(value);
+                if (entityType == EntityType.WELL) wellType[locationsIdx] = ResourceType.values()[value / MAX_LOCATION];
+                ++locationsIdx;
             }
         }
         return locationsIdx;
@@ -106,9 +139,22 @@ public class Comms {
     public static void addHq(RobotController rc, MapLocation hqLoc) throws GameActionException {
         MapLocation[] knownLocations = getHqs(rc);
         if (!locationInArray(knownLocations, hqLoc)) {
-            int index = findEmptySpot(rc, EntityType.HQ);
-            if (rc.canWriteSharedArray(index, pack(hqLoc))) {
-                rc.writeSharedArray(index, pack(hqLoc));
+            int offset =  // need to pick lowest for BaseBot.updateCommsOffsets to work
+                    rc.readSharedArray(EntityType.HQ.offset) == INVALID ? 0 :
+                    rc.readSharedArray(EntityType.HQ.offset + 1) == INVALID ? 1 :
+                    rc.readSharedArray(EntityType.HQ.offset + 2) == INVALID ? 2 :
+                    rc.readSharedArray(EntityType.HQ.offset + 3) == INVALID ? 3 : 0;
+            if (rc.canWriteSharedArray(EntityType.HQ.offset + offset, pack(hqLoc))) {
+                rc.writeSharedArray(EntityType.HQ.offset + offset, pack(hqLoc));
+            }
+        }
+    }
+    public static void addIslands(RobotController rc, IslandInfo[] islands) throws GameActionException {
+        IslandInfo[] knownIslands = getIslands(rc);
+        for (int i = islands.length; i --> 0;) {
+            if (!islandInArray(knownIslands, islands[i])) {
+                int index = findEmptySpot(rc, EntityType.ISLAND);
+                if (rc.canWriteSharedArray(index, islands[i].hashCode())) rc.writeSharedArray(index, islands[i].hashCode());
             }
         }
     }
@@ -126,8 +172,8 @@ public class Comms {
             if (emptySpot == -1) {
                 int minCount = MAX_COUNT;
                 for (int i = EntityType.ENEMY.count; i --> 0;) {
-                    if (minCount > urgencies[i]) {
-                        minCount = urgencies[i];
+                    if (minCount > additionalValues[i]) {
+                        minCount = additionalValues[i];
                         emptySpot = indexes[i];
                     }
                 }
@@ -140,7 +186,7 @@ public class Comms {
         } else {
             for (int i = n; i-- > 0; ) {
                 if (locations[i].isWithinDistanceSquared(enemyLoc, 25)) {
-                    int newValue = pack(locations[i], urgencies[i] + 1);
+                    int newValue = pack(locations[i], additionalValues[i] + 1);
                     if (rc.canWriteSharedArray(indexes[i], newValue)) {
                         rc.writeSharedArray(indexes[i], newValue);
                         return true;
@@ -154,7 +200,7 @@ public class Comms {
         assert rc.canWriteSharedArray(0, 0);
         int n = loadSharedLocations(rc, EntityType.ENEMY);
         for (int i = n; i --> 0;) {
-            int newValue = pack(locations[i], Math.max(0, urgencies[i] - 1));
+            int newValue = pack(locations[i], Math.max(0, additionalValues[i] - 1));
             rc.writeSharedArray(indexes[i], newValue);
         }
     }
@@ -194,7 +240,7 @@ public class Comms {
         return new MapLocation(x / MAP_SIZE, x % MAP_SIZE);
     }
     private static int pack(MapLocation loc, int urgency) {
-        return Math.min(MAX_VALUE, urgency) * MAX_LOCATION + pack(loc);
+        return Math.min(MAX_URGENCY, urgency) * MAX_LOCATION + pack(loc);
     }
     private static int pack(MapLocation loc, ResourceType resourceType) {
         return resourceType.ordinal() * MAX_LOCATION + pack(loc);

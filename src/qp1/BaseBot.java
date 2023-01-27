@@ -1,6 +1,8 @@
 package qp1;
 
 import battlecode.common.*;
+import qp1.communications.Comms;
+import qp1.communications.EntityType;
 import qp1.utilities.FastRandom;
 
 import static qp1.utilities.Util.pickNearest;
@@ -44,5 +46,25 @@ abstract public class BaseBot {
             return pickNearest(rc, nearestIslandLocations);
         }
         return null;
+    }
+
+    public static void updateCommsOffsets() throws GameActionException {
+        // HQ.count == 0 -> uninitialized, round == 2 && HQ -> values need to be updated
+        if (EntityType.HQ.count == 0 || (rc.getRoundNum() == 2 && rc.getType() == RobotType.HEADQUARTERS)) {
+            EntityType.ENEMY.offset = 0;
+            EntityType.ENEMY.count = (int) (Math.log(rc.getMapWidth() * rc.getMapHeight())) + 1;  // from 9 to 12
+
+            EntityType.ISLAND.offset = EntityType.ENEMY.offset + EntityType.ENEMY.count;
+            EntityType.ISLAND.count = rc.getIslandCount();
+
+            EntityType.HQ.offset = EntityType.ISLAND.offset + EntityType.ISLAND.count;
+            EntityType.HQ.count = 4;  // need to initialize to 4 in order for Comms.getHqs to work
+            if (rc.getRoundNum() > 1) {
+                EntityType.HQ.count = Comms.getHqs(rc).length;  // assumes that the lowest indexes are always used
+            }
+            EntityType.WELL.offset = EntityType.HQ.offset + EntityType.HQ.count;
+            EntityType.WELL.count = 63 - EntityType.WELL.offset;  // will always have at least 9 spots
+            // index 63 is used for resource prioritization
+        }
     }
 }

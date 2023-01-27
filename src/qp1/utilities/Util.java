@@ -3,6 +3,7 @@ package qp1.utilities;
 import battlecode.common.*;
 import qp1.communications.Comms;
 import qp1.communications.Comms.WellLocation;
+import qp1.communications.Comms.IslandInfo;
 
 import static qp1.navigation.Pathfinding.DIRECTIONS;
 import static qp1.navigation.Pathfinding.INF_DIST;
@@ -228,9 +229,11 @@ public class Util {
     }
 
     public static boolean locationInArray(MapLocation[] array, MapLocation loc) {
-        for (int i = array.length; i-- > 0; ) {
-            if (array[i].equals(loc)) return true;
-        }
+        for (int i = array.length; i-- > 0; ) if (array[i].equals(loc)) return true;
+        return false;
+    }
+    public static boolean islandInArray(IslandInfo[] array, IslandInfo island) {
+        for (int i = array.length; i --> 0;) if (array[i].id == island.id) return true;
         return false;
     }
     public static boolean locationInArray(MapLocation[] array, int n, MapLocation loc) {
