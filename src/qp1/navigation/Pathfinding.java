@@ -45,7 +45,6 @@ public class Pathfinding {
     // declare arrays once whenever possible to save bytecode
     private static final Direction[][] startingDir = new Direction[MAX_SIZE][MAX_SIZE];
     private static final int[][] distance = new int[MAX_SIZE][MAX_SIZE];
-    private static boolean resetDistanceNeeded = true;
 //    private static final MapLocation[] locations = new MapLocation[MAX_IN_RANGE];
 //    private static final int[][] cost = new int[MAX_IN_RANGE][DIRECTIONS.length];
 
@@ -56,12 +55,6 @@ public class Pathfinding {
     public static Direction moveToward(RobotController rc, MapLocation target) throws GameActionException {
         debugBytecode("4.0");
         int visionLength = (int)(Math.sqrt(rc.getType().visionRadiusSquared) + 0.00001);
-        if (resetDistanceNeeded) {  // reset distance array preemptively so that we save bytecode on rounds that need pathing
-            resetDistanceNeeded = false;
-            for (int x = visionLength + visionLength + 1; x --> 0;) {
-                Arrays.fill(distance[x], INF_DIST);
-            }
-        }
 
         Direction dir = directionToward(rc, target);
         MapLocation curLoc = rc.getLocation();
@@ -70,8 +63,9 @@ public class Pathfinding {
             rc.setIndicatorString("Shortcut move " + dir);
             return dir;
         }
-
-        resetDistanceNeeded = true;
+        for (int x = visionLength + visionLength + 1; x --> 0;) {
+            Arrays.fill(distance[x], INF_DIST);
+        }
 
         int minX = curLoc.x - visionLength, minY = curLoc.y - visionLength;
 
