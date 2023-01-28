@@ -5,6 +5,7 @@ import qp1.communications.Comms;
 import qp1.communications.Comms.WellLocation;
 import qp1.communications.Comms.IslandInfo;
 
+import static qp1.communications.Comms.UPDATE_FREQ;
 import static qp1.navigation.Pathfinding.DIRECTIONS;
 import static qp1.navigation.Pathfinding.INF_DIST;
 
@@ -89,7 +90,7 @@ public class Util {
         int closestIndex = -1;
         int closestDistance = INF_DIST;
         for (int i = islands.length; i --> 0;) {
-            if (islands[i].team == team || (islands[i].lastUpdate + 1000 <= rc.getRoundNum())) {
+            if (islands[i].team == team || (islands[i].lastUpdate <= (rc.getRoundNum() - 500) / UPDATE_FREQ)) {
                 int distance = islands[i].location.distanceSquaredTo(rc.getLocation());
                 if (closestDistance > distance) {
                     closestDistance = distance;

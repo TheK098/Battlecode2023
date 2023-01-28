@@ -13,16 +13,17 @@ import static qp1.utilities.Util.locationInArray;
  */
 public class Comms {
     private static final int INVALID = 0;
+    private static final int RESOURCE_INDEX = 63;
 
     private static final int MAP_SIZE = 60;
     private static final int MAP_COMPRESSION = 3;
-    private static final int UPDATE_FREQ = 40;
+    private static final int MAP_COMPRESSED_SIZE = MAP_SIZE / MAP_COMPRESSION;  // make sure MAP_SIZE % MAP_COMPRESSION == 0 or add 1 to this value
 
-    private static final int MAX_COMPRESSED_LOCATION = (MAP_SIZE / MAP_COMPRESSION) * (MAP_SIZE / MAP_COMPRESSION) + 1;
-    private static final int MAX_LOCATION = MAP_SIZE * MAP_SIZE + 1;
+    private static final int MAX_COMPRESSED_LOCATION = MAP_COMPRESSED_SIZE * MAP_COMPRESSED_SIZE;
+    private static final int MAX_LOCATION = MAP_SIZE * MAP_SIZE;
+    public static final int UPDATE_FREQ = 40;
     private static final int MAX_URGENCY = 17;
     private static final int MAX_ISLAND_ID = 35;
-    private static final int RESOURCE_INDEX = 63;
 
     private static final int MAX_COUNT = 6 * 6 * 4;
 
@@ -62,31 +63,53 @@ public class Comms {
         }
     }
 
+    public static class CompressedMapLocation {
+        public int x, y;
+        CompressedMapLocation(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+        CompressedMapLocation(int value) {
+            this(value / MAP_COMPRESSED_SIZE, value % MAP_COMPRESSED_SIZE);
+        }
+
+        @Override
+        public int hashCode() {
+            return x * MAP_COMPRESSED_SIZE + y;
+        }
+        @Override
+        public String toString() {
+            return "CML[" + x * MAP_COMPRESSION + "," + y * MAP_COMPRESSION + "]";
+        }
+    }
+
     public static class IslandInfo {
+        private final CompressedMapLocation compressedLocation;
         public MapLocation location;
         public int id;
         public Team team;
         public int lastUpdate;
         public IslandInfo(MapLocation location, int id, Team team, int lastUpdate) {
-            this.location = new MapLocation(location.x / MAP_COMPRESSION, location.y / MAP_COMPRESSION);
+            this.compressedLocation = new CompressedMapLocation(location.x / MAP_COMPRESSION, location.y / MAP_COMPRESSION);
+            this.location = location;
             this.id = id;
             this.team = team;
             this.lastUpdate = lastUpdate;
         }
-        IslandInfo(int x) {
-            --x;
-            this.location = unpackLocation(x % MAX_COMPRESSED_LOCATION); x /= MAX_COMPRESSED_LOCATION;
-            this.id = (x % MAX_ISLAND_ID) + 1; x /= MAX_ISLAND_ID;
-            this.team = Team.values()[x % 3]; x /= 3;
-            this.lastUpdate = x;
+        IslandInfo(int value, int id) {
+            this.compressedLocation = new CompressedMapLocation(value % MAX_COMPRESSED_LOCATION); value /= MAX_COMPRESSED_LOCATION;
+            this.location = new MapLocation(compressedLocation.x * MAP_COMPRESSION, compressedLocation.y * MAP_COMPRESSION);
+            this.id = id;
+            this.team = Team.values()[value % 3]; value /= 3;
+            this.lastUpdate = value;
         }
         @Override
         public int hashCode() {
-            return (lastUpdate * 3 + team.ordinal()) * MAX_COMPRESSED_LOCATION + pack(location) + 1;
+            return (lastUpdate * 3 + team.ordinal()) * MAX_COMPRESSED_LOCATION + compressedLocation.hashCode();
         }
         @Override
         public String toString() {
-            return "IslandInfo(" + location.toString() + ", " + id + ", " + team + ", " + lastUpdate + ")";
+            return "IslandInfo(" + compressedLocation.toString() + ", " + id + ", " + team + ", " + lastUpdate + ")";
         }
     }
 
@@ -116,11 +139,9 @@ public class Comms {
         int n = 0;
         IslandInfo[] islandsTmp = new IslandInfo[rc.getIslandCount()];
         for (int i = EntityType.ISLAND.count; i --> 0;) {
-            int value = rc.readSharedArray(EntityType.ISLAND.offset + i);
-            if (value != INVALID) {
-                islandsTmp[n] = new IslandInfo(value);
-                islandsTmp[n].location = new MapLocation(islandsTmp[n].location.x * MAP_COMPRESSION, islandsTmp[n].location.y * MAP_COMPRESSION);
-                ++n;
+            int value = rc.readSharedArray(EntityType.ISLAND.offset + i) - 1;
+            if (value >= 0) {
+                islandsTmp[n++] = new IslandInfo(value, i + 1);
             }
         }
         IslandInfo[] islands = new IslandInfo[n];
@@ -131,8 +152,8 @@ public class Comms {
     private static int loadSharedLocations(RobotController rc, EntityType entityType) throws GameActionException {
         int locationsIdx = 0;
         for (int i = entityType.count; i --> 0;) {
-            int value = rc.readSharedArray(entityType.offset + i);
-            if (value != INVALID) {
+            int value = rc.readSharedArray(entityType.offset + i) - 1;
+            if (value >= 0) {
                 additionalValues[locationsIdx] = value / MAX_LOCATION;
                 indexes[locationsIdx] = entityType.offset + i;
                 locations[locationsIdx] = unpackLocation(value);
@@ -161,8 +182,8 @@ public class Comms {
                     rc.readSharedArray(EntityType.HQ.offset + 1) == INVALID ? 1 :
                     rc.readSharedArray(EntityType.HQ.offset + 2) == INVALID ? 2 :
                     rc.readSharedArray(EntityType.HQ.offset + 3) == INVALID ? 3 : 0;
-            if (rc.canWriteSharedArray(EntityType.HQ.offset + offset, pack(hqLoc))) {
-                rc.writeSharedArray(EntityType.HQ.offset + offset, pack(hqLoc));
+            if (rc.canWriteSharedArray(EntityType.HQ.offset + offset, pack(hqLoc) + 1)) {
+                rc.writeSharedArray(EntityType.HQ.offset + offset, pack(hqLoc) + 1);
             }
         }
     }
@@ -172,7 +193,8 @@ public class Comms {
             MapLocation[] locations = rc.senseNearbyIslandLocations(islands[i]);
             int index = EntityType.ISLAND.offset + islands[i] - 1;
             IslandInfo island = new IslandInfo(locations[0], islands[i], rc.senseTeamOccupyingIsland(islands[i]), rc.getRoundNum() / UPDATE_FREQ);
-            if (rc.canWriteSharedArray(index, island.hashCode())) rc.writeSharedArray(index, island.hashCode());
+            if (rc.canWriteSharedArray(index, island.hashCode() + 1))
+                rc.writeSharedArray(index, island.hashCode() + 1);
             else islandCache[island.id] = island;
         }
         tryPushIslandCache(rc);
@@ -197,7 +219,7 @@ public class Comms {
                     }
                 }
             }
-            int newValue = pack(enemyLoc, 2);
+            int newValue = pack(enemyLoc, 2) + 1;
             if (rc.canWriteSharedArray(emptySpot, newValue)) {
                 rc.writeSharedArray(emptySpot, newValue);
                 return true;
@@ -205,7 +227,7 @@ public class Comms {
         } else {
             for (int i = n; i-- > 0; ) {
                 if (locations[i].isWithinDistanceSquared(enemyLoc, 25)) {
-                    int newValue = pack(locations[i], additionalValues[i] + 1);
+                    int newValue = pack(locations[i], additionalValues[i] + 1) + 1;
                     if (rc.canWriteSharedArray(indexes[i], newValue)) {
                         rc.writeSharedArray(indexes[i], newValue);
                         return true;
@@ -219,15 +241,14 @@ public class Comms {
         assert rc.canWriteSharedArray(0, 0);
         int n = loadSharedLocations(rc, EntityType.ENEMY);
         for (int i = n; i --> 0;) {
-            int newValue = pack(locations[i], Math.max(0, additionalValues[i] - 1));
-            rc.writeSharedArray(indexes[i], newValue);
+            rc.writeSharedArray(indexes[i], pack(locations[i], Math.max(0, additionalValues[i] - 1)) + 1);
         }
     }
 
     private static int findEmptySpot(RobotController rc, EntityType entityType) throws GameActionException {
         for (int i = entityType.count; i --> 0;) {
-            int value = rc.readSharedArray(entityType.offset + i);
-            if (value == INVALID) return entityType.offset + i;
+            int value = rc.readSharedArray(entityType.offset + i) - 1;
+            if (value == -1) return entityType.offset + i;
         }
         return -1;
     }
@@ -244,7 +265,7 @@ public class Comms {
 
                 int index = findEmptySpot(rc, EntityType.WELL);
                 if (index != -1) {
-                    rc.writeSharedArray(index, pack(wellCache[wellCacheSize], wellTypeCache[wellCacheSize]));
+                    rc.writeSharedArray(index, pack(wellCache[wellCacheSize], wellTypeCache[wellCacheSize]) + 1);
                 } else {
                     ++wellCacheSize;
                     break;
@@ -257,16 +278,15 @@ public class Comms {
         if (rc.canWriteSharedArray(0, 0)) {  // just check once at top, hopefully we don't have bytecode issues
             for (int i = EntityType.ISLAND.count; i-- > 0; ) {
                 int index = EntityType.ISLAND.offset + i;
-                int currentValue = rc.readSharedArray(index);
 
                 if (islandCache[i] != null) {
-                    if (currentValue == 0) {
-                        rc.writeSharedArray(index, islandCache[i].hashCode());
+                    if (rc.readSharedArray(index) == INVALID) {
+                        rc.writeSharedArray(index, islandCache[i].hashCode() + 1);
                         islandCache[i] = null;
                     } else {
-                        IslandInfo currentIsland = new IslandInfo(rc.readSharedArray(index));
+                        IslandInfo currentIsland = new IslandInfo(rc.readSharedArray(index) - 1, i + 1);
                         if (islandCache[i].lastUpdate > currentIsland.lastUpdate) {
-                            rc.writeSharedArray(index, islandCache[i].hashCode());
+                            rc.writeSharedArray(index, islandCache[i].hashCode() + 1);
                             islandCache[i] = null;
                         }
                     }
@@ -276,11 +296,10 @@ public class Comms {
     }
 
     private static int pack(MapLocation loc) {
-        return loc.x * MAP_SIZE + loc.y + 1;
+        return loc.x * MAP_SIZE + loc.y;
     }
     private static MapLocation unpackLocation(int x) {
-        x = (x % MAX_LOCATION) - 1;
-        return new MapLocation(x / MAP_SIZE, x % MAP_SIZE);
+        return new MapLocation((x % MAX_LOCATION) / MAP_SIZE, x % MAP_SIZE);
     }
     private static int pack(MapLocation loc, int urgency) {
         return Math.min(MAX_URGENCY, urgency) * MAX_LOCATION + pack(loc);
