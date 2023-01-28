@@ -63,7 +63,8 @@ public class Pathfinding {
         }
 
         Direction dir = directionToward(rc, target);
-        MapLocation nextLoc = rc.getLocation().add(dir);
+        MapLocation curLoc = rc.getLocation();
+        MapLocation nextLoc = curLoc.add(dir);
         if (dir != Direction.CENTER && directionTowardHypothetical(rc, nextLoc, target) != Direction.CENTER) {
             rc.setIndicatorString("Shortcut move " + dir);
             return dir;
@@ -71,22 +72,23 @@ public class Pathfinding {
 
         resetDistanceNeeded = true;
 
-        int minX = rc.getLocation().x - visionLength, minY = rc.getLocation().y - visionLength;
+        int minX = curLoc.x - visionLength, minY = curLoc.y - visionLength;
 
 //        debugBytecode("4.1");
 
         int queueStart = 0, queueEnd = 0;
-        queue[queueEnd++] = rc.getLocation().translate(-minX, -minY);
-        distance[rc.getLocation().x - minX][rc.getLocation().y - minY] = 0;
-        startingDir[rc.getLocation().x - minX][rc.getLocation().y - minY] = Direction.CENTER;
+        queue[queueEnd++] = curLoc.translate(-minX, -minY);
+        distance[visionLength][visionLength] = 0;
+        startingDir[visionLength][visionLength] = Direction.CENTER;
 
-        Direction closestDir = rc.getLocation().directionTo(target);
+        Direction closestDir = curLoc.directionTo(target);
         int closestDistance = INF_DIST;
 
         MapLocation trueNextLoc; int x, y, d, nx, ny, distanceRemaining, totalDistance;  // declare once at top to save bytecode
         while (queueStart < queueEnd) {
 //            debugBytecode("4.2");
-            x = queue[queueStart].x; y = queue[queueStart].y;
+            curLoc = queue[queueStart];
+            x = curLoc.x; y = curLoc.y;
 
             distanceRemaining = Math.max(
                     Math.abs(target.x - (x + minX)),
@@ -103,7 +105,7 @@ public class Pathfinding {
 //            debugBytecode("4.3");
             for (d = 8; d --> 0;) {
                 dir = Direction.allDirections()[d];
-                nextLoc = queue[queueStart].add(dir);
+                nextLoc = curLoc.add(dir);
                 nx = nextLoc.x; ny = nextLoc.y;
 
                 if (nx >= 0 && nx < MAX_SIZE && ny >= 0 && ny < MAX_SIZE && distance[nx][ny] == INF_DIST) {
