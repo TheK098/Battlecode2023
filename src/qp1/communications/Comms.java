@@ -89,7 +89,7 @@ public class Comms {
         public int id;
         public Team team;
         public int lastUpdate;
-        public IslandInfo(MapLocation location, int id, Team team, int lastUpdate) {
+        IslandInfo(MapLocation location, int id, Team team, int lastUpdate) {
             this.compressedLocation = new CompressedMapLocation(location.x / MAP_COMPRESSION, location.y / MAP_COMPRESSION);
             this.location = location;
             this.id = id;
@@ -195,7 +195,7 @@ public class Comms {
             IslandInfo island = new IslandInfo(locations[0], islands[i], rc.senseTeamOccupyingIsland(islands[i]), rc.getRoundNum() / UPDATE_FREQ);
             if (rc.canWriteSharedArray(index, island.hashCode() + 1))
                 rc.writeSharedArray(index, island.hashCode() + 1);
-            else islandCache[island.id] = island;
+            else islandCache[islands[i] - 1] = island;
         }
         tryPushIslandCache(rc);
     }
