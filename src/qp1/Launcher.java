@@ -55,7 +55,7 @@ public class Launcher extends BaseBot {
         }
 
         if (rc.isActionReady()) {  // try attacking again after moving
-            RobotInfo target = pickTarget(rc.senseNearbyRobots(-1, rc.getTeam().opponent()));
+            RobotInfo target = pickTarget(rc.senseNearbyRobots(RobotType.LAUNCHER.actionRadiusSquared, rc.getTeam().opponent()));
             if (target != null && rc.canAttack(target.location)) {
                 rc.attack(target.location);
                 lastMoveOrAction = rc.getRoundNum();
@@ -152,7 +152,7 @@ public class Launcher extends BaseBot {
             }
         }
         if (targetIdx != -1) {
-            tryMove(moveToward(rc, enemySightings[targetIdx].location));
+            tryMove(moveToward(rc, enemySightings[targetIdx].location, 650));
             rc.setIndicatorString(targetScore + " " + enemySightings[targetIdx]);
             return true;
         }
@@ -162,12 +162,12 @@ public class Launcher extends BaseBot {
     private static boolean attackIslands() throws GameActionException {
         MapLocation nearestVisibleIsland = findNearestVisibleIslandLocation(rc.getTeam().opponent());
         if (nearestVisibleIsland != null) {
-            tryMove(moveToward(rc, nearestVisibleIsland));  // if we're already on island, just stay there
+            tryMove(moveToward(rc, nearestVisibleIsland, 650));  // if we're already on island, just stay there
             return true;
         } else {
             IslandInfo nearestIsland = pickNearest(rc, Comms.getIslands(rc), rc.getTeam().opponent());
             if (nearestIsland != null && rc.getLocation().isWithinDistanceSquared(nearestIsland.location, 81)) {
-                tryMove(moveToward(rc, nearestIsland.location));
+                tryMove(moveToward(rc, nearestIsland.location, 1500));
                 rc.setIndicatorString("Moving toward island " + nearestIsland.location);
                 return true;
             }

@@ -51,7 +51,8 @@ public class Pathfinding {
 
 
     // BFS, only handles passability
-    public static Direction moveToward(RobotController rc, MapLocation target) throws GameActionException {
+    // bytecodeLimit should be at least 650
+    public static Direction moveToward(RobotController rc, MapLocation target, int bytecodeLimit) throws GameActionException {
 //        debugBytecode("4.0");
         int visionLength = (int)(Math.sqrt(rc.getType().visionRadiusSquared) + 0.00001);
 
@@ -81,9 +82,9 @@ public class Pathfinding {
 
         int y, d, nx, ny, distanceRemaining, dist;   // declare once at top to save bytecode
         Direction curDir;
-        while (queueStart < queueEnd) {
+        while (queueStart < queueEnd && Clock.getBytecodesLeft() >= bytecodeLimit) {  // one iteration can take around 600 bytecodes
 //            debugBytecode("4.2");
-            curLoc = queue[queueStart];
+            curLoc = queue[queueStart++];
             x = curLoc.x - minX; y = curLoc.y - minY;
 
             distanceRemaining = Math.max(
@@ -119,7 +120,6 @@ public class Pathfinding {
                     }
                 }
             }
-            ++queueStart;
         }
 //        debugBytecode("4.4");
         return closestDir;
