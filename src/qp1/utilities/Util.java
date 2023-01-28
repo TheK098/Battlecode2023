@@ -85,6 +85,20 @@ public class Util {
         }
         return closestIndex == -1 ? null : wells[closestIndex];
     }
+    public static IslandInfo pickNearest(RobotController rc, IslandInfo[] islands, Team team) {
+        int closestIndex = -1;
+        int closestDistance = INF_DIST;
+        for (int i = islands.length; i --> 0;) {
+            if (islands[i].team == team || (islands[i].lastUpdate + 1000 <= rc.getRoundNum())) {
+                int distance = islands[i].location.distanceSquaredTo(rc.getLocation());
+                if (closestDistance > distance) {
+                    closestDistance = distance;
+                    closestIndex = i;
+                }
+            }
+        }
+        return closestIndex == -1 ? null : islands[closestIndex];
+    }
 
     public static RobotInfo pickNearestEnemyHq(RobotController rc, RobotInfo[] robots) {
         int closestIndex = -1;
@@ -168,6 +182,25 @@ public class Util {
         return Direction.allDirections()[bestIdx];  // CENTER should always be allowed
     }
 
+    public static Direction directionTowardHypothetical(RobotController rc, MapLocation currentLocation, MapLocation target) throws GameActionException {
+        int bestIdx = 8, bestDist = INF_DIST * 100;
+        for (int d = 9; d --> 0;) {
+            Direction dir = Direction.allDirections()[d];
+            if (!rc.canSenseLocation(currentLocation.add(dir)) || !rc.sensePassability(currentLocation.add(dir))) continue;
+            MapLocation immediateLocation = currentLocation.add(dir);
+            if (rc.canSenseLocation(immediateLocation)) {
+                MapInfo mapInfo = rc.senseMapInfo(immediateLocation);
+                MapLocation result = immediateLocation.add(mapInfo.getCurrentDirection());
+                int dist = (int) (10 * (result.distanceSquaredTo(target) * 10 + mapInfo.getCooldownMultiplier(rc.getTeam())));
+                if (bestDist > dist) {
+                    bestDist = dist;
+                    bestIdx = d;
+                }
+            }
+        }
+        return Direction.allDirections()[bestIdx];  // CENTER should always be allowed
+    }
+
     public static Direction directionAway(RobotController rc, MapLocation target) throws GameActionException {
         int bestIdx = 8, bestDist = 0;
         for (int d = 9; d --> 0;) {
@@ -230,10 +263,6 @@ public class Util {
 
     public static boolean locationInArray(MapLocation[] array, MapLocation loc) {
         for (int i = array.length; i-- > 0; ) if (array[i].equals(loc)) return true;
-        return false;
-    }
-    public static boolean islandInArray(IslandInfo[] array, IslandInfo island) {
-        for (int i = array.length; i --> 0;) if (array[i].id == island.id) return true;
         return false;
     }
     public static boolean locationInArray(MapLocation[] array, int n, MapLocation loc) {

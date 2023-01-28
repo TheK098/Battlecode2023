@@ -2,6 +2,7 @@ package qp1;
 
 import battlecode.common.*;
 import qp1.communications.Comms;
+import qp1.communications.Comms.IslandInfo;
 import qp1.communications.Comms.WellLocation;
 import qp1.communications.EntityType;
 import qp1.navigation.SpreadSettings;
@@ -33,6 +34,7 @@ public class Carrier extends BaseBot {
     @Override
     public void processRound() throws GameActionException {
         Comms.addWells(rc, rc.senseNearbyWells());
+        Comms.addNearbyIslands(rc);
 
         if (enemySighting != null) {
             if (Comms.reportEnemySighting(rc, enemySighting)) {
@@ -141,16 +143,21 @@ public class Carrier extends BaseBot {
             }
         }
         if (rc.getAnchor() == Anchor.STANDARD) {
-            MapLocation target = findNearestIslandLocation(Team.NEUTRAL);
-            if (target != null) {
-                tryMove(moveToward(rc, target));  // no-op if we're at target already
-                if (rc.getLocation().equals(target) && rc.canPlaceAnchor()) rc.placeAnchor();
-                rc.setIndicatorString("Trying to place anchor at " + target);
-            } else {
-                // spread out from other anchor bots
-                tryMove(spreadOut(rc, 0, 0, SpreadSettings.CARRIER_ANCHOR));
-                rc.setIndicatorString("Spreading out with anchor");
-            }
+            // required since comms only stores approx location
+            MapLocation nearestVisibleIsland = findNearestVisibleIslandLocation(Team.NEUTRAL);
+            if (nearestVisibleIsland == null) {
+                IslandInfo target = pickNearest(rc, Comms.getIslands(rc), Team.NEUTRAL);
+                if (target != null) {
+                    tryMove(moveToward(rc, target.location));  // no-op if we're at target already
+                    rc.setIndicatorString("Moving towards approximate location " + target);
+                } else {
+                    // spread out from other anchor bots
+                    tryMove(spreadOut(rc, 0, 0, SpreadSettings.CARRIER_ANCHOR));
+                    rc.setIndicatorString("Spreading out with anchor");
+                }
+            } else if (rc.canPlaceAnchor()) {
+                rc.placeAnchor();
+            } else tryMove(moveToward(rc, nearestVisibleIsland));
         }
     }
 
@@ -327,6 +334,6 @@ public class Carrier extends BaseBot {
 
     @SuppressWarnings("unused")
     public static void debugBytecode(String s) {
-        if (rc.getID() == 12141 && rc.getRoundNum() <= 60) System.out.println(s + ": " + Clock.getBytecodeNum());
+        if (rc.getID() == 12606 && rc.getRoundNum() <= 60) System.out.println(s + ": " + Clock.getBytecodeNum());
     }
 }

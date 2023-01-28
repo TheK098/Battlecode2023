@@ -63,7 +63,8 @@ public class Pathfinding {
         }
 
         Direction dir = directionToward(rc, target);
-        if (dir != Direction.CENTER) {
+        MapLocation nextLoc = rc.getLocation().add(dir);
+        if (dir != Direction.CENTER && directionTowardHypothetical(rc, nextLoc, target) != Direction.CENTER) {
             rc.setIndicatorString("Shortcut move " + dir);
             return dir;
         }
@@ -82,7 +83,7 @@ public class Pathfinding {
         Direction closestDir = rc.getLocation().directionTo(target);
         int closestDistance = INF_DIST;
 
-        MapLocation nextLoc, trueNextLoc; int x, y, d, nx, ny, distanceRemaining, totalDistance;  // declare once at top to save bytecode
+        MapLocation trueNextLoc; int x, y, d, nx, ny, distanceRemaining, totalDistance;  // declare once at top to save bytecode
         while (queueStart < queueEnd) {
 //            debugBytecode("4.2");
             x = queue[queueStart].x; y = queue[queueStart].y;

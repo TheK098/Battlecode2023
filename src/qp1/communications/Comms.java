@@ -2,7 +2,6 @@ package qp1.communications;
 
 import battlecode.common.*;
 
-import static qp1.utilities.Util.islandInArray;
 import static qp1.utilities.Util.locationInArray;
 
 // TODO: consider cycling through writing data so that all the bots can eventually know everything
@@ -16,6 +15,10 @@ public class Comms {
     private static final int INVALID = 0;
 
     private static final int MAP_SIZE = 60;
+    private static final int MAP_COMPRESSION = 3;
+    private static final int UPDATE_FREQ = 40;
+
+    private static final int MAX_COMPRESSED_LOCATION = (MAP_SIZE / MAP_COMPRESSION) * (MAP_SIZE / MAP_COMPRESSION) + 1;
     private static final int MAX_LOCATION = MAP_SIZE * MAP_SIZE + 1;
     private static final int MAX_URGENCY = 17;
     private static final int MAX_ISLAND_ID = 35;
@@ -28,6 +31,7 @@ public class Comms {
     private static final int[] additionalValues = new int[MAX_COUNT];
     private static final ResourceType[] wellType = new ResourceType[MAX_COUNT];
 
+    private static final IslandInfo[] islandCache = new IslandInfo[MAX_ISLAND_ID];
     private static final MapLocation[] wellCache = new MapLocation[6 * 6 * 4];
     private static final ResourceType[] wellTypeCache = new ResourceType[6 * 6 * 4];
     private static int wellCacheSize = 0;
@@ -59,19 +63,30 @@ public class Comms {
     }
 
     public static class IslandInfo {
-        public MapLocation baseLocation;
+        public MapLocation location;
         public int id;
         public Team team;
         public int lastUpdate;
-        IslandInfo(MapLocation baseLocation, int id, Team team, int lastUpdate) {
-            this.baseLocation = baseLocation;
+        public IslandInfo(MapLocation location, int id, Team team, int lastUpdate) {
+            this.location = new MapLocation(location.x / MAP_COMPRESSION, location.y / MAP_COMPRESSION);
             this.id = id;
             this.team = team;
             this.lastUpdate = lastUpdate;
         }
+        IslandInfo(int x) {
+            --x;
+            this.location = unpackLocation(x % MAX_COMPRESSED_LOCATION); x /= MAX_COMPRESSED_LOCATION;
+            this.id = (x % MAX_ISLAND_ID) + 1; x /= MAX_ISLAND_ID;
+            this.team = Team.values()[x % 3]; x /= 3;
+            this.lastUpdate = x;
+        }
+        @Override
+        public int hashCode() {
+            return (lastUpdate * 3 + team.ordinal()) * MAX_COMPRESSED_LOCATION + pack(location) + 1;
+        }
         @Override
         public String toString() {
-            return "IslandInfo(" + id + ", " + baseLocation.toString() + ")";
+            return "IslandInfo(" + location.toString() + ", " + id + ", " + team + ", " + lastUpdate + ")";
         }
     }
 
@@ -98,16 +113,18 @@ public class Comms {
         return sightings;
     }
     public static IslandInfo[] getIslands(RobotController rc) throws GameActionException {
-        int locationsIdx = loadSharedLocations(rc, EntityType.ISLAND);
-        IslandInfo[] islands = new IslandInfo[locationsIdx];
-        for (int i = locationsIdx; i --> 0;) {
-            int value = additionalValues[i];
-            islands[i] = new IslandInfo(
-                    locations[i],
-                    (value % MAX_ISLAND_ID) + 1,
-                    Team.values()[(value / MAX_ISLAND_ID) % 3],
-                    value / MAX_ISLAND_ID / 3);
+        int n = 0;
+        IslandInfo[] islandsTmp = new IslandInfo[rc.getIslandCount()];
+        for (int i = EntityType.ISLAND.count; i --> 0;) {
+            int value = rc.readSharedArray(EntityType.ISLAND.offset + i);
+            if (value != INVALID) {
+                islandsTmp[n] = new IslandInfo(value);
+                islandsTmp[n].location = new MapLocation(islandsTmp[n].location.x * MAP_COMPRESSION, islandsTmp[n].location.y * MAP_COMPRESSION);
+                ++n;
+            }
         }
+        IslandInfo[] islands = new IslandInfo[n];
+        System.arraycopy(islandsTmp, 0, islands, 0, n);
         return islands;
     }
 
@@ -149,14 +166,16 @@ public class Comms {
             }
         }
     }
-    public static void addIslands(RobotController rc, IslandInfo[] islands) throws GameActionException {
-        IslandInfo[] knownIslands = getIslands(rc);
+    public static void addNearbyIslands(RobotController rc) throws GameActionException {
+        int[] islands = rc.senseNearbyIslands();
         for (int i = islands.length; i --> 0;) {
-            if (!islandInArray(knownIslands, islands[i])) {
-                int index = findEmptySpot(rc, EntityType.ISLAND);
-                if (rc.canWriteSharedArray(index, islands[i].hashCode())) rc.writeSharedArray(index, islands[i].hashCode());
-            }
+            MapLocation[] locations = rc.senseNearbyIslandLocations(islands[i]);
+            int index = EntityType.ISLAND.offset + islands[i] - 1;
+            IslandInfo island = new IslandInfo(locations[0], islands[i], rc.senseTeamOccupyingIsland(islands[i]), rc.getRoundNum() / UPDATE_FREQ);
+            if (rc.canWriteSharedArray(index, island.hashCode())) rc.writeSharedArray(index, island.hashCode());
+            else islandCache[island.id] = island;
         }
+        tryPushCache(rc);
     }
     public static boolean reportEnemySighting(RobotController rc, MapLocation enemyLoc) throws GameActionException {
         if (!rc.canWriteSharedArray(0, 0)) return false;
@@ -214,22 +233,43 @@ public class Comms {
     }
 
     public static void tryPushCache(RobotController rc) throws GameActionException {
-        WellLocation[] knownWells = getKnownWells(rc);
-        while (wellCacheSize --> 0) {
-            int ct = 0;
-            for (int j = knownWells.length; j --> 0;) if (knownWells[j].location.equals(wellCache[wellCacheSize])) ++ct;
+        if (rc.canWriteSharedArray(0, 0)) {  // just check once at top, hopefully we don't have bytecode issues
+            WellLocation[] knownWells = getKnownWells(rc);
+            while (wellCacheSize-- > 0) {
+                int ct = 0;
+                for (int j = knownWells.length; j-- > 0; )
+                    if (knownWells[j].location.equals(wellCache[wellCacheSize])) ++ct;
 
-            if (ct > 1) continue;  // value has already been pushed by another bot
+                if (ct > 1) continue;  // value has already been pushed by another bot
 
-            int index = findEmptySpot(rc, EntityType.WELL);
-            if (index != -1 && rc.canWriteSharedArray(index, pack(wellCache[wellCacheSize], wellTypeCache[wellCacheSize]))) {
-                rc.writeSharedArray(index, pack(wellCache[wellCacheSize], wellTypeCache[wellCacheSize]));
-            } else {
-                ++wellCacheSize;
-                break;
+                int index = findEmptySpot(rc, EntityType.WELL);
+                if (index != -1) {
+                    rc.writeSharedArray(index, pack(wellCache[wellCacheSize], wellTypeCache[wellCacheSize]));
+                } else {
+                    ++wellCacheSize;
+                    break;
+                }
+            }
+            if (wellCacheSize == -1) wellCacheSize = 0;
+
+            for (int i = EntityType.ISLAND.count; i-- > 0; ) {
+                int index = EntityType.ISLAND.offset + i;
+                int currentValue = rc.readSharedArray(index);
+
+                if (islandCache[i] != null) {
+                    if (currentValue == 0) {
+                        rc.writeSharedArray(index, islandCache[i].hashCode());
+                        islandCache[i] = null;
+                    } else {
+                        IslandInfo currentIsland = new IslandInfo(rc.readSharedArray(index));
+                        if (islandCache[i].lastUpdate > currentIsland.lastUpdate) {
+                            rc.writeSharedArray(index, islandCache[i].hashCode());
+                            islandCache[i] = null;
+                        }
+                    }
+                }
             }
         }
-        if (wellCacheSize == -1) wellCacheSize = 0;
     }
 
     private static int pack(MapLocation loc) {

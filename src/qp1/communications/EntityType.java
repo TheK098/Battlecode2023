@@ -2,9 +2,9 @@ package qp1.communications;
 
 public enum EntityType {
     ENEMY(1, 1, 1, 1),
-    ISLAND(10, 100, 10, 3),
-    WELL(10, 200, 12, 3),
-    HQ(20, 100, 36, 4);
+    ISLAND(20, 100, 10, 6),
+    WELL(20, 200, 12, 6),
+    HQ(40, 100, 36, 8);
     // index 63 is for directing carriers to collect certain resource types
 
     public int offset, count;  // these will be initialized in BaseBot.updateCommsOffsets to fit specific maps

@@ -35,8 +35,9 @@ abstract public class BaseBot {
         return ourRobots * 3 >= threshold;
     }
 
-    protected static MapLocation findNearestIslandLocation(Team team) throws GameActionException {
-        int[] islands = rc.senseNearbyIslands();  // TODO: add comms to make anchoring more efficient
+    // only finds islands within range; required since comms only stores a compressed approximation of locations
+    protected static MapLocation findNearestVisibleIslandLocation(Team team) throws GameActionException {
+        int[] islands = rc.senseNearbyIslands();
         if (islands.length > 0) {
             MapLocation[] nearestIslandLocations = new MapLocation[islands.length];
             for (int i = islands.length; i --> 0;) {
