@@ -72,18 +72,18 @@ public class Pathfinding {
         debugBytecode("4.1");
 
         int queueStart = 0, queueEnd = 0;
-        queue[queueEnd++] = curLoc.translate(-minX, -minY);
+        queue[queueEnd++] = curLoc;
         distance[visionLength][visionLength] = 0;
         startingDir[visionLength][visionLength] = Direction.CENTER;
 
         Direction closestDir = curLoc.directionTo(target);
         int closestDistance = INF_DIST;
 
-        MapLocation trueNextLoc; int x, y, d, nx, ny, distanceRemaining, totalDistance;  // declare once at top to save bytecode
+        int x, y, d, nx, ny, distanceRemaining, totalDistance;  // declare once at top to save bytecode
         while (queueStart < queueEnd) {
             debugBytecode("4.2");
             curLoc = queue[queueStart];
-            x = curLoc.x; y = curLoc.y;
+            x = curLoc.x - minX; y = curLoc.y - minY;
 
             distanceRemaining = Math.max(
                     Math.abs(target.x - (x + minX)),
@@ -101,22 +101,19 @@ public class Pathfinding {
                 debugBytecode("4.3.0");
                 dir = Direction.allDirections()[d];
                 nextLoc = curLoc.add(dir);
-                nx = nextLoc.x; ny = nextLoc.y;
+                nx = nextLoc.x - minX; ny = nextLoc.y - minY;
 
-                if (nx >= 0 && nx < MAX_SIZE && ny >= 0 && ny < MAX_SIZE && distance[nx][ny] == INF_DIST) {
-                    trueNextLoc = nextLoc.translate(minX, minY);
+                if (rc.canSenseLocation(nextLoc) && distance[nx][ny] == INF_DIST && rc.sensePassability(nextLoc) ) {
                     debugBytecode("4.3.1");
-                    if (rc.canSenseLocation(trueNextLoc) && rc.sensePassability(trueNextLoc)) {
-                        // check if we're processing starting location and trying to move to adjacent
-                        if (startingDir[x][y] != Direction.CENTER) {
-                            startingDir[nx][ny] = startingDir[x][y];
-                            distance[nx][ny] = distance[x][y] + 1;
-                            queue[queueEnd++] = nextLoc;
-                        } else if (rc.canMove(dir)) {
-                            startingDir[nx][ny] = dir;
-                            distance[nx][ny] = distance[x][y] + 1;
-                            queue[queueEnd++] = nextLoc;
-                        }
+                    // check if we're processing starting location and trying to move to adjacent
+                    if (startingDir[x][y] != Direction.CENTER) {
+                        startingDir[nx][ny] = startingDir[x][y];
+                        distance[nx][ny] = distance[x][y] + 1;
+                        queue[queueEnd++] = nextLoc;
+                    } else if (rc.canMove(dir)) {
+                        startingDir[nx][ny] = dir;
+                        distance[nx][ny] = distance[x][y] + 1;
+                        queue[queueEnd++] = nextLoc;
                     }
                 }
             }
