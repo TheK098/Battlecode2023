@@ -151,7 +151,7 @@ public class Comms {
                 wellCache[wellCacheSize++] = wells[i].getMapLocation();
             }
         }
-        tryPushCache(rc);
+        tryPushWellCache(rc);
     }
     public static void addHq(RobotController rc, MapLocation hqLoc) throws GameActionException {
         MapLocation[] knownLocations = getHqs(rc);
@@ -175,7 +175,7 @@ public class Comms {
             if (rc.canWriteSharedArray(index, island.hashCode())) rc.writeSharedArray(index, island.hashCode());
             else islandCache[island.id] = island;
         }
-        tryPushCache(rc);
+        tryPushIslandCache(rc);
     }
     public static boolean reportEnemySighting(RobotController rc, MapLocation enemyLoc) throws GameActionException {
         if (!rc.canWriteSharedArray(0, 0)) return false;
@@ -232,8 +232,8 @@ public class Comms {
         return -1;
     }
 
-    public static void tryPushCache(RobotController rc) throws GameActionException {
-        if (rc.canWriteSharedArray(0, 0)) {  // just check once at top, hopefully we don't have bytecode issues
+    public static void tryPushWellCache(RobotController rc) throws GameActionException {
+        if (rc.canWriteSharedArray(0, 0) && wellCacheSize > 0) {  // just check once at top, hopefully we don't have bytecode issues
             WellLocation[] knownWells = getKnownWells(rc);
             while (wellCacheSize-- > 0) {
                 int ct = 0;
@@ -251,7 +251,10 @@ public class Comms {
                 }
             }
             if (wellCacheSize == -1) wellCacheSize = 0;
-
+        }
+    }
+    public static void tryPushIslandCache(RobotController rc) throws GameActionException {
+        if (rc.canWriteSharedArray(0, 0)) {  // just check once at top, hopefully we don't have bytecode issues
             for (int i = EntityType.ISLAND.count; i-- > 0; ) {
                 int index = EntityType.ISLAND.offset + i;
                 int currentValue = rc.readSharedArray(index);
