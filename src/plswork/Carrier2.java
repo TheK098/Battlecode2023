@@ -41,7 +41,7 @@ public class Carrier2 extends Base{
                     if(currCoords == wellCoords){
                         break;
                     }
-                    else if(currCoords == 65535){
+                    else if(currCoords == 65535 && rc.canWriteSharedArray(i, wellCoords)){
                         rc.writeSharedArray(i, wellCoords);
                         break;
                     }
