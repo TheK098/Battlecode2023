@@ -5,7 +5,6 @@ import qp1.utilities.FastRandom;
 
 import java.util.Arrays;
 
-import static qp1.Carrier.debugBytecode;
 import static qp1.utilities.Util.*;
 
 public class Pathfinding {
@@ -53,7 +52,7 @@ public class Pathfinding {
 
     // BFS, only handles passability
     public static Direction moveToward(RobotController rc, MapLocation target) throws GameActionException {
-        debugBytecode("4.0");
+//        debugBytecode("4.0");
         int visionLength = (int)(Math.sqrt(rc.getType().visionRadiusSquared) + 0.00001);
 
         Direction dir = directionToward(rc, target);
@@ -68,7 +67,7 @@ public class Pathfinding {
             Arrays.fill(distance[x], INF_DIST);
         }
 
-        debugBytecode("4.1");
+//        debugBytecode("4.1");
 
         int queueStart = 0, queueEnd = 0;
         queue[queueEnd++] = curLoc;
@@ -83,7 +82,7 @@ public class Pathfinding {
         int y, d, nx, ny, distanceRemaining, dist;   // declare once at top to save bytecode
         Direction curDir;
         while (queueStart < queueEnd) {
-            debugBytecode("4.2");
+//            debugBytecode("4.2");
             curLoc = queue[queueStart];
             x = curLoc.x - minX; y = curLoc.y - minY;
 
@@ -102,7 +101,7 @@ public class Pathfinding {
             }
 
             for (d = 8; d --> 0;) {
-                debugBytecode("4.3.0");
+//                debugBytecode("4.3.0");
                 dir = Direction.allDirections()[d];
                 nextLoc = curLoc.add(dir);
                 nx = nextLoc.x - minX; ny = nextLoc.y - minY;
@@ -122,7 +121,7 @@ public class Pathfinding {
             }
             ++queueStart;
         }
-        debugBytecode("4.4");
+//        debugBytecode("4.4");
         return closestDir;
     }
 
@@ -154,127 +153,3 @@ public class Pathfinding {
         return similarDirection(rc, new MapLocation(0, 0).directionTo(new MapLocation(finalDx, finalDy)));
     }
 }
-
-/*
-[A:CARRIER#12606@17] 4.0: 2590
-[A:CARRIER#12606@17] 4.1: 4441
-[A:CARRIER#12606@17] 4.2: 4501
-[A:CARRIER#12606@17] 4.3.0: 4580
-[A:CARRIER#12606@17] 4.3.0: 4644
-[A:CARRIER#12606@17] 4.3.0: 4744
-[A:CARRIER#12606@17] 4.3.0: 4844
-[A:CARRIER#12606@17] 4.3.0: 4944
-[A:CARRIER#12606@17] 4.3.0: 5008
-[A:CARRIER#12606@17] 4.3.0: 5072
-[A:CARRIER#12606@17] 4.3.0: 5136
-[A:CARRIER#12606@17] 4.2: 5205
-[A:CARRIER#12606@17] 4.3.0: 5278
-[A:CARRIER#12606@17] 4.3.0: 5342
-[A:CARRIER#12606@17] 4.3.0: 5429
-[A:CARRIER#12606@17] 4.3.0: 5516
-[A:CARRIER#12606@17] 4.3.0: 5572
-[A:CARRIER#12606@17] 4.3.0: 5628
-[A:CARRIER#12606@17] 4.3.0: 5684
-[A:CARRIER#12606@17] 4.3.0: 5748
-[A:CARRIER#12606@17] 4.2: 5817
-[A:CARRIER#12606@17] 4.3.0: 5890
-[A:CARRIER#12606@17] 4.3.0: 5946
-[A:CARRIER#12606@17] 4.3.0: 6002
-[A:CARRIER#12606@17] 4.3.0: 6066
-[A:CARRIER#12606@17] 4.3.0: 6153
-[A:CARRIER#12606@17] 4.3.0: 6240
-[A:CARRIER#12606@17] 4.3.0: 6296
-[A:CARRIER#12606@17] 4.3.0: 6352
-[A:CARRIER#12606@17] 4.2: 6413
-[A:CARRIER#12606@17] 4.3.0: 6486
-[A:CARRIER#12606@17] 4.3.0: 6542
-[A:CARRIER#12606@17] 4.3.0: 6598
-[A:CARRIER#12606@17] 4.3.0: 6654
-[A:CARRIER#12606@17] 4.3.0: 6710
-[A:CARRIER#12606@17] 4.3.0: 6774
-[A:CARRIER#12606@17] 4.3.0: 6838
-[A:CARRIER#12606@17] 4.3.0: 6902
-[A:CARRIER#12606@17] 4.2: 6963
-[A:CARRIER#12606@17] 4.3.0: 7036
-[A:CARRIER#12606@17] 4.3.0: 7100
-[A:CARRIER#12606@17] 4.3.0: 7187
-[A:CARRIER#12606@17] 4.3.0: 7274
-[A:CARRIER#12606@17] 4.3.0: 7330
-[A:CARRIER#12606@17] 4.3.0: 7386
-[A:CARRIER#12606@17] 4.3.0: 7442
-[A:CARRIER#12606@17] 4.3.0: 7506
-[A:CARRIER#12606@17] 4.2: 7575
-[A:CARRIER#12606@17] 4.3.0: 7648
-[A:CARRIER#12606@17] 4.3.0: 7704
-[A:CARRIER#12606@17] 4.3.0: 7760
-[A:CARRIER#12606@17] 4.3.0: 7824
-[A:CARRIER#12606@17] 4.3.0: 7888
-[A:CARRIER#12606@17] 4.3.0: 7944
-[A:CARRIER#12606@17] 4.3.0: 8000
-[A:CARRIER#12606@17] 4.3.0: 8056
-[A:CARRIER#12606@17] 4.2: 8117
-[A:CARRIER#12606@17] 4.3.0: 8190
-[A:CARRIER#12606@17] 4.3.0: 8246
-[A:CARRIER#12606@17] 4.3.0: 8310
-[A:CARRIER#12606@17] 4.3.0: 8374
-[A:CARRIER#12606@17] 4.3.0: 8423
-[A:CARRIER#12606@17] 4.3.0: 8472
-[A:CARRIER#12606@17] 4.3.0: 8528
-[A:CARRIER#12606@17] 4.3.0: 8584
-[A:CARRIER#12606@17] 4.2: 8645
-[A:CARRIER#12606@17] 4.3.0: 8718
-[A:CARRIER#12606@17] 4.3.0: 8774
-[A:CARRIER#12606@17] 4.3.0: 8830
-[A:CARRIER#12606@17] 4.3.0: 8879
-[A:CARRIER#12606@17] 4.3.0: 8928
-[A:CARRIER#12606@17] 4.3.0: 8992
-[A:CARRIER#12606@17] 4.3.0: 9056
-[A:CARRIER#12606@17] 4.3.0: 9120
-[A:CARRIER#12606@17] 4.2: 9181
-[A:CARRIER#12606@17] 4.3.0: 9254
-[A:CARRIER#12606@17] 4.3.0: 9318
-[A:CARRIER#12606@17] 4.3.0: 9405
-[A:CARRIER#12606@17] 4.3.0: 9492
-[A:CARRIER#12606@17] 4.3.0: 9548
-[A:CARRIER#12606@17] 4.3.0: 9604
-[A:CARRIER#12606@17] 4.3.0: 9660
-[A:CARRIER#12606@17] 4.3.0: 9724
-[A:CARRIER#12606@17] 4.2: 9793
-[A:CARRIER#12606@17] 4.3.0: 9866
-[A:CARRIER#12606@17] 4.3.0: 9922
-[A:CARRIER#12606@17] 4.3.0: 9978
-[A:CARRIER#12606@17] 4.3.0: 10065
-[A:CARRIER#12606@17] 4.3.0: 10129
-[A:CARRIER#12606@17] 4.3.0: 10193
-[A:CARRIER#12606@17] 4.3.0: 10249
-[A:CARRIER#12606@17] 4.3.0: 10305
-[A:CARRIER#12606@17] 4.2: 10366
-[A:CARRIER#12606@17] 4.3.0: 10439
-[A:CARRIER#12606@17] 4.3.0: 10488
-[A:CARRIER#12606@17] 4.3.0: 10537
-[A:CARRIER#12606@17] 4.3.0: 10586
-[A:CARRIER#12606@17] 4.3.0: 10642
-[A:CARRIER#12606@17] 4.3.0: 10698
-[A:CARRIER#12606@17] 4.3.0: 10754
-[A:CARRIER#12606@17] 4.3.0: 10818
-[A:CARRIER#12606@17] 4.2: 10887
-[A:CARRIER#12606@17] 4.3.0: 10960
-[A:CARRIER#12606@17] 4.3.0: 11009
-[A:CARRIER#12606@17] 4.3.0: 11058
-[A:CARRIER#12606@17] 4.3.0: 11107
-[A:CARRIER#12606@17] 4.3.0: 11163
-[A:CARRIER#12606@17] 4.3.0: 11227
-[A:CARRIER#12606@17] 4.3.0: 11283
-[A:CARRIER#12606@17] 4.3.0: 11339
-[A:CARRIER#12606@17] 4.2: 11400
-[A:CARRIER#12606@17] 4.3.0: 11473
-[A:CARRIER#12606@17] 4.3.0: 11522
-[A:CARRIER#12606@17] 4.3.0: 11571
-[A:CARRIER#12606@17] 4.3.0: 11620
-[A:CARRIER#12606@17] 4.3.0: 11669
-[A:CARRIER#12606@17] 4.3.0: 11733
-[A:CARRIER#12606@17] 4.3.0: 11797
-[A:CARRIER#12606@17] 4.3.0: 11853
-[A:CARRIER#12606@17] 4.4: 11914
-[A:CARRIER#12606@18] Started on round 17 but ended on round 18 with 552 bytecode used
- */
