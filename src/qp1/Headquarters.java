@@ -127,13 +127,19 @@ public class Headquarters extends BaseBot {
     }
 
     private static void updateResourcePriorities(RobotInfo[] allies, EnemySighting[] sightings) throws GameActionException {
-        // TODO: might be issue if one HQ has few carriers around it and the other has many
         int adamantiumPriority, manaPriority = 3600 / (rc.getMapWidth() * rc.getMapHeight());
         int carrierDensity = 1;
         for (int i = allies.length; i--> 0;) carrierDensity += allies[i].type == RobotType.CARRIER ? 1 : 0;
         for (int i = sightings.length; i--> 0;) manaPriority += sightings[i].urgency;
         adamantiumPriority = possibleLocations.length / carrierDensity;  // locations is action radius, carrierDensity is vision radius
-        Comms.setResourcePriorities(rc, adamantiumPriority, Math.min(30, manaPriority / 10));
+
+        Comms.setResourcePriorities(rc,
+                calculateResourcePriority(Comms.getAdamantiumPriority(rc), adamantiumPriority),
+                calculateResourcePriority(Comms.getManaPriority(rc), Math.min(30, manaPriority / 10)));
         rc.setIndicatorString(adamantiumPriority + " " + manaPriority + " " + Comms.getEnemySightings(rc).length);
+    }
+
+    private static int calculateResourcePriority(int oldValue, int newValue) {
+        return Math.round((oldValue * 4f + newValue * 5f) / 9);
     }
 }
