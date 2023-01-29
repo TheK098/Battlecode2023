@@ -20,7 +20,8 @@ public class Headquarters extends BaseBot {
     public Headquarters(RobotController rc) throws GameActionException {
         super(rc);
 
-        MapLocation[] reachableLocations = rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), RobotType.HEADQUARTERS.actionRadiusSquared);
+        MapLocation curLocation = rc.getLocation();
+        MapLocation[] reachableLocations = rc.getAllLocationsWithinRadiusSquared(curLocation, RobotType.HEADQUARTERS.actionRadiusSquared);
         int canBuild = 0;  // store array of 29 booleans
         int n = 0;
         for (int i = reachableLocations.length; i --> 0;)
@@ -37,11 +38,10 @@ public class Headquarters extends BaseBot {
             if (((canBuild >> i) & 1) == 1) {
                 spawnLocations[--n] = reachableLocations[i];
                 centerDist[n] = spawnLocations[n].distanceSquaredTo(center);
-                adamantiumWellDist[n] = INF_DIST - rc.getLocation().distanceSquaredTo(spawnLocations[n]);
-                manaWellDist[n] = INF_DIST - rc.getLocation().distanceSquaredTo(spawnLocations[n]);
+                adamantiumWellDist[n] = manaWellDist[n] = INF_DIST - curLocation.distanceSquaredTo(spawnLocations[n]);
             }
 
-        Comms.addHq(rc, rc.getLocation()); // report HQ position
+        Comms.addHq(rc, curLocation); // report HQ position
         Comms.addWells(rc, rc.senseNearbyWells());
     }
 
@@ -102,16 +102,19 @@ public class Headquarters extends BaseBot {
         return null;
     }
 
+    private static int locIdx = 0;
+
     private static void calculateWellDistances(WellLocation[] wells) {
-        for (int i = spawnLocations.length; i --> 0;) {
-            WellLocation nearestAdamantiumWell = pickNearest(spawnLocations[i], wells, ResourceType.ADAMANTIUM);
+        if (locIdx == 0) locIdx = spawnLocations.length;
+        while (locIdx --> 0 && Clock.getBytecodesLeft() > 10000) {
+            WellLocation nearestAdamantiumWell = pickNearest(spawnLocations[locIdx], wells, ResourceType.ADAMANTIUM);
             if (nearestAdamantiumWell != null) {
-                adamantiumWellDist[i] = spawnLocations[i].distanceSquaredTo(nearestAdamantiumWell.location);
+                adamantiumWellDist[locIdx] = spawnLocations[locIdx].distanceSquaredTo(nearestAdamantiumWell.location);
             }
 
-            WellLocation nearestManaWell = pickNearest(spawnLocations[i], wells, ResourceType.MANA);
+            WellLocation nearestManaWell = pickNearest(spawnLocations[locIdx], wells, ResourceType.MANA);
             if (nearestManaWell != null) {
-                manaWellDist[i] = spawnLocations[i].distanceSquaredTo(nearestManaWell.location);
+                manaWellDist[locIdx] = spawnLocations[locIdx].distanceSquaredTo(nearestManaWell.location);
             }
         }
     }

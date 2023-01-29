@@ -165,11 +165,17 @@ public class Comms {
     }
 
     public static void addWells(RobotController rc, WellInfo[] wells) throws GameActionException {
+        boolean canWrite = rc.canWriteSharedArray(0, 0);
         int n = loadSharedLocations(rc, EntityType.WELL);
         for (int i = wells.length; i --> 0;) {
             if (!locationInArray(locations, n, wells[i].getMapLocation()) && !locationInArray(wellCache, wellCacheSize, wells[i].getMapLocation())) {
-                wellTypeCache[wellCacheSize] = wells[i].getResourceType();
-                wellCache[wellCacheSize++] = wells[i].getMapLocation();
+                int index = canWrite ? findEmptySpot(rc, EntityType.WELL) : -1;
+                if (index != -1) {
+                    rc.writeSharedArray(index, pack(wells[i].getMapLocation(), wells[i].getResourceType()) + 1);
+                } else {
+                    wellTypeCache[wellCacheSize] = wells[i].getResourceType();
+                    wellCache[wellCacheSize++] = wells[i].getMapLocation();
+                }
             }
         }
         tryPushWellCache(rc);
@@ -246,9 +252,9 @@ public class Comms {
     }
 
     private static int findEmptySpot(RobotController rc, EntityType entityType) throws GameActionException {
-        for (int i = entityType.count; i --> 0;) {
-            int value = rc.readSharedArray(entityType.offset + i) - 1;
-            if (value == -1) return entityType.offset + i;
+        int index = entityType.offset;
+        for (int i = entityType.count; i --> 0; ++index) {
+            if (rc.readSharedArray(index) == INVALID) return index;
         }
         return -1;
     }
