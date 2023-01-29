@@ -28,28 +28,30 @@ public class Launcher extends BaseBot {
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         if (!handleCombat(enemies)) {
             if (!supportAlly(enemies)) {
-                if (!investigateSightings()) {
-                    if (!attackIslands()) {
-                        float weightX = (rc.getMapWidth() / 2f) - rc.getLocation().x, weightY = (rc.getMapHeight() / 2f) - rc.getLocation().y;  // default drift to center
-                        rc.setIndicatorString("Spreading out");
-                        Direction dir = spreadOut(rc, weightX / 10, weightY / 10, SpreadSettings.LAUNCHER);
-                        MapLocation newLoc = rc.getLocation().add(dir);
-                        RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
-                        // maintain space for carriers
-                        if (adjacentToHeadquarters(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
-                            tryMove(directionAway(rc, Util.pickNearest(rc, Comms.getHqs(rc))));
-                        else if (adjacentToWell(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
-                            if (rc.senseWell(rc.getLocation()) != null) tryMove(randomDirection(rc));
-                            else tryMove(directionAway(rc, pickNearest(rc, Comms.getKnownWells(rc)).location));
-                        else {
-                            RobotInfo nearestEnemyHq = pickNearestEnemyHq(rc, enemies);
-                            if (nearestEnemyHq != null && rc.getLocation().isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
-                                tryMove(directionAway(rc, nearestEnemyHq.location));
-                            else
-                                tryMove(dir);
+                if (!attackVisibleIsland()) {
+                    if (!investigateSightings()) {
+                        if (!attackNearestIsland()) {
+                            float weightX = (rc.getMapWidth() / 2f) - rc.getLocation().x, weightY = (rc.getMapHeight() / 2f) - rc.getLocation().y;  // default drift to center
+                            rc.setIndicatorString("Spreading out");
+                            Direction dir = spreadOut(rc, weightX / 10, weightY / 10, SpreadSettings.LAUNCHER);
+                            MapLocation newLoc = rc.getLocation().add(dir);
+                            RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
+                            // maintain space for carriers
+                            if (adjacentToHeadquarters(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
+                                tryMove(directionAway(rc, Util.pickNearest(rc, Comms.getHqs(rc))));
+                            else if (adjacentToWell(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
+                                if (rc.senseWell(rc.getLocation()) != null) tryMove(randomDirection(rc));
+                                else tryMove(directionAway(rc, pickNearest(rc, Comms.getKnownWells(rc)).location));
+                            else {
+                                RobotInfo nearestEnemyHq = pickNearestEnemyHq(rc, enemies);
+                                if (nearestEnemyHq != null && rc.getLocation().isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
+                                    tryMove(directionAway(rc, nearestEnemyHq.location));
+                                else
+                                    tryMove(dir);
+                            }
                         }
-                    }
 //                rc.setIndicatorString("Spreading out");
+                    }
                 }
             }
         }
@@ -159,18 +161,21 @@ public class Launcher extends BaseBot {
         return false;
     }
 
-    private static boolean attackIslands() throws GameActionException {
+    private static boolean attackVisibleIsland() throws GameActionException {
         MapLocation nearestVisibleIsland = findNearestVisibleIslandLocation(rc.getTeam().opponent());
         if (nearestVisibleIsland != null) {
             tryMove(moveToward(rc, nearestVisibleIsland, 650));  // if we're already on island, just stay there
             return true;
-        } else {
-            IslandInfo nearestIsland = pickNearest(rc, Comms.getIslands(rc), rc.getTeam().opponent());
-            if (nearestIsland != null && rc.getLocation().isWithinDistanceSquared(nearestIsland.location, 81)) {
-                tryMove(moveToward(rc, nearestIsland.location, 1500));
-                rc.setIndicatorString("Moving toward island " + nearestIsland.location);
-                return true;
-            }
+        }
+        return false;
+    }
+
+    private static boolean attackNearestIsland() throws GameActionException {
+        IslandInfo nearestIsland = pickNearest(rc, Comms.getIslands(rc), rc.getTeam().opponent());
+        if (nearestIsland != null && rc.getLocation().isWithinDistanceSquared(nearestIsland.location, 81)) {
+            tryMove(moveToward(rc, nearestIsland.location, 1500));
+            rc.setIndicatorString("Moving toward island " + nearestIsland.location);
+            return true;
         }
         return false;
     }
