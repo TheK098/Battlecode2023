@@ -35,8 +35,8 @@ public class Launcher extends BaseBot {
                         if (!attackNearestIsland()) {
                             rc.setIndicatorString("Spreading out");
                             Direction dir = spreadOut(rc,
-                                    ((rc.getMapWidth() / 2f) - rc.getLocation().x) / 10,
-                                    ((rc.getMapHeight() / 2f) - rc.getLocation().y) / 10,
+                                    ((rc.getMapWidth() / 2f) - rc.getLocation().x) / 5,
+                                    ((rc.getMapHeight() / 2f) - rc.getLocation().y) / 5,
                                     SpreadSettings.LAUNCHER);
                             MapLocation newLoc = rc.getLocation().add(dir);
                             // maintain space for carriers
