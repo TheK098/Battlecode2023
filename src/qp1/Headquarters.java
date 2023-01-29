@@ -17,6 +17,8 @@ public class Headquarters extends BaseBot {
     // distance to nearest well, with slightly smaller values for locations far from HQ
     private static int[] adamantiumWellDist, manaWellDist;
 
+    private static int AMPLIFIER_FREQUENCY;
+
     public Headquarters(RobotController rc) throws GameActionException {
         super(rc);
 
@@ -43,6 +45,8 @@ public class Headquarters extends BaseBot {
 
         Comms.addHq(rc, curLocation); // report HQ position
         Comms.addWells(rc, rc.senseNearbyWells());
+
+        AMPLIFIER_FREQUENCY = 6000 / (int)Math.round(Math.sqrt(rc.getMapWidth() * rc.getMapHeight()));
     }
 
     @Override
@@ -67,7 +71,7 @@ public class Headquarters extends BaseBot {
                 spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
 
             MapLocation newLoc;
-            if (rc.getRoundNum() >= 400 && rc.getRoundNum() % 100 == 0) {
+            if (rc.getRoundNum() >= 400 && rc.getRoundNum() % AMPLIFIER_FREQUENCY == 0) {
                 newLoc = pickCentralSpawnLocation(RobotType.AMPLIFIER, allies.length);
                 if (newLoc != null) rc.buildRobot(RobotType.AMPLIFIER, newLoc);
             }
