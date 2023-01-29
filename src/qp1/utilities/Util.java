@@ -148,6 +148,10 @@ public class Util {
                (rc.canSenseLocation(location.add(Direction.NORTHWEST)) && rc.senseWell(location.add(Direction.NORTHWEST)) != null);
     }
 
+    public static boolean adjacentOrEqual(MapLocation loc1, MapLocation loc2) {
+        return loc1.isWithinDistanceSquared(loc2, 2);
+    }
+
     public static Direction randomDirection(RobotController rc) {
         Direction dir;
         // Tries 25 times, (7/8)^25 ≈ 3.55% chance of missing available move, worst case
