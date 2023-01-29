@@ -261,7 +261,7 @@ public class Carrier extends BaseBot {
         } else if (timeRemaining <= EntityType.HQ.randomMoveCutoff && timeRemaining % EntityType.HQ.randomMovePeriod == 0) {
             dir = randomDirection(rc);
         } else {
-            dir = moveToward(rc, targetHq, 1700);
+            dir = moveToward(rc, targetHq, 1850);
         }
         tryMove(dir);
         tryMove(similarDirection(rc, dir));
@@ -275,7 +275,7 @@ public class Carrier extends BaseBot {
         } else if (timeRemaining <= EntityType.WELL.randomMoveCutoff && timeRemaining % EntityType.WELL.randomMovePeriod == 0) {
             dir = randomDirection(rc);
         } else {
-            dir = moveToward(rc, targetWell, 1700);
+            dir = moveToward(rc, targetWell, 1850);
         }
 
 //        debugBytecode("2.1");
