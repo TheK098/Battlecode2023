@@ -44,7 +44,7 @@ public class Launcher extends BaseBot {
                                 else tryMove(directionAway(rc, pickNearest(rc, Comms.getKnownWells(rc)).location));
                             else {
                                 RobotInfo nearestEnemyHq = pickNearestEnemyHq(rc, enemies);
-                                if (nearestEnemyHq != null && rc.getLocation().isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
+                                if (nearestEnemyHq != null && rc.getLocation().add(dir).isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
                                     tryMove(directionAway(rc, nearestEnemyHq.location));
                                 else
                                     tryMove(dir);
