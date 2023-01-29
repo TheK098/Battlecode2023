@@ -6,7 +6,6 @@ import qp1.communications.Comms.IslandInfo;
 import qp1.communications.Comms.WellLocation;
 import qp1.communications.EntityType;
 import qp1.navigation.SpreadSettings;
-import qp1.utilities.Util;
 
 import static qp1.navigation.Pathfinding.*;
 import static qp1.utilities.Util.*;
@@ -26,6 +25,8 @@ public class Carrier extends BaseBot {
     // save the well we're collecting from so that we can collect the same resource
     private static MapLocation targetWell = null;
 
+    private static int returnTimer = 0;
+
     public Carrier(RobotController rc) throws GameActionException {
         super(rc);
         blacklist = new int[rc.getMapWidth()][rc.getMapHeight()];
@@ -36,16 +37,19 @@ public class Carrier extends BaseBot {
         Comms.addWells(rc, rc.senseNearbyWells());
         Comms.addNearbyIslands(rc);
 
-        if (enemySighting != null) {
-            if (Comms.reportEnemySighting(rc, enemySighting)) {
-                enemySighting = null;
-            }
-            else {
-                MapLocation nearestHq = Util.pickNearest(rc, Comms.getHqs(rc));
-                tryMove(moveToward(rc, nearestHq, 700));
-                rc.setIndicatorString("Running to " + nearestHq + " to report enemy sighting");
-                return;
-            }
+        MapLocation[] hqs = Comms.getHqs(rc);
+        MapLocation nearestHq = pickNearest(rc, hqs);
+        MapLocation nearestHqNotBlacklisted = pickNearest(rc, hqs, blacklist);
+
+        if (enemySighting != null && Comms.reportEnemySighting(rc, enemySighting)) {
+            enemySighting = null;
+            returnTimer = 5;
+        }
+        if (enemySighting != null || returnTimer --> 0) {
+            tryMove(moveToward(rc, nearestHq, 700));
+            transferResourcesToHq(nearestHq);
+            rc.setIndicatorString("Running to " + nearestHq + " to report enemy sighting");
+            return;
         }
 
         // deal with issue where carriers with resources sometimes end up next to blacklisted headquarters
@@ -53,36 +57,35 @@ public class Carrier extends BaseBot {
 
 //        debugBytecode("1.0");
 
-        boolean shouldReturn = handleCombat();
+        boolean shouldReturn = handleCombat(nearestHq);
         if (shouldReturn) return;
 
         boolean adjacentToHq = adjacentToHeadquarters(rc, rc.getLocation());
         if ((rc.getID() % 8 == 0 && itsAnchorTime()) || rc.getAnchor() != null) {
-            if (getCurrentResources() > 0) returnResources();
-            else handleAnchor();
+            if (getCurrentResources() > 0) returnResources(nearestHqNotBlacklisted, nearestHq);
+            else handleAnchor(nearestHqNotBlacklisted);
         } else if (adjacentToHq && ((rc.getResourceAmount(ResourceType.ADAMANTIUM) > 0 && adamantiumCooldown <= 0) || (rc.getResourceAmount(ResourceType.MANA) > 0 && manaCooldown <= 0))) {
             // ensure we don't hold on to a resource that takes up capacity
-            returnResources();
+            returnResources(nearestHqNotBlacklisted, nearestHq);
         } else if (getCurrentResources() >= 39 || (getCurrentResources() > 0 && adjacentToHq && !adjacentToWell(rc, rc.getLocation()))) {
-            returnResources();
+            returnResources(nearestHqNotBlacklisted, nearestHq);
         } else {
-            collectResources();
+            collectResources(nearestHq);
         }
 //        debugBytecode("1.1");
 
         dieIfStuck();
     }
 
-    private static boolean handleCombat() throws GameActionException {
+    private static boolean handleCombat(MapLocation nearestHq) throws GameActionException {
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         if (enemies.length > 0) {
             int closestEnemy = -1, closestLauncher = -1;
             int closestEnemyDist = INF_DIST, closestLauncherDist = INF_DIST;
-            boolean onlyCarriersNearby = true;
+            int distance;
+            MapLocation curLocation = rc.getLocation();
             for (int i = enemies.length; i --> 0;) {
-                onlyCarriersNearby &= enemies[i].type == RobotType.CARRIER;
-
-                int distance = enemies[i].location.distanceSquaredTo(rc.getLocation());
+                distance = enemies[i].location.distanceSquaredTo(curLocation);
                 if (closestEnemyDist > distance && enemies[i].type != RobotType.HEADQUARTERS) {
                     closestEnemyDist = distance;
                     closestEnemy = i;
@@ -95,22 +98,22 @@ public class Carrier extends BaseBot {
 
             if (closestEnemy == -1) return false;  // only visible enemy was HQ
 
-            if (onlyCarriersNearby && rc.getHealth() == rc.getType().health) return false;  // continue as normal, report enemy location when depositing resources
-
-            // record enemy location and run away
+            // record enemy location
             if (!Comms.reportEnemySighting(rc, enemies[closestEnemy].location))
                 enemySighting = enemies[closestEnemy].location;
 
-            if ((closestLauncher == -1 || !tryToAttack(enemies[closestLauncher].location)) && !tryToAttack(enemies[closestEnemy].location)) {
+            // continue as normal, report enemy location when depositing resources
+            if (closestLauncher == -1 || rc.getHealth() * 2 >= rc.getType().health) return false;
+
+            if (!tryToAttack(enemies[closestLauncher].location) && !tryToAttack(enemies[closestEnemy].location)) {
                 // dump resources and then run away
-                if (rc.canAttack(rc.getLocation())) {
-                    rc.attack(rc.getLocation());  // just toss the resources so we can move faster
-                    rc.setIndicatorString("Tossing resources to " + rc.getLocation());
+                if (rc.canAttack(curLocation)) {
+                    rc.attack(curLocation);  // just toss the resources so we can move faster
+                    rc.setIndicatorString("Tossing resources to " + curLocation);
                     return true;
                 }
             }
 
-            MapLocation nearestHq = Util.pickNearest(rc, Comms.getHqs(rc));
             assert nearestHq != null;
             tryMove(moveToward(rc, nearestHq, 700));
             tryMove(moveToward(rc, nearestHq, 700));
@@ -133,9 +136,8 @@ public class Carrier extends BaseBot {
         return false;
     }
 
-    private static void handleAnchor() throws GameActionException {
+    private static void handleAnchor(MapLocation targetHq) throws GameActionException {
         if (rc.getAnchor() == null) {  // need to pick up an anchor
-            MapLocation targetHq = Util.pickNearest(rc, Comms.getHqs(rc), blacklist);
             rc.setIndicatorString("Waiting for anchor from " + targetHq);
             if (targetHq != null) {
                 moveTowardHeadquarters(targetHq);
@@ -166,7 +168,7 @@ public class Carrier extends BaseBot {
         }
     }
 
-    private static void collectResources() throws GameActionException {
+    private static void collectResources(MapLocation nearestHq) throws GameActionException {
 //        debugBytecode("2.0");
         if (targetWell == null || !rc.getLocation().isAdjacentTo(targetWell)) {
             WellLocation well = pickWell();
@@ -181,7 +183,7 @@ public class Carrier extends BaseBot {
         handleBlacklist(targetWell, EntityType.WELL);
 
 //        Direction dir = pickDirectionForCollection(rc, targetWell);
-        moveTowardsWell(targetWell);
+        moveTowardsWell(targetWell, nearestHq);
 
         if (rc.canSenseLocation(targetWell)) {
             int toCollect = Math.min(CAPACITY - getCurrentResources(), rc.senseWell(targetWell).getRate());
@@ -220,11 +222,10 @@ public class Carrier extends BaseBot {
         return closestIndex == -1 ? null : wells[closestIndex];
     }
 
-    private static void returnResources() throws GameActionException {
+    private static void returnResources(MapLocation targetHq, MapLocation nearestHq) throws GameActionException {
 //        debugBytecode("3.0");
         targetWell = null;
 
-        MapLocation targetHq = Util.pickNearest(rc, Comms.getHqs(rc), blacklist);
         rc.setIndicatorString("Returning to " + targetHq);
         if (targetHq != null) {
             handleBlacklist(targetHq, EntityType.HQ);
@@ -232,24 +233,10 @@ public class Carrier extends BaseBot {
 //            debugBytecode("3.1");
             moveTowardHeadquarters(targetHq);
 //            debugBytecode("3.2");
-
-            int mana = rc.getResourceAmount(ResourceType.MANA);
-            int adamantium = rc.getResourceAmount(ResourceType.ADAMANTIUM);
-            int elixir = rc.getResourceAmount(ResourceType.ELIXIR);
-            if (mana > 0 && rc.canTransferResource(targetHq, ResourceType.MANA, mana)) {
-                rc.transferResource(targetHq, ResourceType.MANA, mana);
-                lastMoveOrAction = rc.getRoundNum();
-            } else if (adamantium > 0 && rc.canTransferResource(targetHq, ResourceType.ADAMANTIUM, adamantium)) {
-                rc.transferResource(targetHq, ResourceType.ADAMANTIUM, adamantium);
-                lastMoveOrAction = rc.getRoundNum();
-            } else if (elixir > 0 && rc.canTransferResource(targetHq, ResourceType.ELIXIR, elixir)) {
-                rc.transferResource(targetHq, ResourceType.ELIXIR, elixir);
-                lastMoveOrAction = rc.getRoundNum();
-            }
+            transferResourcesToHq(targetHq);
 //            debugBytecode("3.3");
         } else {
             // this will only happen when we can't reach any of the HQs, so let's move away to try and free up space
-            MapLocation nearestHq = Util.pickNearest(rc, Comms.getHqs(rc));
             assert nearestHq != null;
             if (rc.getLocation().isWithinDistanceSquared(nearestHq, 16)) {
                 tryMove(directionAway(rc, nearestHq));
@@ -272,7 +259,23 @@ public class Carrier extends BaseBot {
         tryMove(similarDirection(rc, dir));
     }
 
-    private static void moveTowardsWell(MapLocation targetWell) throws GameActionException {
+    private static void transferResourcesToHq(MapLocation targetHq) throws GameActionException {
+        int mana = rc.getResourceAmount(ResourceType.MANA);
+        int adamantium = rc.getResourceAmount(ResourceType.ADAMANTIUM);
+        int elixir = rc.getResourceAmount(ResourceType.ELIXIR);
+        if (mana > 0 && rc.canTransferResource(targetHq, ResourceType.MANA, mana)) {
+            rc.transferResource(targetHq, ResourceType.MANA, mana);
+            lastMoveOrAction = rc.getRoundNum();
+        } else if (adamantium > 0 && rc.canTransferResource(targetHq, ResourceType.ADAMANTIUM, adamantium)) {
+            rc.transferResource(targetHq, ResourceType.ADAMANTIUM, adamantium);
+            lastMoveOrAction = rc.getRoundNum();
+        } else if (elixir > 0 && rc.canTransferResource(targetHq, ResourceType.ELIXIR, elixir)) {
+            rc.transferResource(targetHq, ResourceType.ELIXIR, elixir);
+            lastMoveOrAction = rc.getRoundNum();
+        }
+    }
+
+    private static void moveTowardsWell(MapLocation targetWell, MapLocation nearestHq) throws GameActionException {
         Direction dir;
         if (adjacentToWell(rc, rc.getLocation())) {
             resetBlacklistTimer(EntityType.WELL);
@@ -289,7 +292,6 @@ public class Carrier extends BaseBot {
             if (!adjacentToWell(rc, rc.getLocation())) tryMove(similarDirection(rc, dir));
         } else if (!adjacentToWell(rc, rc.getLocation())) {
             // just try moving away from HQ
-            MapLocation nearestHq = Util.pickNearest(rc, Comms.getHqs(rc));
             tryMove(directionAway(rc, nearestHq));
             tryMove(directionAway(rc, nearestHq));
         }
