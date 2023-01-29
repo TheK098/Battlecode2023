@@ -66,15 +66,21 @@ public class Headquarters extends BaseBot {
                     (50 < rc.getRoundNum() && wells.length > 0 && FastRandom.nextInt(50 * wells.length) < rc.getRobotCount()))
                 spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
 
-            MapLocation newCarrierLoc = pickEmptySpawnLocation(spawnPriority[0], allies.length);
-            int typeIdx = 0;
-            while (newCarrierLoc != null) {
-                rc.buildRobot(spawnPriority[typeIdx], newCarrierLoc);  // it's guaranteed that we can build
-                typeIdx ^= 1;
-                newCarrierLoc = pickEmptySpawnLocation(spawnPriority[typeIdx], allies.length);
+            MapLocation newLoc;
+            if (rc.getRoundNum() >= 400 && rc.getRoundNum() % 100 == 0) {
+                newLoc = pickCentralSpawnLocation(RobotType.AMPLIFIER, allies.length);
+                if (newLoc != null) rc.buildRobot(RobotType.AMPLIFIER, newLoc);
             }
-            newCarrierLoc = pickEmptySpawnLocation(spawnPriority[typeIdx], allies.length);
-            if (newCarrierLoc != null) rc.buildRobot(spawnPriority[typeIdx], newCarrierLoc);  // try again with other type
+
+            newLoc = pickEmptySpawnLocation(spawnPriority[0], allies.length);
+            int typeIdx = 0;
+            while (newLoc != null) {
+                rc.buildRobot(spawnPriority[typeIdx], newLoc);  // it's guaranteed that we can build
+                typeIdx ^= 1;
+                newLoc = pickEmptySpawnLocation(spawnPriority[typeIdx], allies.length);
+            }
+            newLoc = pickEmptySpawnLocation(spawnPriority[typeIdx], allies.length);
+            if (newLoc != null) rc.buildRobot(spawnPriority[typeIdx], newLoc);  // try again with other type
         }
         if (itsAnchorTime() && rc.canBuildAnchor(Anchor.STANDARD) && rc.getNumAnchors(Anchor.STANDARD) < 3) {
             // stick with Standard anchors for now, chances are we're already overrunning the map
@@ -91,7 +97,8 @@ public class Headquarters extends BaseBot {
         if (rc.isActionReady()) {
             switch (robotType) {
                 case LAUNCHER:
-                    return pickLauncherSpawnLocation(visibleAllies);
+                case AMPLIFIER:
+                    return pickCentralSpawnLocation(robotType, visibleAllies);
                 case CARRIER:  // spawn close to well, with some random variation
                     return pickCarrierSpawnLocation(visibleAllies);
             }
@@ -117,13 +124,13 @@ public class Headquarters extends BaseBot {
         }
     }
 
-    private static MapLocation pickLauncherSpawnLocation(int visibleAllies) {
+    private static MapLocation pickCentralSpawnLocation(RobotType robotType, int visibleAllies) {
         // spawn as close to center as possible
         if (rc.isActionReady()) {
             int bestDist = INF_DIST, bestIdx = -1;
             int availableSpots = 0;
             for (int i = spawnLocations.length; i-- > 0; ) {
-                if (rc.canBuildRobot(RobotType.LAUNCHER, spawnLocations[i])) {
+                if (rc.canBuildRobot(robotType, spawnLocations[i])) {
                     ++availableSpots;
                     if (bestDist > centerDist[i]) {
                         bestDist = centerDist[i];

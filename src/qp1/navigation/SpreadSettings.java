@@ -3,7 +3,8 @@ package qp1.navigation;
 public enum SpreadSettings {
     CARRIER_ANCHOR(25, 30, 100),
     CARRIER_SEARCHING(25, 20, 100),
-    LAUNCHER(16, 1, 20);
+    LAUNCHER(16, 1, 20),
+    AMPLIFIER(34, 100, 100);
 
     public final int ally_dist_cutoff;
     public final float ally_dist_factor;
