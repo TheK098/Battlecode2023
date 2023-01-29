@@ -4,19 +4,18 @@ import battlecode.common.*;
 import qp1.communications.Comms;
 import qp1.communications.Comms.EnemySighting;
 import qp1.communications.EntityType;
-import qp1.utilities.FastRandom;
 
 import static qp1.utilities.Util.pickNearest;
 
 abstract public class BaseBot {
     protected static RobotController rc;
-    protected static int lastMoveOrAction = 0;
+    protected static int lastMoveOrAction;
     private static final MapLocation IRRELEVANT = new MapLocation(-10000, -10000);
 
     public BaseBot(RobotController rc) {
         BaseBot.rc = rc;
-        for (int i = rc.getID() % 23; i --> 0;) FastRandom.nextInt();  // try to spread out the seeding a bit
         updateCommsOffsets();
+        lastMoveOrAction = rc.getRoundNum();
     }
 
     abstract public void processRound() throws GameActionException;
@@ -31,8 +30,7 @@ abstract public class BaseBot {
     }
 
     protected static boolean itsAnchorTime() {
-        double mapSize = rc.getMapWidth() * rc.getMapHeight();
-        double threshold = mapSize / Math.pow(Math.max(1, rc.getRoundNum() * rc.getRoundNum() - 2_500_000), 0.15);
+        double threshold = rc.getMapWidth() * rc.getMapHeight() / Math.pow(Math.max(1, rc.getRoundNum() * rc.getRoundNum() - 2_000_000), 0.15);
         int ourRobots = rc.getRobotCount();
         return ourRobots * 3 >= threshold;
     }

@@ -25,11 +25,13 @@ public class Carrier extends BaseBot {
     // save the well we're collecting from so that we can collect the same resource
     private static MapLocation targetWell = null;
 
+    private static int ANCHORING_PROPORTION = 10;
     private static int returnTimer = 0;
 
     public Carrier(RobotController rc) throws GameActionException {
         super(rc);
         blacklist = new int[rc.getMapWidth()][rc.getMapHeight()];
+        ANCHORING_PROPORTION = (int)Math.round(40 / Math.sqrt(rc.getIslandCount()));
     }
 
     @Override
@@ -61,7 +63,7 @@ public class Carrier extends BaseBot {
         if (shouldReturn) return;
 
         boolean adjacentToHq = adjacentToHeadquarters(rc, rc.getLocation());
-        if ((rc.getID() % 8 == 0 && itsAnchorTime()) || rc.getAnchor() != null) {
+        if ((rc.getID() % ANCHORING_PROPORTION == 0 && itsAnchorTime()) || rc.getAnchor() != null) {
             if (getCurrentResources() > 0) returnResources(nearestHqNotBlacklisted, nearestHq);
             else handleAnchor(nearestHqNotBlacklisted);
         } else if (adjacentToHq && ((rc.getResourceAmount(ResourceType.ADAMANTIUM) > 0 && adamantiumCooldown <= 0) || (rc.getResourceAmount(ResourceType.MANA) > 0 && manaCooldown <= 0))) {
@@ -162,10 +164,23 @@ public class Carrier extends BaseBot {
                     tryMove(spreadOut(rc, 0, 0, SpreadSettings.CARRIER_ANCHOR));
                     rc.setIndicatorString("Spreading out with anchor");
                 }
-            } else if (rc.canPlaceAnchor()) {
-                rc.placeAnchor();
-            } else tryMove(moveToward(rc, nearestVisibleIsland, 700));
+            } else if (!tryPlaceAnchor()) {
+                tryMove(moveToward(rc, nearestVisibleIsland, 700));
+                rc.setIndicatorString("Moving toward exact " + nearestVisibleIsland);
+            }
         }
+    }
+
+    private static boolean tryPlaceAnchor() throws GameActionException {
+        if (rc.canPlaceAnchor()) {
+            int island = rc.senseIsland(rc.getLocation());
+            if (island != -1 && rc.senseTeamOccupyingIsland(island) == Team.NEUTRAL && rc.canPlaceAnchor()) {
+                rc.placeAnchor();
+                rc.setIndicatorString("Placing anchor at " + rc.getLocation());
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void collectResources(MapLocation nearestHq) throws GameActionException {

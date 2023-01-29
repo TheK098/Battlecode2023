@@ -3,6 +3,7 @@ package qp1;
 import battlecode.common.Clock;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
+import qp1.utilities.FastRandom;
 
 @SuppressWarnings("unused")
 public strictfp class RobotPlayer {
@@ -12,7 +13,7 @@ public strictfp class RobotPlayer {
      *            information on its current status. Essentially your portal to interacting with the world.
      **/
     @SuppressWarnings({"unused", "InfiniteLoopStatement"})
-    public static void run(RobotController rc) throws GameActionException {
+    public static void run(RobotController rc) {
         BaseBot bot = null;
         // switch assignments don't work in 1.8 smh
         while (true) {
@@ -34,6 +35,8 @@ public strictfp class RobotPlayer {
                     case DESTABILIZER:
                         throw new IllegalArgumentException("Type " + rc.getType() + " is not handled!");
                 }
+
+                FastRandom.x = rc.getID();
                 break;
             } catch (GameActionException e) {
                 System.out.println("GameActionException: " + rc.getType());

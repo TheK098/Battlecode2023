@@ -2,7 +2,7 @@ package qp1.utilities;
 
 // https://stackoverflow.com/questions/1640258/need-a-fast-random-generator-for-c
 public class FastRandom {
-    static long x = (long) (Math.random() * 0xffffffffL) & 0xffffffffL;
+    public static long x = 0;  // seed will be set in BaseBot initializer
 
     public static int nextInt() {
         x = (214013 * x + 2531011);
