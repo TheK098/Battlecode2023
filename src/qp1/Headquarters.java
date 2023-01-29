@@ -76,7 +76,7 @@ public class Headquarters extends BaseBot {
             newCarrierLoc = pickEmptySpawnLocation(spawnPriority[typeIdx], allies.length);
             if (newCarrierLoc != null) rc.buildRobot(spawnPriority[typeIdx], newCarrierLoc);  // try again with other type
         }
-        if (itsAnchorTime() && rc.canBuildAnchor(Anchor.STANDARD)) {
+        if (itsAnchorTime() && rc.canBuildAnchor(Anchor.STANDARD) && rc.getNumAnchors(Anchor.STANDARD) < 3) {
             // stick with Standard anchors for now, chances are we're already overrunning the map
             rc.buildAnchor(Anchor.STANDARD);
         }
@@ -170,7 +170,7 @@ public class Headquarters extends BaseBot {
 
         int manaPriority = 0;
         for (int i = sightings.length; i--> 0;) manaPriority += sightings[i].urgency;
-        manaPriority = Math.min(30, (manaPriority / 10) + 3600 / (rc.getMapWidth() * rc.getMapHeight()));
+        manaPriority = Math.min(30, (manaPriority / 4) + 3600 / (rc.getMapWidth() * rc.getMapHeight()));
 
         Comms.setResourcePriorities(rc,
                 calculateResourcePriority(Comms.getAdamantiumPriority(rc), adamantiumPriority),
