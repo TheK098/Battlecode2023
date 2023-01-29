@@ -15,20 +15,31 @@ public strictfp class RobotPlayer {
     public static void run(RobotController rc) throws GameActionException {
         BaseBot bot = null;
         // switch assignments don't work in 1.8 smh
-        switch (rc.getType()) {
-            case HEADQUARTERS:
-                bot = new Headquarters(rc);
+        while (true) {
+            try {  // wrap in a loop and keep trying, just in case
+                switch (rc.getType()) {
+                    case HEADQUARTERS:
+                        bot = new Headquarters(rc);
+                        break;
+                    case CARRIER:
+                        bot = new Carrier(rc);
+                        break;
+                    case LAUNCHER:
+                        bot = new Launcher(rc);
+                        break;
+                    case BOOSTER:
+                    case DESTABILIZER:
+                    case AMPLIFIER:
+                        throw new IllegalArgumentException("Type " + rc.getType() + " is not handled!");
+                }
                 break;
-            case CARRIER:
-                bot = new Carrier(rc);
-                break;
-            case LAUNCHER:
-                bot = new Launcher(rc);
-                break;
-            case BOOSTER:
-            case DESTABILIZER:
-            case AMPLIFIER:
-                throw new IllegalArgumentException("Type " + rc.getType() + " is not handled!");
+            } catch (GameActionException e) {
+                System.out.println("GameActionException: " + rc.getType());
+                e.printStackTrace();
+            } catch (Exception e) {
+                System.out.println("Exception: " + rc.getType());
+                e.printStackTrace();
+            }
         }
 
         while (true) {
