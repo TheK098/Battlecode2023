@@ -2,10 +2,10 @@ package qp1;
 
 import battlecode.common.*;
 import qp1.communications.Comms;
+import qp1.communications.Comms.EnemySighting;
 import qp1.communications.EntityType;
 import qp1.utilities.FastRandom;
 
-import static qp1.navigation.Pathfinding.moveToward;
 import static qp1.utilities.Util.pickNearest;
 
 abstract public class BaseBot {
@@ -66,8 +66,8 @@ abstract public class BaseBot {
         // index 63 is used for resource prioritization
     }
 
-    protected static boolean investigateSightings() throws GameActionException {
-        Comms.EnemySighting[] enemySightings = Comms.getEnemySightings(rc);
+    protected static EnemySighting pickSighting() throws GameActionException {
+        EnemySighting[] enemySightings = Comms.getEnemySightings(rc);
         int targetIdx = -1;
         int targetScore = 10;
         int factor = rc.getMapWidth() * rc.getMapHeight();
@@ -80,11 +80,6 @@ abstract public class BaseBot {
                 }
             }
         }
-        if (targetIdx != -1) {
-            tryMove(moveToward(rc, enemySightings[targetIdx].location, 700));
-            rc.setIndicatorString(targetScore + " " + enemySightings[targetIdx]);
-            return true;
-        }
-        return false;
+        return targetIdx == -1 ? null : enemySightings[targetIdx];
     }
 }

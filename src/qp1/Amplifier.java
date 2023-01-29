@@ -2,6 +2,7 @@ package qp1;
 
 import battlecode.common.*;
 import qp1.communications.Comms;
+import qp1.communications.Comms.EnemySighting;
 import qp1.navigation.SpreadSettings;
 import qp1.utilities.FastRandom;
 
@@ -34,8 +35,11 @@ public class Amplifier extends BaseBot {
         }
 
         if (nearestIdx != -1) tryMove(directionAway(rc, enemies[nearestIdx].location));
-        else if (!investigateSightings()) {
-            Direction dir = spreadOut(rc, 0, 0, SpreadSettings.AMPLIFIER);
+        else {
+            EnemySighting sighting = pickSighting();
+            float weightX = sighting == null ? 0 : sighting.location.x - rc.getLocation().x;
+            float weightY = sighting == null ? 0 : sighting.location.y - rc.getLocation().y;
+            Direction dir = spreadOut(rc, weightX, weightY, SpreadSettings.AMPLIFIER);
             if (!rc.senseCloud(rc.getLocation().add(dir)) || FastRandom.nextInt(8) == 0) tryMove(dir);
         }
         dieIfStuck();

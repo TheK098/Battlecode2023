@@ -2,6 +2,7 @@ package qp1;
 
 import battlecode.common.*;
 import qp1.communications.Comms;
+import qp1.communications.Comms.EnemySighting;
 import qp1.communications.Comms.IslandInfo;
 import qp1.navigation.SpreadSettings;
 import qp1.utilities.FastRandom;
@@ -31,26 +32,26 @@ public class Launcher extends BaseBot {
             RobotInfo nearestEnemyHq = pickNearestHq(rc, enemies);
             if (!supportAlly(enemies, allies, nearestEnemyHq)) {
                 if (!attackVisibleIsland()) {
-                    if (!investigateSightings()) {
-                        if (!attackNearestIsland()) {
-                            rc.setIndicatorString("Spreading out");
-                            Direction dir = spreadOut(rc,
-                                    ((rc.getMapWidth() / 2f) - curLoc.x) / 5,
-                                    ((rc.getMapHeight() / 2f) - curLoc.y) / 5,
-                                    SpreadSettings.LAUNCHER);
-                            MapLocation newLoc = curLoc.add(dir);
-                            // maintain space for carriers
-                            if (adjacentToHeadquarters(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
-                                tryMove(directionAway(rc, Util.pickNearest(rc, Comms.getHqs(rc))));
-                            else if (adjacentToWell(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
-                                if (rc.senseWell(curLoc) != null) tryMove(randomDirection(rc));
-                                else tryMove(directionAway(rc, pickNearest(rc, Comms.getKnownWells(rc)).location));
-                            else if (nearestEnemyHq != null && newLoc.isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
-                                tryMove(directionAway(rc, nearestEnemyHq.location));
-                            else
-                                tryMove(dir);
-
-                        }
+                    EnemySighting sighting = pickSighting();
+                    if (sighting != null) {
+                        tryMove(moveToward(rc, sighting.location, 700));
+                    } else if (!attackNearestIsland()) {
+                        rc.setIndicatorString("Spreading out");
+                        Direction dir = spreadOut(rc,
+                                ((rc.getMapWidth() / 2f) - curLoc.x) / 5,
+                                ((rc.getMapHeight() / 2f) - curLoc.y) / 5,
+                                SpreadSettings.LAUNCHER);
+                        MapLocation newLoc = curLoc.add(dir);
+                        // maintain space for carriers
+                        if (adjacentToHeadquarters(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
+                            tryMove(directionAway(rc, Util.pickNearest(rc, Comms.getHqs(rc))));
+                        else if (adjacentToWell(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
+                            if (rc.senseWell(curLoc) != null) tryMove(randomDirection(rc));
+                            else tryMove(directionAway(rc, pickNearest(rc, Comms.getKnownWells(rc)).location));
+                        else if (nearestEnemyHq != null && newLoc.isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
+                            tryMove(directionAway(rc, nearestEnemyHq.location));
+                        else
+                            tryMove(dir);
                     }
                 }
             }
