@@ -188,6 +188,6 @@ public class Pathfinding {
 
         int finalDx = FastRandom.nextInt(settings.random_bound) - settings.random_cutoff > weightX ? -1 : 1;
         int finalDy = FastRandom.nextInt(settings.random_bound) - settings.random_cutoff > weightY ? -1 : 1;
-        return similarDirection(rc, new MapLocation(0, 0).directionTo(new MapLocation(finalDx, finalDy)));
+        return similarDirectionNoCloud(rc, new MapLocation(0, 0).directionTo(new MapLocation(finalDx, finalDy)));
     }
 }

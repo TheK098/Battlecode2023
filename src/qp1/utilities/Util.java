@@ -245,6 +245,24 @@ public class Util {
         return currentOppositeDir != targetDir && currentOppositeDir.rotateLeft() != targetDir && currentOppositeDir.rotateRight() != targetDir;
     }
 
+    public static Direction similarDirectionNoCloud(RobotController rc, Direction dir) throws GameActionException {
+        if (directionOkayNoCloud(rc, dir, dir)) return dir;
+        if (directionOkayNoCloud(rc, dir, dir.rotateLeft())) return dir.rotateLeft();
+        if (directionOkayNoCloud(rc, dir, dir.rotateRight())) return dir.rotateRight();
+        if (directionOkayNoCloud(rc, dir, dir.rotateLeft().rotateLeft())) return dir.rotateLeft().rotateLeft();
+        return similarDirectionNoCloud(rc, dir);
+    }
+
+    private static boolean directionOkayNoCloud(RobotController rc, Direction targetDir, Direction actualDir) throws GameActionException {
+        return rc.canMove(actualDir) && mapInfoOkay(rc, rc.getLocation().add(actualDir), targetDir);
+    }
+
+    private static boolean mapInfoOkay(RobotController rc, MapLocation location, Direction targetDir) throws GameActionException {
+        MapInfo mapInfo = rc.senseMapInfo(location);
+        Direction currentOppositeDir = mapInfo.getCurrentDirection().opposite();
+        return currentOppositeDir != targetDir && currentOppositeDir.rotateLeft() != targetDir && currentOppositeDir.rotateRight() != targetDir && !mapInfo.hasCloud();
+    }
+
     public static Direction directionTowardImmediate(RobotController rc, MapLocation target) {
         return similarDirectionImmediate(rc, rc.getLocation().directionTo(target));
     }

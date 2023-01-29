@@ -7,7 +7,6 @@ import qp1.communications.Comms.IslandInfo;
 import qp1.navigation.SpreadSettings;
 import qp1.utilities.FastRandom;
 import qp1.utilities.IntHashMap;
-import qp1.utilities.Util;
 
 import static qp1.navigation.Pathfinding.moveToward;
 import static qp1.navigation.Pathfinding.spreadOut;
@@ -27,6 +26,7 @@ public class Launcher extends BaseBot {
     public void processRound() throws GameActionException {
         MapLocation curLoc = rc.getLocation();
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+        MapLocation nearestHq = pickNearest(rc, Comms.getHqs(rc));
         if (!handleCombat(enemies)) {
             RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
             RobotInfo nearestEnemyHq = pickNearestHq(rc, enemies);
@@ -44,7 +44,7 @@ public class Launcher extends BaseBot {
                         MapLocation newLoc = curLoc.add(dir);
                         // maintain space for carriers
                         if (adjacentToHeadquarters(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
-                            tryMove(directionAway(rc, Util.pickNearest(rc, Comms.getHqs(rc))));
+                            tryMove(directionAway(rc, nearestHq));
                         else if (adjacentToWell(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
                             if (rc.senseWell(curLoc) != null) tryMove(randomDirection(rc));
                             else tryMove(directionAway(rc, pickNearest(rc, Comms.getKnownWells(rc)).location));
@@ -58,29 +58,32 @@ public class Launcher extends BaseBot {
         }
 
         if (rc.isActionReady()) {  // try attacking again after moving
-            RobotInfo target = pickTarget(rc.senseNearbyRobots(RobotType.LAUNCHER.actionRadiusSquared, rc.getTeam().opponent()));
-            if (target != null && rc.canAttack(target.location)) {
-                rc.attack(target.location);
-                lastMoveOrAction = rc.getRoundNum();
-            } else if (rc.senseCloud(rc.getLocation())) {
-                MapLocation center = new MapLocation(rc.getMapWidth() / 2, rc.getMapHeight() / 2);
-                Direction dir = rc.getLocation().directionTo(center);
-                MapLocation targetLoc = curLoc.add(dir).add(dir).add(dir.rotateLeft());  // rotateLeft to stay within attack range
-                if (rc.canAttack(targetLoc)) rc.attack(targetLoc);
-            } else {  // attack cloud
-                MapLocation[] clouds = rc.senseNearbyCloudLocations(16);
-                int farthestDist = 0, farthestIdx = -1;
-                for (int i = clouds.length; i --> 0;) {
-                    if (!curLoc.isWithinDistanceSquared(clouds[i], farthestDist)) {
-                        farthestDist = curLoc.distanceSquaredTo(clouds[i]);
-                        farthestIdx = i;
-                    }
-                }
-                if (farthestIdx != -1 && rc.canAttack(clouds[farthestIdx])) rc.attack(clouds[farthestIdx]);
-            }
+            extraAttack(curLoc, nearestHq);
         }
 
         dieIfStuck();
+    }
+
+    private static void extraAttack(MapLocation curLoc, MapLocation nearestHq) throws GameActionException {
+        RobotInfo target = pickTarget(rc.senseNearbyRobots(RobotType.LAUNCHER.actionRadiusSquared, rc.getTeam().opponent()));
+        if (target != null && rc.canAttack(target.location)) {
+            rc.attack(target.location);
+            lastMoveOrAction = rc.getRoundNum();
+        } else if (rc.senseCloud(rc.getLocation())) {
+            Direction dir = rc.getLocation().directionTo(nearestHq).opposite();
+            MapLocation targetLoc = curLoc.add(dir).add(dir).add(dir.rotateLeft());  // rotateLeft to stay within attack range
+            if (rc.canAttack(targetLoc)) rc.attack(targetLoc);
+        } else {  // attack cloud
+            MapLocation[] clouds = rc.senseNearbyCloudLocations(RobotType.LAUNCHER.actionRadiusSquared);
+            int farthestDist = 0, farthestIdx = -1;
+            for (int i = clouds.length; i --> 0;) {
+                if (!curLoc.isWithinDistanceSquared(clouds[i], farthestDist)) {
+                    farthestDist = curLoc.distanceSquaredTo(clouds[i]);
+                    farthestIdx = i;
+                }
+            }
+            if (farthestIdx != -1 && rc.canAttack(clouds[farthestIdx])) rc.attack(clouds[farthestIdx]);
+        }
     }
 
     private static boolean handleCombat(RobotInfo[] enemies) throws GameActionException {

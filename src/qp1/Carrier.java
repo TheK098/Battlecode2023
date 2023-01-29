@@ -101,13 +101,14 @@ public class Carrier extends BaseBot {
             if (closestEnemy == -1) return false;  // only visible enemy was HQ
 
             // record enemy location
-            if (!Comms.reportEnemySighting(rc, enemies[closestEnemy].location))
-                enemySighting = enemies[closestEnemy].location;
+            MapLocation enemy = enemies[closestEnemy].location;
+            if (!Comms.reportEnemySighting(rc, enemy))
+                enemySighting = enemy;
 
             // continue as normal, report enemy location when depositing resources
             if (closestLauncher == -1 || rc.getHealth() * 2 >= rc.getType().health) return false;
 
-            if (!tryToAttack(enemies[closestLauncher].location) && !tryToAttack(enemies[closestEnemy].location)) {
+            if (!tryToAttack(enemy) && !tryToAttack(enemy)) {
                 // dump resources and then run away
                 if (rc.canAttack(curLocation)) {
                     rc.attack(curLocation);  // just toss the resources so we can move faster
