@@ -26,7 +26,7 @@ public class Carrier extends BaseBot {
     // save the well we're collecting from so that we can collect the same resource
     private static MapLocation targetWell = null;
 
-    public Carrier(RobotController rc) {
+    public Carrier(RobotController rc) throws GameActionException {
         super(rc);
         blacklist = new int[rc.getMapWidth()][rc.getMapHeight()];
     }
@@ -57,7 +57,7 @@ public class Carrier extends BaseBot {
         if (shouldReturn) return;
 
         boolean adjacentToHq = adjacentToHeadquarters(rc, rc.getLocation());
-        if (rc.getID() % 5 == 0 && itsAnchorTime()) {
+        if ((rc.getID() % 5 == 0 && itsAnchorTime()) || rc.getAnchor() != null) {
             if (getCurrentResources() > 0) returnResources();
             else handleAnchor();
         } else if (adjacentToHq && ((rc.getResourceAmount(ResourceType.ADAMANTIUM) > 0 && adamantiumCooldown <= 0) || (rc.getResourceAmount(ResourceType.MANA) > 0 && manaCooldown <= 0))) {

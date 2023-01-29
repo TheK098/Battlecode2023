@@ -20,10 +20,8 @@ public class Headquarters extends BaseBot {
 
     @Override
     public void processRound() throws GameActionException {
-        if (rc.getRoundNum() == 1) {
-            Comms.addHq(rc, rc.getLocation()); // report HQ position
-            Comms.addWells(rc, rc.senseNearbyWells());
-        }
+        if (rc.getRoundNum() == 2) updateCommsOffsets();
+
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
         EnemySighting[] sightings = Comms.getEnemySightings(rc);

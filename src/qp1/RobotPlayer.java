@@ -34,7 +34,6 @@ public strictfp class RobotPlayer {
         while (true) {
 //            int startingRound = rc.getRoundNum();
             try {
-                BaseBot.updateCommsOffsets();
                 bot.processRound();
             } catch (GameActionException e) {
                 System.out.println("GameActionException: " + rc.getType());

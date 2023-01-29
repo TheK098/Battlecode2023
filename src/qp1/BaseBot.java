@@ -12,9 +12,10 @@ abstract public class BaseBot {
     protected static int lastMoveOrAction = 0;
     private static final MapLocation IRRELEVANT = new MapLocation(-10000, -10000);
 
-    public BaseBot(RobotController rc) {
+    public BaseBot(RobotController rc) throws GameActionException {
         BaseBot.rc = rc;
         for (int i = rc.getID() % 23; i --> 0;) FastRandom.nextInt();  // try to spread out the seeding a bit
+        updateCommsOffsets();
     }
 
     abstract public void processRound() throws GameActionException;
@@ -50,22 +51,19 @@ abstract public class BaseBot {
     }
 
     public static void updateCommsOffsets() throws GameActionException {
-        // HQ.count == 0 -> uninitialized, round == 2 && HQ -> values need to be updated
-        if (EntityType.HQ.count == 0 || (rc.getRoundNum() == 2 && rc.getType() == RobotType.HEADQUARTERS)) {
-            EntityType.ENEMY.offset = 0;
-            EntityType.ENEMY.count = (int) (Math.log(rc.getMapWidth() * rc.getMapHeight())) + 1;  // from 9 to 12
+        EntityType.ENEMY.offset = 0;
+        EntityType.ENEMY.count = (int) (Math.log(rc.getMapWidth() * rc.getMapHeight())) + 1;  // from 9 to 12
 
-            EntityType.ISLAND.offset = EntityType.ENEMY.offset + EntityType.ENEMY.count;
-            EntityType.ISLAND.count = rc.getIslandCount();
+        EntityType.ISLAND.offset = EntityType.ENEMY.offset + EntityType.ENEMY.count;
+        EntityType.ISLAND.count = rc.getIslandCount();
 
-            EntityType.HQ.offset = EntityType.ISLAND.offset + EntityType.ISLAND.count;
-            EntityType.HQ.count = 4;  // need to initialize to 4 in order for Comms.getHqs to work
-            if (rc.getRoundNum() > 1) {
-                EntityType.HQ.count = Comms.getHqs(rc).length;  // assumes that the lowest indexes are always used
-            }
-            EntityType.WELL.offset = EntityType.HQ.offset + EntityType.HQ.count;
-            EntityType.WELL.count = 63 - EntityType.WELL.offset;  // will always have at least 9 spots
-            // index 63 is used for resource prioritization
+        EntityType.HQ.offset = EntityType.ISLAND.offset + EntityType.ISLAND.count;
+        EntityType.HQ.count = 4;  // need to initialize to 4 in order for Comms.getHqs to work
+        if (rc.getRoundNum() > 1) {
+            EntityType.HQ.count = Comms.getHqs(rc).length;  // assumes that the lowest indexes are always used
         }
+        EntityType.WELL.offset = EntityType.HQ.offset + EntityType.HQ.count;
+        EntityType.WELL.count = 63 - EntityType.WELL.offset;  // will always have at least 9 spots
+        // index 63 is used for resource prioritization
     }
 }
