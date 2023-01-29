@@ -1,9 +1,11 @@
 package qp1;
 
 import battlecode.common.*;
+import qp1.communications.Comms;
 import qp1.communications.EntityType;
 import qp1.utilities.FastRandom;
 
+import static qp1.navigation.Pathfinding.moveToward;
 import static qp1.utilities.Util.pickNearest;
 
 abstract public class BaseBot {
@@ -11,7 +13,7 @@ abstract public class BaseBot {
     protected static int lastMoveOrAction = 0;
     private static final MapLocation IRRELEVANT = new MapLocation(-10000, -10000);
 
-    public BaseBot(RobotController rc) throws GameActionException {
+    public BaseBot(RobotController rc) {
         BaseBot.rc = rc;
         for (int i = rc.getID() % 23; i --> 0;) FastRandom.nextInt();  // try to spread out the seeding a bit
         updateCommsOffsets();
@@ -62,5 +64,27 @@ abstract public class BaseBot {
         EntityType.WELL.offset = EntityType.HQ.offset + EntityType.HQ.count;
         EntityType.WELL.count = 63 - EntityType.WELL.offset;  // will always have at least 9 spots
         // index 63 is used for resource prioritization
+    }
+
+    protected static boolean investigateSightings() throws GameActionException {
+        Comms.EnemySighting[] enemySightings = Comms.getEnemySightings(rc);
+        int targetIdx = -1;
+        int targetScore = 10;
+        int factor = rc.getMapWidth() * rc.getMapHeight();
+        for (int i = enemySightings.length; i --> 0;) {
+            if (enemySightings[i].urgency > 0) {
+                int score = factor * enemySightings[i].urgency / Math.max(1, rc.getLocation().distanceSquaredTo(enemySightings[i].location));
+                if (targetScore < score) {
+                    targetScore = score;
+                    targetIdx = i;
+                }
+            }
+        }
+        if (targetIdx != -1) {
+            tryMove(moveToward(rc, enemySightings[targetIdx].location, 700));
+            rc.setIndicatorString(targetScore + " " + enemySightings[targetIdx]);
+            return true;
+        }
+        return false;
     }
 }

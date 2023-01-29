@@ -34,11 +34,8 @@ public class Amplifier extends BaseBot {
         }
 
         if (nearestIdx != -1) tryMove(directionAway(rc, enemies[nearestIdx].location));
-        else {
-            Direction dir = spreadOut(rc,
-                    ((rc.getMapWidth() / 2f) - rc.getLocation().x) / 3,
-                    ((rc.getMapHeight() / 2f) - rc.getLocation().y) / 3,
-                    SpreadSettings.AMPLIFIER);
+        else if (!investigateSightings()) {
+            Direction dir = spreadOut(rc, 0, 0, SpreadSettings.AMPLIFIER);
             if (!rc.senseCloud(rc.getLocation().add(dir)) || FastRandom.nextInt(8) == 0) tryMove(dir);
         }
         dieIfStuck();

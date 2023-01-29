@@ -2,7 +2,6 @@ package qp1;
 
 import battlecode.common.*;
 import qp1.communications.Comms;
-import qp1.communications.Comms.EnemySighting;
 import qp1.communications.Comms.IslandInfo;
 import qp1.navigation.SpreadSettings;
 import qp1.utilities.FastRandom;
@@ -140,28 +139,6 @@ public class Launcher extends BaseBot {
                 tryMove(dir);
             else tryMove(directionAway(rc, nearestEnemyHq.location));
             rc.setIndicatorString("Trying to help " + allyToFollow);
-            return true;
-        }
-        return false;
-    }
-
-    private static boolean investigateSightings() throws GameActionException {  // TODO: try to put carriers between this launcher and nearest HQ
-        EnemySighting[] enemySightings = Comms.getEnemySightings(rc);
-        int targetIdx = -1;
-        int targetScore = 10;
-        int factor = rc.getMapWidth() * rc.getMapHeight();
-        for (int i = enemySightings.length; i --> 0;) {
-            if (enemySightings[i].urgency > 0) {
-                int score = factor * enemySightings[i].urgency / Math.max(1, rc.getLocation().distanceSquaredTo(enemySightings[i].location));
-                if (targetScore < score) {
-                    targetScore = score;
-                    targetIdx = i;
-                }
-            }
-        }
-        if (targetIdx != -1) {
-            tryMove(moveToward(rc, enemySightings[targetIdx].location, 700));
-            rc.setIndicatorString(targetScore + " " + enemySightings[targetIdx]);
             return true;
         }
         return false;
