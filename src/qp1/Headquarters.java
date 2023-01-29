@@ -180,6 +180,6 @@ public class Headquarters extends BaseBot {
 
     private static int calculateResourcePriority(int oldValue, int newValue) {
         float factor = (float) Math.sqrt(rc.getRoundNum());
-        return Math.round((oldValue * (1 - factor) + newValue * factor) / rc.getRoundNum());
+        return Math.round((oldValue * (rc.getRoundNum() - factor) + newValue * factor) / rc.getRoundNum());
     }
 }
