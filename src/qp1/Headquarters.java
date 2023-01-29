@@ -11,11 +11,38 @@ import static qp1.utilities.Util.pickNearest;
 
 public class Headquarters extends BaseBot {
     private static int lastEnemyCommUpdate = 0;
-    private static MapLocation[] possibleLocations;
+    private static MapLocation[] spawnLocations;
+    private static int[] centerDist;
+
+    // distance to nearest well, with slightly smaller values for locations far from HQ
+    private static int[] adamantiumWellDist, manaWellDist;
 
     public Headquarters(RobotController rc) throws GameActionException {
         super(rc);
-        possibleLocations = rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), RobotType.HEADQUARTERS.actionRadiusSquared);
+
+        MapLocation[] reachableLocations = rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), RobotType.HEADQUARTERS.actionRadiusSquared);
+        int canBuild = 0;  // store array of 29 booleans
+        int n = 0;
+        for (int i = reachableLocations.length; i --> 0;)
+            if (rc.canBuildRobot(RobotType.CARRIER, reachableLocations[i])) {
+                canBuild |= 1 << i;
+                ++n;
+            }
+
+        spawnLocations = new MapLocation[n];
+        centerDist = new int[n];
+        adamantiumWellDist = new int[n]; manaWellDist = new int[n];
+        MapLocation center = new MapLocation(rc.getMapWidth() / 2, rc.getMapHeight() / 2);
+        for (int i = reachableLocations.length; i --> 0;)
+            if (((canBuild >> i) & 1) == 1) {
+                spawnLocations[--n] = reachableLocations[i];
+                centerDist[n] = spawnLocations[n].distanceSquaredTo(center);
+                adamantiumWellDist[n] = INF_DIST - rc.getLocation().distanceSquaredTo(spawnLocations[n]);
+                manaWellDist[n] = INF_DIST - rc.getLocation().distanceSquaredTo(spawnLocations[n]);
+            }
+
+        Comms.addHq(rc, rc.getLocation()); // report HQ position
+        Comms.addWells(rc, rc.senseNearbyWells());
     }
 
     @Override
@@ -29,6 +56,7 @@ public class Headquarters extends BaseBot {
 
         updateEnemyComms(enemies);
         updateResourcePriorities(allies, sightings);
+        calculateWellDistances(wells);
 
         if ((rc.getRoundNum() - rc.getID()) % (18 / Comms.getHqs(rc).length) == 0) Comms.decreaseUrgencies(rc);
         if (enemies.length >= 8 && allies.length == 0) return;  // save resources, any bots will get spawnkilled
@@ -40,14 +68,14 @@ public class Headquarters extends BaseBot {
                     (50 < rc.getRoundNum() && wells.length > 0 && FastRandom.nextInt(50 * wells.length) < rc.getRobotCount()))
                 spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
 
-            MapLocation newCarrierLoc = pickEmptySpawnLocation(spawnPriority[0], wells);
+            MapLocation newCarrierLoc = pickEmptySpawnLocation(spawnPriority[0], allies.length);
             int typeIdx = 0;
             while (newCarrierLoc != null) {
                 rc.buildRobot(spawnPriority[typeIdx], newCarrierLoc);  // it's guaranteed that we can build
                 typeIdx ^= 1;
-                newCarrierLoc = pickEmptySpawnLocation(spawnPriority[typeIdx], wells);
+                newCarrierLoc = pickEmptySpawnLocation(spawnPriority[typeIdx], allies.length);
             }
-            newCarrierLoc = pickEmptySpawnLocation(spawnPriority[typeIdx], wells);
+            newCarrierLoc = pickEmptySpawnLocation(spawnPriority[typeIdx], allies.length);
             if (newCarrierLoc != null) rc.buildRobot(spawnPriority[typeIdx], newCarrierLoc);  // try again with other type
         }
         if (itsAnchorTime() && rc.canBuildAnchor(Anchor.STANDARD)) {
@@ -61,59 +89,69 @@ public class Headquarters extends BaseBot {
      * Avoids spawning if most locations (relative to # of passable locations) are already full to prevent clogging
      * Returns null if cannot/should not be built
      */
-    private static MapLocation pickEmptySpawnLocation(RobotType robotType, WellLocation[] wells) throws GameActionException {
+    private static MapLocation pickEmptySpawnLocation(RobotType robotType, int visibleAllies) throws GameActionException {
         if (rc.isActionReady()) {
-            int nearbyRobots = rc.senseNearbyRobots(RobotType.HEADQUARTERS.actionRadiusSquared).length;
-            int availableSpots = 0;
-            int bestDist, bestIdx;
-
             switch (robotType) {
-                case LAUNCHER:  // spawn as close to center as possible
-                    MapLocation center = new MapLocation(rc.getMapWidth() / 2, rc.getMapHeight() / 2);
-                    bestDist = INF_DIST;
-                    bestIdx = -1;
-                    for (int i = possibleLocations.length; i-- > 0; ) {
-                        if (rc.canBuildRobot(robotType, possibleLocations[i])) {
-                            ++availableSpots;
-                            if (possibleLocations[i].isWithinDistanceSquared(center, bestDist - 1)) {
-                                bestDist = possibleLocations[i].distanceSquaredTo(center);
-                                bestIdx = i;
-                            }
-                        }
-                    }
-                    return bestIdx == -1 || availableSpots * 12 < nearbyRobots ? null : possibleLocations[bestIdx];
+                case LAUNCHER:
+                    return pickLauncherSpawnLocation(visibleAllies);
                 case CARRIER:  // spawn close to well, with some random variation
-                    if (wells.length == 0) {  // can happen in HQ in cloud, just pick random spot
-                        int[] validIndexes = new int[possibleLocations.length];
-                        int n = 0;
-                        for (int i = possibleLocations.length; i --> 0;) {
-                            if (rc.canBuildRobot(robotType, possibleLocations[i])) {
-                                validIndexes[n++] = i;
-                            }
-                        }
-                        return n == 0 ? null : possibleLocations[validIndexes[FastRandom.nextInt(n)]];
-                    }
-
-                    bestDist = INF_DIST;
-                    bestIdx = -1;
-                    int adamantiumPriority = Comms.getAdamantiumPriority(rc), manaPriority = Comms.getManaPriority(rc);
-                    int typeBonus;
-                    for (int i = possibleLocations.length; i --> 0;) {
-                        WellLocation nearestWell = pickNearest(possibleLocations[i], wells);
-                        if (rc.canBuildRobot(robotType, possibleLocations[i]) && nearestWell != null) {
-                            ++availableSpots;
-                            typeBonus = nearestWell.resourceType == ResourceType.ADAMANTIUM ? adamantiumPriority : manaPriority;
-                            if (possibleLocations[i].isWithinDistanceSquared(nearestWell.location, bestDist + typeBonus)) {
-                                bestDist = possibleLocations[i].distanceSquaredTo(nearestWell.location);
-                                bestIdx = i;
-                            }
-                        }
-                    }
-                    return bestIdx == -1 || availableSpots * 10 < nearbyRobots ? null : possibleLocations[bestIdx];
+                    return pickCarrierSpawnLocation(visibleAllies);
             }
             throw new IllegalArgumentException("Only handling building launchers and carriers");
         }
         return null;
+    }
+
+    private static void calculateWellDistances(WellLocation[] wells) {
+        for (int i = spawnLocations.length; i --> 0;) {
+            WellLocation nearestAdamantiumWell = pickNearest(spawnLocations[i], wells, ResourceType.ADAMANTIUM);
+            if (nearestAdamantiumWell != null) {
+                adamantiumWellDist[i] = spawnLocations[i].distanceSquaredTo(nearestAdamantiumWell.location);
+            }
+
+            WellLocation nearestManaWell = pickNearest(spawnLocations[i], wells, ResourceType.MANA);
+            if (nearestManaWell != null) {
+                manaWellDist[i] = spawnLocations[i].distanceSquaredTo(nearestManaWell.location);
+            }
+        }
+    }
+
+    private static MapLocation pickLauncherSpawnLocation(int visibleAllies) {
+        // spawn as close to center as possible
+        if (rc.isActionReady()) {
+            int bestDist = INF_DIST, bestIdx = -1;
+            int availableSpots = 0;
+            for (int i = spawnLocations.length; i-- > 0; ) {
+                if (rc.canBuildRobot(RobotType.LAUNCHER, spawnLocations[i])) {
+                    ++availableSpots;
+                    if (bestDist > centerDist[i]) {
+                        bestDist = centerDist[i];
+                        bestIdx = i;
+                    }
+                }
+            }
+            return bestIdx == -1 || availableSpots * 24 < visibleAllies ? null : spawnLocations[bestIdx];
+        }
+        return null;
+    }
+
+    // assumes calculateWellDistances has already been called
+    private static MapLocation pickCarrierSpawnLocation(int visibleAllies) throws GameActionException {
+        int adamantiumPriority = Comms.getAdamantiumPriority(rc), manaPriority = Comms.getManaPriority(rc);
+        int bestDist = INF_DIST, bestIdx = -1;
+        int dist;
+        int availableSpots = 0;
+        for (int i = spawnLocations.length; i --> 0;) {
+            if (rc.canBuildRobot(RobotType.CARRIER, spawnLocations[i])) {
+                ++availableSpots;
+                dist = Math.min(adamantiumWellDist[i] - adamantiumPriority, manaWellDist[i] - manaPriority);
+                if (bestDist > dist) {
+                    bestDist = dist;
+                    bestIdx = i;
+                }
+            }
+        }
+        return bestIdx == -1 || availableSpots * 20 < visibleAllies ? null : spawnLocations[bestIdx];
     }
 
     private static void updateEnemyComms(RobotInfo[] enemies) throws GameActionException {
@@ -125,19 +163,22 @@ public class Headquarters extends BaseBot {
     }
 
     private static void updateResourcePriorities(RobotInfo[] allies, EnemySighting[] sightings) throws GameActionException {
-        int adamantiumPriority, manaPriority = 3600 / (rc.getMapWidth() * rc.getMapHeight());
-        int carrierDensity = 1;
+        int carrierDensity = 4;
         for (int i = allies.length; i--> 0;) carrierDensity += allies[i].type == RobotType.CARRIER ? 1 : 0;
+        int adamantiumPriority = spawnLocations.length / carrierDensity;  // locations is action radius, carrierDensity is vision radius
+
+        int manaPriority = 0;
         for (int i = sightings.length; i--> 0;) manaPriority += sightings[i].urgency;
-        adamantiumPriority = possibleLocations.length / carrierDensity;  // locations is action radius, carrierDensity is vision radius
+        manaPriority = Math.min(30, (manaPriority / 10) + 3600 / (rc.getMapWidth() * rc.getMapHeight()));
 
         Comms.setResourcePriorities(rc,
                 calculateResourcePriority(Comms.getAdamantiumPriority(rc), adamantiumPriority),
-                calculateResourcePriority(Comms.getManaPriority(rc), Math.min(30, manaPriority / 10)));
-        rc.setIndicatorString(adamantiumPriority + " " + manaPriority + " " + Comms.getEnemySightings(rc).length);
+                calculateResourcePriority(Comms.getManaPriority(rc), manaPriority));
+        rc.setIndicatorString(adamantiumPriority + " " + manaPriority + " " + sightings.length);
     }
 
     private static int calculateResourcePriority(int oldValue, int newValue) {
-        return Math.round((oldValue * 4f + newValue * 5f) / 9);
+        float factor = (float) Math.sqrt(rc.getRoundNum());
+        return Math.round((oldValue * (1 - factor) + newValue * factor) / rc.getRoundNum());
     }
 }
