@@ -56,12 +56,12 @@ public class Pathfinding {
 //        debugBytecode("4.0");
         int visionLength = (int)(Math.sqrt(rc.getType().visionRadiusSquared) + 0.00001);
 
-        Direction dir = directionToward(rc, target);
+        Direction closestDir = directionToward(rc, target);
         MapLocation curLoc = rc.getLocation();
-        MapLocation nextLoc = curLoc.add(dir);
-        if (dir != Direction.CENTER && directionTowardHypothetical(rc, nextLoc, target) != Direction.CENTER) {
-            rc.setIndicatorString("Shortcut move " + dir);
-            return dir;
+        MapLocation nextLoc = curLoc.add(closestDir);
+        if (closestDir != Direction.CENTER && directionTowardHypothetical(rc, nextLoc, target) != Direction.CENTER) {
+            rc.setIndicatorString("Shortcut move " + closestDir);
+            return closestDir;
         }
         int x;
         for (x = MAX_SIZE; x --> 0;) {
@@ -75,13 +75,13 @@ public class Pathfinding {
         distance[visionLength][visionLength] = 0;
         startingDir[visionLength][visionLength] = Direction.CENTER;
 
-        Direction closestDir = curLoc.directionTo(target);
+        closestDir = curLoc.directionTo(target);
         int closestDistance = INF_DIST;
 
         int minX = curLoc.x - visionLength, minY = curLoc.y - visionLength;
 
         int y, d, nx, ny, distanceRemaining, dist;   // declare once at top to save bytecode
-        Direction curDir;
+        Direction dir, curDir;
         while (queueStart < queueEnd && Clock.getBytecodesLeft() >= bytecodeLimit) {  // one iteration can take around 600 bytecodes
 //            debugBytecode("4.2");
             curLoc = queue[queueStart++];
@@ -122,6 +122,7 @@ public class Pathfinding {
             }
         }
 //        debugBytecode("4.4");
+        rc.setIndicatorString("Returning direction " + closestDir);
         return closestDir;
     }
 
