@@ -23,32 +23,32 @@ public class Pathfinding {
     };
 
     public static Direction moveWhileStayingAdjacent(RobotController rc, MapLocation target) throws GameActionException {
-        MapLocation loc1 = rc.getLocation().add(Direction.NORTHWEST); MapInfo info1 = rc.senseMapInfo(loc1);
-        MapLocation loc2 = rc.getLocation().add(Direction.NORTHEAST); MapInfo info2 = rc.senseMapInfo(loc2);
-        MapLocation loc3 = rc.getLocation().add(Direction.SOUTHEAST); MapInfo info3 = rc.senseMapInfo(loc3);
-        MapLocation loc4 = rc.getLocation().add(Direction.SOUTHWEST); MapInfo info4 = rc.senseMapInfo(loc4);
-        MapLocation loc5 = rc.getLocation().add(Direction.NORTH);     MapInfo info5 = rc.senseMapInfo(loc5);
-        MapLocation loc6 = rc.getLocation().add(Direction.EAST);      MapInfo info6 = rc.senseMapInfo(loc6);
-        MapLocation loc7 = rc.getLocation().add(Direction.SOUTH);     MapInfo info7 = rc.senseMapInfo(loc7);
-        MapLocation loc8 = rc.getLocation().add(Direction.WEST);      MapInfo info8 = rc.senseMapInfo(loc8);
+        MapLocation loc1 = rc.getLocation().add(Direction.NORTHWEST); MapInfo info1 = rc.onTheMap(loc1) ? rc.senseMapInfo(loc1) : null;
+        MapLocation loc2 = rc.getLocation().add(Direction.NORTHEAST); MapInfo info2 = rc.onTheMap(loc2) ? rc.senseMapInfo(loc2) : null;
+        MapLocation loc3 = rc.getLocation().add(Direction.SOUTHEAST); MapInfo info3 = rc.onTheMap(loc3) ? rc.senseMapInfo(loc3) : null;
+        MapLocation loc4 = rc.getLocation().add(Direction.SOUTHWEST); MapInfo info4 = rc.onTheMap(loc4) ? rc.senseMapInfo(loc4) : null;
+        MapLocation loc5 = rc.getLocation().add(Direction.NORTH);     MapInfo info5 = rc.onTheMap(loc5) ? rc.senseMapInfo(loc5) : null;
+        MapLocation loc6 = rc.getLocation().add(Direction.EAST);      MapInfo info6 = rc.onTheMap(loc6) ? rc.senseMapInfo(loc6) : null;
+        MapLocation loc7 = rc.getLocation().add(Direction.SOUTH);     MapInfo info7 = rc.onTheMap(loc7) ? rc.senseMapInfo(loc7) : null;
+        MapLocation loc8 = rc.getLocation().add(Direction.WEST);      MapInfo info8 = rc.onTheMap(loc8) ? rc.senseMapInfo(loc8) : null;
 
-        if (rc.canMove(Direction.NORTHWEST) && !info1.hasCloud() && adjacentOrEqual(loc1, target) && adjacentOrEqual(loc1.add(info1.getCurrentDirection()), target)) return Direction.NORTHWEST;
-        if (rc.canMove(Direction.NORTHEAST) && !info2.hasCloud() && adjacentOrEqual(loc2, target) && adjacentOrEqual(loc2.add(info1.getCurrentDirection()), target)) return Direction.NORTHEAST;
-        if (rc.canMove(Direction.SOUTHEAST) && !info3.hasCloud() && adjacentOrEqual(loc3, target) && adjacentOrEqual(loc3.add(info1.getCurrentDirection()), target)) return Direction.SOUTHEAST;
-        if (rc.canMove(Direction.SOUTHWEST) && !info4.hasCloud() && adjacentOrEqual(loc4, target) && adjacentOrEqual(loc4.add(info1.getCurrentDirection()), target)) return Direction.SOUTHWEST;
-        if (rc.canMove(Direction.NORTH)     && !info5.hasCloud() && adjacentOrEqual(loc5, target) && adjacentOrEqual(loc5.add(info1.getCurrentDirection()), target)) return Direction.NORTH;
-        if (rc.canMove(Direction.EAST)      && !info6.hasCloud() && adjacentOrEqual(loc6, target) && adjacentOrEqual(loc6.add(info1.getCurrentDirection()), target)) return Direction.EAST;
-        if (rc.canMove(Direction.SOUTH)     && !info7.hasCloud() && adjacentOrEqual(loc7, target) && adjacentOrEqual(loc7.add(info1.getCurrentDirection()), target)) return Direction.SOUTH;
-        if (rc.canMove(Direction.WEST)      && !info8.hasCloud() && adjacentOrEqual(loc8, target) && adjacentOrEqual(loc8.add(info1.getCurrentDirection()), target)) return Direction.WEST;
+        if (info1 != null && rc.canMove(Direction.NORTHWEST) && !info1.hasCloud() && adjacentOrEqual(loc1, target) && adjacentOrEqual(loc1.add(info1.getCurrentDirection()), target)) return Direction.NORTHWEST;
+        if (info2 != null && rc.canMove(Direction.NORTHEAST) && !info2.hasCloud() && adjacentOrEqual(loc2, target) && adjacentOrEqual(loc2.add(info2.getCurrentDirection()), target)) return Direction.NORTHEAST;
+        if (info3 != null && rc.canMove(Direction.SOUTHEAST) && !info3.hasCloud() && adjacentOrEqual(loc3, target) && adjacentOrEqual(loc3.add(info3.getCurrentDirection()), target)) return Direction.SOUTHEAST;
+        if (info4 != null && rc.canMove(Direction.SOUTHWEST) && !info4.hasCloud() && adjacentOrEqual(loc4, target) && adjacentOrEqual(loc4.add(info4.getCurrentDirection()), target)) return Direction.SOUTHWEST;
+        if (info5 != null && rc.canMove(Direction.NORTH)     && !info5.hasCloud() && adjacentOrEqual(loc5, target) && adjacentOrEqual(loc5.add(info5.getCurrentDirection()), target)) return Direction.NORTH;
+        if (info6 != null && rc.canMove(Direction.EAST)      && !info6.hasCloud() && adjacentOrEqual(loc6, target) && adjacentOrEqual(loc6.add(info6.getCurrentDirection()), target)) return Direction.EAST;
+        if (info7 != null && rc.canMove(Direction.SOUTH)     && !info7.hasCloud() && adjacentOrEqual(loc7, target) && adjacentOrEqual(loc7.add(info7.getCurrentDirection()), target)) return Direction.SOUTH;
+        if (info8 != null && rc.canMove(Direction.WEST)      && !info8.hasCloud() && adjacentOrEqual(loc8, target) && adjacentOrEqual(loc8.add(info8.getCurrentDirection()), target)) return Direction.WEST;
 
-        if (rc.canMove(Direction.NORTHWEST) && adjacentOrEqual(loc1, target) && adjacentOrEqual(loc1.add(info1.getCurrentDirection()), target)) return Direction.NORTHWEST;
-        if (rc.canMove(Direction.NORTHEAST) && adjacentOrEqual(loc2, target) && adjacentOrEqual(loc2.add(info1.getCurrentDirection()), target)) return Direction.NORTHEAST;
-        if (rc.canMove(Direction.SOUTHEAST) && adjacentOrEqual(loc3, target) && adjacentOrEqual(loc3.add(info1.getCurrentDirection()), target)) return Direction.SOUTHEAST;
-        if (rc.canMove(Direction.SOUTHWEST) && adjacentOrEqual(loc4, target) && adjacentOrEqual(loc4.add(info1.getCurrentDirection()), target)) return Direction.SOUTHWEST;
-        if (rc.canMove(Direction.NORTH)     && adjacentOrEqual(loc5, target) && adjacentOrEqual(loc5.add(info1.getCurrentDirection()), target)) return Direction.NORTH;
-        if (rc.canMove(Direction.EAST)      && adjacentOrEqual(loc6, target) && adjacentOrEqual(loc6.add(info1.getCurrentDirection()), target)) return Direction.EAST;
-        if (rc.canMove(Direction.SOUTH)     && adjacentOrEqual(loc7, target) && adjacentOrEqual(loc7.add(info1.getCurrentDirection()), target)) return Direction.SOUTH;
-        if (rc.canMove(Direction.WEST)      && adjacentOrEqual(loc8, target) && adjacentOrEqual(loc8.add(info1.getCurrentDirection()), target)) return Direction.WEST;
+        if (info1 != null && rc.canMove(Direction.NORTHWEST) && adjacentOrEqual(loc1, target) && adjacentOrEqual(loc1.add(info1.getCurrentDirection()), target)) return Direction.NORTHWEST;
+        if (info2 != null && rc.canMove(Direction.NORTHEAST) && adjacentOrEqual(loc2, target) && adjacentOrEqual(loc2.add(info2.getCurrentDirection()), target)) return Direction.NORTHEAST;
+        if (info3 != null && rc.canMove(Direction.SOUTHEAST) && adjacentOrEqual(loc3, target) && adjacentOrEqual(loc3.add(info3.getCurrentDirection()), target)) return Direction.SOUTHEAST;
+        if (info4 != null && rc.canMove(Direction.SOUTHWEST) && adjacentOrEqual(loc4, target) && adjacentOrEqual(loc4.add(info4.getCurrentDirection()), target)) return Direction.SOUTHWEST;
+        if (info5 != null && rc.canMove(Direction.NORTH)     && adjacentOrEqual(loc5, target) && adjacentOrEqual(loc5.add(info5.getCurrentDirection()), target)) return Direction.NORTH;
+        if (info6 != null && rc.canMove(Direction.EAST)      && adjacentOrEqual(loc6, target) && adjacentOrEqual(loc6.add(info6.getCurrentDirection()), target)) return Direction.EAST;
+        if (info7 != null && rc.canMove(Direction.SOUTH)     && adjacentOrEqual(loc7, target) && adjacentOrEqual(loc7.add(info7.getCurrentDirection()), target)) return Direction.SOUTH;
+        if (info8 != null && rc.canMove(Direction.WEST)      && adjacentOrEqual(loc8, target) && adjacentOrEqual(loc8.add(info8.getCurrentDirection()), target)) return Direction.WEST;
 
         if (rc.canMove(Direction.NORTHWEST) && adjacentOrEqual(loc1, target)) return Direction.NORTHWEST;
         if (rc.canMove(Direction.NORTHEAST) && adjacentOrEqual(loc2, target)) return Direction.NORTHEAST;
