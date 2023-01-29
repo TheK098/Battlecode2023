@@ -130,33 +130,43 @@ public class Pathfinding {
     private static final int EDGE_PUSH = 6;
 
     public static Direction spreadOut(RobotController rc, float weightX, float weightY, SpreadSettings settings) throws GameActionException {
-        int x = rc.getLocation().x, y = rc.getLocation().y;
+        MapLocation currentLocation = rc.getLocation();
+        float x = currentLocation.x, y = currentLocation.y;
         // push away from edges
         weightX += (Math.max(0, cube(EDGE_PUSH - x)) - Math.max(0, cube(x - (rc.getMapWidth() - EDGE_PUSH - 1)))) / 10f;
         weightY += (Math.max(0, cube(EDGE_PUSH - y)) - Math.max(0, cube(y - (rc.getMapHeight() - EDGE_PUSH - 1)))) / 10f;
 
         RobotInfo[] robots = rc.senseNearbyRobots(settings.ally_dist_cutoff, rc.getTeam());
         int dist;
-        final float ally_dist_factor = settings.ally_dist_factor;
+        float allyWeightX = 0, allyWeightY = 0;
+        MapLocation loc;
+        boolean notAnchor = settings != SpreadSettings.CARRIER_ANCHOR;
         for (int i = robots.length; i --> 0;) {
             // when spreading out anchoring carriers, we only care about other anchor carriers
-            if (rc.getType() == robots[i].getType() && (settings != SpreadSettings.CARRIER_ANCHOR || robots[i].getNumAnchors(Anchor.STANDARD) > 0)) {
+            if (rc.getType() == robots[i].getType() && (notAnchor || robots[i].getNumAnchors(Anchor.STANDARD) > 0)) {
+                loc = robots[i].location;
                 // add one to avoid div by 0 when running out of bytecode
-                dist = rc.getLocation().distanceSquaredTo(robots[i].location) + 1;
+                dist = currentLocation.distanceSquaredTo(loc) + 1;
                 // subtract since we want to move away
-                weightX -= ally_dist_factor * (robots[i].location.x - x) / dist;
-                weightY -= ally_dist_factor * (robots[i].location.y - y) / dist;
+                allyWeightX -= (loc.x - x) / dist;
+                allyWeightY -= (loc.y - y) / dist;
             }
         }
+        weightX += allyWeightX * settings.ally_dist_factor;
+        weightY += allyWeightY * settings.ally_dist_factor;
 
         // searching carriers should avoid enemy sightings
         if (settings == SpreadSettings.CARRIER_SEARCHING) {
+            float enemyWeightX = 0, enemyWeightY = 0;
             EnemySighting[] sightings = Comms.getEnemySightings(rc);
             for (int i = sightings.length; i --> 0;) {
-                dist = rc.getLocation().distanceSquaredTo(sightings[i].location) + 1;
-                weightX -= 40f * (sightings[i].location.x - x) / dist;
-                weightY -= 40f * (sightings[i].location.y - y) / dist;
+                loc = sightings[i].location;
+                dist = currentLocation.distanceSquaredTo(loc) + 1;
+                enemyWeightX -= (loc.x - x) / dist;
+                enemyWeightY -= (loc.y - y) / dist;
             }
+            weightX += enemyWeightX * 40;
+            weightY += enemyWeightY * 40;
         }
 //        rc.setIndicatorString(weightX + " " + weightY);
 

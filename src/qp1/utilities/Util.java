@@ -113,14 +113,16 @@ public class Util {
         return closestIndex == -1 ? null : islands[closestIndex];
     }
 
-    public static RobotInfo pickNearestEnemyHq(RobotController rc, RobotInfo[] robots) {
+    public static RobotInfo pickNearestHq(RobotController rc, RobotInfo[] robots) {
         int closestIndex = -1;
         int closestDistance = INF_DIST;
         for (int i = robots.length; i --> 0;) {
-            int distance = robots[i].location.distanceSquaredTo(rc.getLocation());
-            if (closestDistance > distance && robots[i].type == RobotType.HEADQUARTERS && robots[i].team != rc.getTeam()) {
-                closestDistance = distance;
-                closestIndex = i;
+            if (robots[i].type == RobotType.HEADQUARTERS) {
+                int distance = robots[i].location.distanceSquaredTo(rc.getLocation());
+                if (closestDistance > distance) {
+                    closestDistance = distance;
+                    closestIndex = i;
+                }
             }
         }
         return closestIndex == -1 ? null : robots[closestIndex];
@@ -285,7 +287,7 @@ public class Util {
         return false;
     }
 
-    public static int cube(int x) {
+    public static float cube(float x) {
         return x * x * x;
     }
 }

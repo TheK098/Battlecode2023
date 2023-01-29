@@ -28,7 +28,7 @@ public class Launcher extends BaseBot {
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         if (!handleCombat(enemies)) {
             RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
-            RobotInfo nearestEnemyHq = pickNearestEnemyHq(rc, enemies);
+            RobotInfo nearestEnemyHq = pickNearestHq(rc, enemies);
             if (!supportAlly(enemies, allies, nearestEnemyHq)) {
                 if (!attackVisibleIsland()) {
                     if (!investigateSightings()) {
@@ -128,7 +128,7 @@ public class Launcher extends BaseBot {
                     allyToFollow = allies[i].ID;
                     allyFollowTimer = ALLY_FOLLOW_TIME;
                     allyHealth.put(allies[i].ID, allies[i].health);
-                } else if (storedHealth == 0 && ++added <= 12) {  // don't add too many in one round for bytecode reasons
+                } else if (storedHealth == 0 && ++added <= 10) {  // don't add too many in one round for bytecode reasons
                     // haven't seen this ally before, record their health
                     allyHealth.put(allies[i].ID, allies[i].health);
                 }
@@ -200,11 +200,8 @@ public class Launcher extends BaseBot {
     }
 
     private static boolean canAttack(MapLocation location) {
-        if (rc.isMovementReady()) {
-            MapLocation closer = rc.getLocation().add(directionTowardImmediate(rc, location));
-            if (closer.isWithinDistanceSquared(location, 16)) return true;
-        }
-        return rc.getLocation().isWithinDistanceSquared(location, 16);
+        return (rc.isMovementReady() && rc.getLocation().add(directionTowardImmediate(rc, location)).isWithinDistanceSquared(location, 16)) ||
+                rc.getLocation().isWithinDistanceSquared(location, 16);
     }
 
     // assume both robots are within attacking range
