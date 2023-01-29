@@ -1,6 +1,8 @@
 package qp1.navigation;
 
 import battlecode.common.*;
+import qp1.communications.Comms;
+import qp1.communications.Comms.EnemySighting;
 import qp1.utilities.FastRandom;
 
 import java.util.Arrays;
@@ -136,6 +138,7 @@ public class Pathfinding {
 
         RobotInfo[] robots = rc.senseNearbyRobots(settings.ally_dist_cutoff, rc.getTeam());
         int dist;
+        final float ally_dist_factor = settings.ally_dist_factor;
         for (int i = robots.length; i --> 0;) {
             if (rc.getType() != robots[i].getType()) continue;
             // when spreading out anchoring carriers, we only care about other anchor carriers
@@ -144,8 +147,18 @@ public class Pathfinding {
             // add one to avoid div by 0 when running out of bytecode
             dist = rc.getLocation().distanceSquaredTo(robots[i].location) + 1;
             // subtract since we want to move away
-            weightX -= settings.ally_dist_factor * (robots[i].location.x - x) / dist;
-            weightY -= settings.ally_dist_factor * (robots[i].location.y - y) / dist;
+            weightX -= ally_dist_factor * (robots[i].location.x - x) / dist;
+            weightY -= ally_dist_factor * (robots[i].location.y - y) / dist;
+        }
+
+        // searching carriers should avoid enemy sightings
+        if (settings == SpreadSettings.CARRIER_SEARCHING) {
+            EnemySighting[] sightings = Comms.getEnemySightings(rc);
+            for (int i = sightings.length; i --> 0;) {
+                dist = rc.getLocation().distanceSquaredTo(sightings[i].location) + 1;
+                weightX -= 40f * (sightings[i].location.x - x) / dist;
+                weightY -= 40f * (sightings[i].location.y - y) / dist;
+            }
         }
 //        rc.setIndicatorString(weightX + " " + weightY);
 

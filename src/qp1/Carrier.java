@@ -57,7 +57,7 @@ public class Carrier extends BaseBot {
         if (shouldReturn) return;
 
         boolean adjacentToHq = adjacentToHeadquarters(rc, rc.getLocation());
-        if ((rc.getID() % 5 == 0 && itsAnchorTime()) || rc.getAnchor() != null) {
+        if ((rc.getID() % 8 == 0 && itsAnchorTime()) || rc.getAnchor() != null) {
             if (getCurrentResources() > 0) returnResources();
             else handleAnchor();
         } else if (adjacentToHq && ((rc.getResourceAmount(ResourceType.ADAMANTIUM) > 0 && adamantiumCooldown <= 0) || (rc.getResourceAmount(ResourceType.MANA) > 0 && manaCooldown <= 0))) {
@@ -170,7 +170,7 @@ public class Carrier extends BaseBot {
 
         if (targetWell == null) {
             rc.setIndicatorString("All wells blacklisted");
-            tryMove(randomDirection(rc));
+            tryMove(spreadOut(rc, 0, 0, SpreadSettings.CARRIER_SEARCHING));
             return;
         }
         handleBlacklist(targetWell, EntityType.WELL);
@@ -248,7 +248,7 @@ public class Carrier extends BaseBot {
             assert nearestHq != null;
             if (rc.getLocation().isWithinDistanceSquared(nearestHq, 16)) {
                 tryMove(directionAway(rc, nearestHq));
-            } else tryMove(randomDirection(rc));
+            } else tryMove(spreadOut(rc, 0, 0, SpreadSettings.CARRIER_SEARCHING));
 //            debugBytecode("3.4");
         }
     }
