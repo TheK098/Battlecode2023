@@ -32,6 +32,7 @@ public class Comms {
     private static final int[] additionalValues = new int[MAX_COUNT];
     private static final ResourceType[] wellType = new ResourceType[MAX_COUNT];
 
+    private static final IslandInfo[] islands = new IslandInfo[MAX_ISLAND_ID];
     private static final IslandInfo[] islandCache = new IslandInfo[MAX_ISLAND_ID];
     private static final MapLocation[] wellCache = new MapLocation[6 * 6 * 4];
     private static final ResourceType[] wellTypeCache = new ResourceType[6 * 6 * 4];
@@ -137,16 +138,16 @@ public class Comms {
     }
     public static IslandInfo[] getIslands(RobotController rc) throws GameActionException {
         int n = 0;
-        IslandInfo[] islandsTmp = new IslandInfo[rc.getIslandCount()];
-        for (int i = EntityType.ISLAND.count; i --> 0;) {
-            int value = rc.readSharedArray(EntityType.ISLAND.offset + i) - 1;
+        int index = EntityType.ISLAND.offset;
+        for (int i = EntityType.ISLAND.count; i --> 0; ++index) {
+            int value = rc.readSharedArray(index) - 1;
             if (value >= 0) {
-                islandsTmp[n++] = new IslandInfo(value, i + 1);
+                islands[n++] = new IslandInfo(value, i + 1);
             }
         }
-        IslandInfo[] islands = new IslandInfo[n];
-        System.arraycopy(islandsTmp, 0, islands, 0, n);
-        return islands;
+        IslandInfo[] islandsToReturn = new IslandInfo[n];
+        System.arraycopy(islands, 0, islandsToReturn, 0, n);
+        return islandsToReturn;
     }
 
     private static int loadSharedLocations(RobotController rc, EntityType entityType) throws GameActionException {

@@ -24,6 +24,7 @@ public class Launcher extends BaseBot {
 
     @Override
     public void processRound() throws GameActionException {
+        MapLocation curLoc = rc.getLocation();
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         if (!handleCombat(enemies)) {
             RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
@@ -34,22 +35,21 @@ public class Launcher extends BaseBot {
                         if (!attackNearestIsland()) {
                             rc.setIndicatorString("Spreading out");
                             Direction dir = spreadOut(rc,
-                                    ((rc.getMapWidth() / 2f) - rc.getLocation().x) / 5,
-                                    ((rc.getMapHeight() / 2f) - rc.getLocation().y) / 5,
+                                    ((rc.getMapWidth() / 2f) - curLoc.x) / 5,
+                                    ((rc.getMapHeight() / 2f) - curLoc.y) / 5,
                                     SpreadSettings.LAUNCHER);
-                            MapLocation newLoc = rc.getLocation().add(dir);
+                            MapLocation newLoc = curLoc.add(dir);
                             // maintain space for carriers
                             if (adjacentToHeadquarters(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
                                 tryMove(directionAway(rc, Util.pickNearest(rc, Comms.getHqs(rc))));
                             else if (adjacentToWell(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
-                                if (rc.senseWell(rc.getLocation()) != null) tryMove(randomDirection(rc));
+                                if (rc.senseWell(curLoc) != null) tryMove(randomDirection(rc));
                                 else tryMove(directionAway(rc, pickNearest(rc, Comms.getKnownWells(rc)).location));
-                            else {
-                                if (nearestEnemyHq != null && newLoc.isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
-                                    tryMove(directionAway(rc, nearestEnemyHq.location));
-                                else
-                                    tryMove(dir);
-                            }
+                            else if (nearestEnemyHq != null && newLoc.isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
+                                tryMove(directionAway(rc, nearestEnemyHq.location));
+                            else
+                                tryMove(dir);
+
                         }
                     }
                 }
@@ -61,6 +61,21 @@ public class Launcher extends BaseBot {
             if (target != null && rc.canAttack(target.location)) {
                 rc.attack(target.location);
                 lastMoveOrAction = rc.getRoundNum();
+            } else if (rc.senseCloud(rc.getLocation())) {
+                MapLocation center = new MapLocation(rc.getMapWidth() / 2, rc.getMapHeight() / 2);
+                Direction dir = rc.getLocation().directionTo(center);
+                MapLocation targetLoc = curLoc.add(dir).add(dir).add(dir.rotateLeft());  // rotateLeft to stay within attack range
+                if (rc.canAttack(targetLoc)) rc.attack(targetLoc);
+            } else {  // attack cloud
+                MapLocation[] clouds = rc.senseNearbyCloudLocations(16);
+                int farthestDist = 0, farthestIdx = -1;
+                for (int i = clouds.length; i --> 0;) {
+                    if (!curLoc.isWithinDistanceSquared(clouds[i], farthestDist)) {
+                        farthestDist = curLoc.distanceSquaredTo(clouds[i]);
+                        farthestIdx = i;
+                    }
+                }
+                if (farthestIdx != -1 && rc.canAttack(clouds[farthestIdx])) rc.attack(clouds[farthestIdx]);
             }
         }
 
