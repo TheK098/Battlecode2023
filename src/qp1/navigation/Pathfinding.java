@@ -124,7 +124,6 @@ public class Pathfinding {
             }
         }
 //        debugBytecode("4.4");
-        rc.setIndicatorString("Returning direction " + closestDir);
         return closestDir;
     }
 
@@ -140,15 +139,14 @@ public class Pathfinding {
         int dist;
         final float ally_dist_factor = settings.ally_dist_factor;
         for (int i = robots.length; i --> 0;) {
-            if (rc.getType() != robots[i].getType()) continue;
             // when spreading out anchoring carriers, we only care about other anchor carriers
-            if (settings == SpreadSettings.CARRIER_ANCHOR && robots[i].getNumAnchors(Anchor.STANDARD) == 0) continue;
-
-            // add one to avoid div by 0 when running out of bytecode
-            dist = rc.getLocation().distanceSquaredTo(robots[i].location) + 1;
-            // subtract since we want to move away
-            weightX -= ally_dist_factor * (robots[i].location.x - x) / dist;
-            weightY -= ally_dist_factor * (robots[i].location.y - y) / dist;
+            if (rc.getType() == robots[i].getType() && (settings != SpreadSettings.CARRIER_ANCHOR || robots[i].getNumAnchors(Anchor.STANDARD) > 0)) {
+                // add one to avoid div by 0 when running out of bytecode
+                dist = rc.getLocation().distanceSquaredTo(robots[i].location) + 1;
+                // subtract since we want to move away
+                weightX -= ally_dist_factor * (robots[i].location.x - x) / dist;
+                weightY -= ally_dist_factor * (robots[i].location.y - y) / dist;
+            }
         }
 
         // searching carriers should avoid enemy sightings

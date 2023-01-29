@@ -157,7 +157,7 @@ public class Headquarters extends BaseBot {
 
     private static void updateEnemyComms(RobotInfo[] enemies) throws GameActionException {
         if (lastEnemyCommUpdate + 5 <= rc.getRoundNum()) {
-            RobotInfo nearestEnemy = pickNearest(rc, enemies, false);
+            RobotInfo nearestEnemy = pickNearest(rc, enemies);
             if (nearestEnemy != null && Comms.reportEnemySighting(rc, nearestEnemy.location))
                 lastEnemyCommUpdate = rc.getRoundNum();
         }

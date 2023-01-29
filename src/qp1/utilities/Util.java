@@ -62,12 +62,12 @@ public class Util {
         }
         return closestIndex == -1 ? null : wells[closestIndex];
     }
-    public static RobotInfo pickNearest(RobotController rc, RobotInfo[] robots, boolean includeHeadquarters) {
+    public static RobotInfo pickNearest(RobotController rc, RobotInfo[] robots) {
         int closestIndex = -1;
         int closestDistance = INF_DIST;
         for (int i = robots.length; i --> 0;) {
             int distance = robots[i].location.distanceSquaredTo(rc.getLocation());
-            if (closestDistance > distance && (includeHeadquarters || robots[i].getType() != RobotType.HEADQUARTERS)) {
+            if (closestDistance > distance && robots[i].getType() != RobotType.HEADQUARTERS) {
                 closestDistance = distance;
                 closestIndex = i;
             }

@@ -33,9 +33,11 @@ public class Launcher extends BaseBot {
                 if (!attackVisibleIsland()) {
                     if (!investigateSightings()) {
                         if (!attackNearestIsland()) {
-                            float weightX = (rc.getMapWidth() / 2f) - rc.getLocation().x, weightY = (rc.getMapHeight() / 2f) - rc.getLocation().y;  // default drift to center
                             rc.setIndicatorString("Spreading out");
-                            Direction dir = spreadOut(rc, weightX / 10, weightY / 10, SpreadSettings.LAUNCHER);
+                            Direction dir = spreadOut(rc,
+                                    ((rc.getMapWidth() / 2f) - rc.getLocation().x) / 10,
+                                    ((rc.getMapHeight() / 2f) - rc.getLocation().y) / 10,
+                                    SpreadSettings.LAUNCHER);
                             MapLocation newLoc = rc.getLocation().add(dir);
                             // maintain space for carriers
                             if (adjacentToHeadquarters(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
@@ -44,7 +46,7 @@ public class Launcher extends BaseBot {
                                 if (rc.senseWell(rc.getLocation()) != null) tryMove(randomDirection(rc));
                                 else tryMove(directionAway(rc, pickNearest(rc, Comms.getKnownWells(rc)).location));
                             else {
-                                if (nearestEnemyHq != null && rc.getLocation().add(dir).isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
+                                if (nearestEnemyHq != null && newLoc.isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
                                     tryMove(directionAway(rc, nearestEnemyHq.location));
                                 else
                                     tryMove(dir);
@@ -69,7 +71,7 @@ public class Launcher extends BaseBot {
 
     private static boolean handleCombat(RobotInfo[] enemies) throws GameActionException {
         RobotInfo target = pickTarget(enemies);
-        if (target == null) target = pickNearest(rc, enemies, false);
+        if (target == null) target = pickNearest(rc, enemies);
         if (target == null) return false;
 
         MapLocation toAttack = target.location;
@@ -85,12 +87,21 @@ public class Launcher extends BaseBot {
             RobotInfo[] allies = rc.senseNearbyRobots(toAttack, 20, rc.getTeam());
             int desperationScore = 0, allyLaunchers = 0;
             for (int i = allies.length; i --> 0;) {
-                desperationScore += allies[i].type == RobotType.CARRIER ? 1 : (allies[i].type == RobotType.HEADQUARTERS ? 5 : 0);
-                allyLaunchers += allies[i].type == RobotType.LAUNCHER ? 1 : 0;
+                switch (allies[i].type) {
+                    case CARRIER:
+                        ++desperationScore;
+                        break;
+                    case HEADQUARTERS:
+                        desperationScore += 5;
+                        break;
+                    case LAUNCHER:
+                        ++allyLaunchers;
+                        break;
+                }
             }
 
             int enemyLaunchers = 0;
-            for (int i = enemies.length; i --> 0;) enemyLaunchers += enemies[i].type == RobotType.LAUNCHER ? 1 : 0;
+            for (int i = enemies.length; i --> 0;) if (enemies[i].type == RobotType.LAUNCHER) ++enemyLaunchers;
             if (allyLaunchers >= enemyLaunchers || desperationScore >= 3) {
                 Direction dir = directionTowardImmediate(rc, toAttack);
                 tryMove(dir);
@@ -117,7 +128,7 @@ public class Launcher extends BaseBot {
                     allyToFollow = allies[i].ID;
                     allyFollowTimer = ALLY_FOLLOW_TIME;
                     allyHealth.put(allies[i].ID, allies[i].health);
-                } else if (storedHealth == 0 && ++added <= 15) {  // don't add too many in one round for bytecode reasons
+                } else if (storedHealth == 0 && ++added <= 12) {  // don't add too many in one round for bytecode reasons
                     // haven't seen this ally before, record their health
                     allyHealth.put(allies[i].ID, allies[i].health);
                 }

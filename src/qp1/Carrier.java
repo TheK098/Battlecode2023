@@ -136,10 +136,15 @@ public class Carrier extends BaseBot {
     private static void handleAnchor() throws GameActionException {
         if (rc.getAnchor() == null) {  // need to pick up an anchor
             MapLocation targetHq = Util.pickNearest(rc, Comms.getHqs(rc), blacklist);
-            moveTowardHeadquarters(targetHq);
             rc.setIndicatorString("Waiting for anchor from " + targetHq);
-            if (rc.canTakeAnchor(targetHq, Anchor.STANDARD)) {
-                rc.takeAnchor(targetHq, Anchor.STANDARD);
+            if (targetHq != null) {
+                moveTowardHeadquarters(targetHq);
+                if (rc.canTakeAnchor(targetHq, Anchor.STANDARD)) {
+                    rc.takeAnchor(targetHq, Anchor.STANDARD);
+                }
+            } else {
+                tryMove(spreadOut(rc, 0, 0, SpreadSettings.CARRIER_SEARCHING));
+                tryMove(spreadOut(rc, 0, 0, SpreadSettings.CARRIER_SEARCHING));
             }
         }
         if (rc.getAnchor() == Anchor.STANDARD) {
