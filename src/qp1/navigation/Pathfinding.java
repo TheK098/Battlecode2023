@@ -100,7 +100,6 @@ public class Pathfinding {
             if (closestDistance > dist + distanceRemaining) {
                 closestDistance = dist + distanceRemaining;
                 closestDir = curDir;
-//                rc.setIndicatorString(closestDir + " " + (x + minX) + " " + (y + minY) + " " + target.x + " " + target.y + " " + totalDistance + " " + distanceRemaining + " " + queueStart);
             }
 
             for (d = 8; d --> 0;) {
@@ -168,7 +167,6 @@ public class Pathfinding {
             weightX += enemyWeightX * 40;
             weightY += enemyWeightY * 40;
         }
-//        rc.setIndicatorString(weightX + " " + weightY);
 
         int finalDx = FastRandom.nextInt(settings.random_bound) - settings.random_cutoff > weightX ? -1 : 1;
         int finalDy = FastRandom.nextInt(settings.random_bound) - settings.random_cutoff > weightY ? -1 : 1;

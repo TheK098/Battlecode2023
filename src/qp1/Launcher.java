@@ -52,7 +52,6 @@ public class Launcher extends BaseBot {
                                     tryMove(dir);
                             }
                         }
-//                rc.setIndicatorString("Spreading out");
                     }
                 }
             }
