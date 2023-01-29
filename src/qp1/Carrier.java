@@ -42,7 +42,7 @@ public class Carrier extends BaseBot {
             }
             else {
                 MapLocation nearestHq = Util.pickNearest(rc, Comms.getHqs(rc));
-                tryMove(moveToward(rc, nearestHq, 650));
+                tryMove(moveToward(rc, nearestHq, 700));
                 rc.setIndicatorString("Running to " + nearestHq + " to report enemy sighting");
                 return;
             }
@@ -112,8 +112,8 @@ public class Carrier extends BaseBot {
 
             MapLocation nearestHq = Util.pickNearest(rc, Comms.getHqs(rc));
             assert nearestHq != null;
-            tryMove(moveToward(rc, nearestHq, 650));
-            tryMove(moveToward(rc, nearestHq, 650));
+            tryMove(moveToward(rc, nearestHq, 700));
+            tryMove(moveToward(rc, nearestHq, 700));
             return true;
         }
          return false;
@@ -153,7 +153,7 @@ public class Carrier extends BaseBot {
             if (nearestVisibleIsland == null) {
                 IslandInfo target = pickNearest(rc, Comms.getIslands(rc), Team.NEUTRAL);
                 if (target != null) {
-                    tryMove(moveToward(rc, target.location, 1400));  // no-op if we're at target already
+                    tryMove(moveToward(rc, target.location, 1500));  // no-op if we're at target already
                     rc.setIndicatorString("Moving towards approx " + target);
                 } else {
                     // spread out from other anchor bots
@@ -162,7 +162,7 @@ public class Carrier extends BaseBot {
                 }
             } else if (rc.canPlaceAnchor()) {
                 rc.placeAnchor();
-            } else tryMove(moveToward(rc, nearestVisibleIsland, 650));
+            } else tryMove(moveToward(rc, nearestVisibleIsland, 700));
         }
     }
 
@@ -266,7 +266,7 @@ public class Carrier extends BaseBot {
         } else if (timeRemaining <= EntityType.HQ.randomMoveCutoff && timeRemaining % EntityType.HQ.randomMovePeriod == 0) {
             dir = randomDirection(rc);
         } else {
-            dir = moveToward(rc, targetHq, 1850);
+            dir = moveToward(rc, targetHq, 1950);
         }
         tryMove(dir);
         tryMove(similarDirection(rc, dir));
@@ -280,7 +280,7 @@ public class Carrier extends BaseBot {
         } else if (timeRemaining <= EntityType.WELL.randomMoveCutoff && timeRemaining % EntityType.WELL.randomMovePeriod == 0) {
             dir = randomDirection(rc);
         } else {
-            dir = moveToward(rc, targetWell, 1850);
+            dir = moveToward(rc, targetWell, 1950);
         }
 
 //        debugBytecode("2.1");

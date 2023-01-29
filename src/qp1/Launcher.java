@@ -160,7 +160,7 @@ public class Launcher extends BaseBot {
             }
         }
         if (targetIdx != -1) {
-            tryMove(moveToward(rc, enemySightings[targetIdx].location, 650));
+            tryMove(moveToward(rc, enemySightings[targetIdx].location, 700));
             rc.setIndicatorString(targetScore + " " + enemySightings[targetIdx]);
             return true;
         }
@@ -170,7 +170,7 @@ public class Launcher extends BaseBot {
     private static boolean attackVisibleIsland() throws GameActionException {
         MapLocation nearestVisibleIsland = findNearestVisibleIslandLocation(rc.getTeam().opponent());
         if (nearestVisibleIsland != null) {
-            tryMove(moveToward(rc, nearestVisibleIsland, 650));  // if we're already on island, just stay there
+            tryMove(moveToward(rc, nearestVisibleIsland, 700));  // if we're already on island, just stay there
             return true;
         }
         return false;
@@ -179,7 +179,7 @@ public class Launcher extends BaseBot {
     private static boolean attackNearestIsland() throws GameActionException {
         IslandInfo nearestIsland = pickNearest(rc, Comms.getIslands(rc), rc.getTeam().opponent());
         if (nearestIsland != null && rc.getLocation().isWithinDistanceSquared(nearestIsland.location, 81)) {
-            tryMove(moveToward(rc, nearestIsland.location, 1500));
+            tryMove(moveToward(rc, nearestIsland.location, 1600));
             rc.setIndicatorString("Moving toward island " + nearestIsland.location);
             return true;
         }
