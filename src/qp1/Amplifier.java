@@ -40,11 +40,18 @@ public class Amplifier extends BaseBot {
             float weightX = sighting == null ? 0 : sighting.location.x - rc.getLocation().x;
             float weightY = sighting == null ? 0 : sighting.location.y - rc.getLocation().y;
             Direction dir = spreadOut(rc, weightX, weightY, SpreadSettings.AMPLIFIER);
-            if (!rc.senseCloud(rc.getLocation().add(dir)) || FastRandom.nextInt(8) == 0) tryMove(dir);
+
+            if (shouldMove(dir, 4)) tryMove(dir);
+            else if (shouldMove(dir.rotateLeft(), 8)) tryMove(dir.rotateLeft());
+            else if (shouldMove(dir.rotateRight(), 8)) tryMove(dir.rotateRight());
         }
         dieIfStuck();
     }
 
+    private static boolean shouldMove(Direction dir, int chance) throws GameActionException {
+        MapLocation result = rc.getLocation().add(dir);
+        return rc.canMove(dir) && rc.canSenseLocation(result) && (!rc.senseCloud(result) || FastRandom.nextInt(chance) == 0);
+    }
 
     private static void dieIfStuck() {  // desperate times call for desperate measures
         if (rc.getRoundNum() - lastMoveOrAction >= 200) rc.disintegrate();
