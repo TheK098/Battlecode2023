@@ -16,4 +16,9 @@ public enum EntityType {
         this.randomMoveCutoff = randomMoveCutoff;
         this.randomMovePeriod = randomMovePeriod;
     }
+
+    @Override
+    public String toString() {
+        return "EntityType." + name() + "(offset=" + offset + ",count=" + count + ")";
+    }
 }
