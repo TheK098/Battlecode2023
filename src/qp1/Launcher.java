@@ -27,7 +27,9 @@ public class Launcher extends BaseBot {
     public void processRound() throws GameActionException {
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         if (!handleCombat(enemies)) {
-            if (!supportAlly(enemies)) {
+            RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
+            RobotInfo nearestEnemyHq = pickNearestEnemyHq(rc, enemies);
+            if (!supportAlly(enemies, allies, nearestEnemyHq)) {
                 if (!attackVisibleIsland()) {
                     if (!investigateSightings()) {
                         if (!attackNearestIsland()) {
@@ -35,7 +37,6 @@ public class Launcher extends BaseBot {
                             rc.setIndicatorString("Spreading out");
                             Direction dir = spreadOut(rc, weightX / 10, weightY / 10, SpreadSettings.LAUNCHER);
                             MapLocation newLoc = rc.getLocation().add(dir);
-                            RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
                             // maintain space for carriers
                             if (adjacentToHeadquarters(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
                                 tryMove(directionAway(rc, Util.pickNearest(rc, Comms.getHqs(rc))));
@@ -43,7 +44,6 @@ public class Launcher extends BaseBot {
                                 if (rc.senseWell(rc.getLocation()) != null) tryMove(randomDirection(rc));
                                 else tryMove(directionAway(rc, pickNearest(rc, Comms.getKnownWells(rc)).location));
                             else {
-                                RobotInfo nearestEnemyHq = pickNearestEnemyHq(rc, enemies);
                                 if (nearestEnemyHq != null && rc.getLocation().add(dir).isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
                                     tryMove(directionAway(rc, nearestEnemyHq.location));
                                 else
@@ -107,33 +107,29 @@ public class Launcher extends BaseBot {
         return true;
     }
 
-    private static boolean supportAlly(RobotInfo[] enemies) throws GameActionException {
-        int allyToFollowLocal = allyToFollow;
-        if (allyToFollowLocal != -1 && (--allyFollowTimer == 0 || !rc.canSenseRobot(allyToFollowLocal))) allyToFollowLocal = -1;
-        if (allyToFollowLocal == -1) {  // check if any allies were recently hurt
-            RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
-            int added = 0;
+    private static boolean supportAlly(RobotInfo[] enemies, RobotInfo[] allies, RobotInfo nearestEnemyHq) throws GameActionException {
+        if (allyToFollow != -1 && (--allyFollowTimer == 0 || !rc.canSenseRobot(allyToFollow))) allyToFollow = -1;
+        if (allyToFollow == -1) {  // check if any allies were recently hurt
+            int added = 0, storedHealth;
             for (int i = allies.length; i --> 0;) {
-                int storedHealth = allyHealth.get(allies[i].ID);
+                storedHealth = allyHealth.get(allies[i].ID);
                 if (allies[i].health < storedHealth) {  // ally took damage, go help them
-                    allyToFollowLocal = allies[i].ID;
+                    allyToFollow = allies[i].ID;
                     allyFollowTimer = ALLY_FOLLOW_TIME;
                     allyHealth.put(allies[i].ID, allies[i].health);
-                } else if (storedHealth == 0 && added++ <= 15) {  // don't add too many in one round for bytecode reasons
+                } else if (storedHealth == 0 && ++added <= 15) {  // don't add too many in one round for bytecode reasons
                     // haven't seen this ally before, record their health
                     allyHealth.put(allies[i].ID, allies[i].health);
                 }
             }
         }
-        allyToFollow = allyToFollowLocal;
 
-        if (allyToFollowLocal != -1) {  // support hurt ally
-            Direction dir = directionToward(rc, rc.senseRobot(allyToFollowLocal).location);
-            RobotInfo nearestEnemyHq = pickNearestEnemyHq(rc, enemies);
+        if (allyToFollow != -1) {  // support hurt ally
+            Direction dir = directionToward(rc, rc.senseRobot(allyToFollow).location);  // no pathing, just try to be nearby
             if (enemies.length > 0 || nearestEnemyHq == null || !rc.getLocation().add(dir).isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
                 tryMove(dir);
             else tryMove(directionAway(rc, nearestEnemyHq.location));
-            rc.setIndicatorString("Trying to help " + allyToFollowLocal);
+            rc.setIndicatorString("Trying to help " + allyToFollow);
             return true;
         }
         return false;
