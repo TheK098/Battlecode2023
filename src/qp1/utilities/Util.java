@@ -38,18 +38,6 @@ public class Util {
         }
         return closestIndex == -1 ? null : locations[closestIndex];
     }
-    public static WellLocation pickNearest(MapLocation origin, WellLocation[] wells) {
-        int closestIndex = -1;
-        int closestDistance = INF_DIST;
-        for (int i = wells.length; i --> 0;) {
-            int distance = wells[i].location.distanceSquaredTo(origin);
-            if (closestDistance > distance) {
-                closestDistance = distance;
-                closestIndex = i;
-            }
-        }
-        return closestIndex == -1 ? null : wells[closestIndex];
-    }
     public static WellLocation pickNearest(MapLocation origin, WellLocation[] wells, ResourceType resourceType) {
         int closestIndex = -1;
         int closestDistance = INF_DIST;
@@ -80,18 +68,6 @@ public class Util {
         for (int i = wells.length; i --> 0;) {
             int distance = wells[i].location.distanceSquaredTo(rc.getLocation());
             if (closestDistance > distance) {
-                closestDistance = distance;
-                closestIndex = i;
-            }
-        }
-        return closestIndex == -1 ? null : wells[closestIndex];
-    }
-    public static WellLocation pickNearest(RobotController rc, WellLocation[] wells, ResourceType resourceType, int[][] blacklist) {
-        int closestIndex = -1;
-        int closestDistance = INF_DIST;
-        for (int i = wells.length; i --> 0;) {
-            int distance = wells[i].location.distanceSquaredTo(rc.getLocation());
-            if (closestDistance > distance && wells[i].resourceType == resourceType && blacklist[wells[i].location.x][wells[i].location.y] <= rc.getRoundNum()) {
                 closestDistance = distance;
                 closestIndex = i;
             }

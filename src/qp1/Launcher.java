@@ -19,7 +19,7 @@ public class Launcher extends BaseBot {
     private static int allyFollowTimer = 0;
     private static final int ALLY_FOLLOW_TIME = 8;
 
-    public Launcher(RobotController rc) throws GameActionException {
+    public Launcher(RobotController rc) {
         super(rc);
     }
 

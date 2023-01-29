@@ -39,8 +39,8 @@ public class Comms {
     private static int wellCacheSize = 0;
 
     public static class WellLocation {
-        public MapLocation location;
-        public ResourceType resourceType;
+        public final MapLocation location;
+        public final ResourceType resourceType;
         WellLocation(MapLocation location, ResourceType resourceType) {
             this.location = location;
             this.resourceType = resourceType;
@@ -52,8 +52,8 @@ public class Comms {
     }
 
     public static class EnemySighting {
-        public MapLocation location;
-        public int urgency;
+        public final MapLocation location;
+        public final int urgency;
         EnemySighting(MapLocation location, int urgency) {
             this.location = location;
             this.urgency = urgency;
@@ -65,7 +65,7 @@ public class Comms {
     }
 
     public static class CompressedMapLocation {
-        public int x, y;
+        public final int x, y;
         CompressedMapLocation(int x, int y) {
             this.x = x;
             this.y = y;
@@ -86,10 +86,10 @@ public class Comms {
 
     public static class IslandInfo {
         private final CompressedMapLocation compressedLocation;
-        public MapLocation location;
-        public int id;
-        public Team team;
-        public int lastUpdate;
+        public final MapLocation location;
+        public final int id;
+        public final Team team;
+        public final int lastUpdate;
         IslandInfo(MapLocation location, int id, Team team, int lastUpdate) {
             this.compressedLocation = new CompressedMapLocation(location.x / MAP_COMPRESSION, location.y / MAP_COMPRESSION);
             this.location = location;

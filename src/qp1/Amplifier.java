@@ -11,7 +11,7 @@ import static qp1.navigation.Pathfinding.spreadOut;
 import static qp1.utilities.Util.directionAway;
 
 public class Amplifier extends BaseBot {
-    public Amplifier(RobotController rc) throws GameActionException {
+    public Amplifier(RobotController rc) {
         super(rc);
     }
 

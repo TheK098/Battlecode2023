@@ -66,8 +66,6 @@ public class Pathfinding {
     // declare arrays once whenever possible to save bytecode
     private static final Direction[][] startingDir = new Direction[MAX_SIZE][MAX_SIZE];
     private static final int[][] distance = new int[MAX_SIZE][MAX_SIZE];
-//    private static final MapLocation[] locations = new MapLocation[MAX_IN_RANGE];
-//    private static final int[][] cost = new int[MAX_IN_RANGE][DIRECTIONS.length];
 
     private static final MapLocation[] queue = new MapLocation[MAX_IN_RANGE];
 

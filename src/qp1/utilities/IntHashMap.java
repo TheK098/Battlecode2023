@@ -57,27 +57,4 @@ public class IntHashMap {
         }
         return 0;
     }
-
-//    public void remove(int key) {
-//        int hash = key % n;
-//        int cind = ind[hash];
-//        int[] ckeys = keys[hash];
-//        int[] cvalues = values[hash];
-//        for (int i = 0; i < cind; i++) {
-//            if (ckeys[i] == key) {
-//                System.arraycopy(ckeys, i + 1, ckeys, i, --ind[hash] - i);
-//                System.arraycopy(cvalues, i + 1, cvalues, i, ind[hash] - i);
-//                size--;
-//                return;
-//            }
-//        }
-//    }
-
-//    public int size() {
-//        return size;
-//    }
-//
-//    public boolean isEmpty() {
-//        return size == 0;
-//    }
 }

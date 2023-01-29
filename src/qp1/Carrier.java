@@ -28,7 +28,7 @@ public class Carrier extends BaseBot {
     private static int ANCHORING_PROPORTION = 10;
     private static int returnTimer = 0;
 
-    public Carrier(RobotController rc) throws GameActionException {
+    public Carrier(RobotController rc) {
         super(rc);
         blacklist = new int[rc.getMapWidth()][rc.getMapHeight()];
         ANCHORING_PROPORTION = (int)Math.round(40 / Math.sqrt(rc.getIslandCount()));
