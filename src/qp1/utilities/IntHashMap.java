@@ -17,9 +17,9 @@ public class IntHashMap {
 
     public IntHashMap(int bucketCount) {
         n = bucketCount;
-        ind = new int[n];
-        keys = new int[n][INITIAL_BIN_CAPACITY];
-        values = new int[n][INITIAL_BIN_CAPACITY];
+        ind = new int[bucketCount];
+        keys = new int[bucketCount][INITIAL_BIN_CAPACITY];
+        values = new int[bucketCount][INITIAL_BIN_CAPACITY];
     }
 
     public void put(int key, int value) {
@@ -34,8 +34,8 @@ public class IntHashMap {
             }
         }
         if (cind == ckeys.length) {
-            keys[hash] = Arrays.copyOf(keys[hash], ckeys.length * 2);
-            values[hash] = Arrays.copyOf(values[hash], ckeys.length * 2);
+            keys[hash] = Arrays.copyOf(ckeys, ckeys.length * 2);
+            values[hash] = Arrays.copyOf(cvalues, ckeys.length * 2);
             keys[hash][cind] = key;
             values[hash][cind] = value;
         } else {
