@@ -250,7 +250,7 @@ public class Util {
         if (directionOkayNoCloud(rc, dir, dir.rotateLeft())) return dir.rotateLeft();
         if (directionOkayNoCloud(rc, dir, dir.rotateRight())) return dir.rotateRight();
         if (directionOkayNoCloud(rc, dir, dir.rotateLeft().rotateLeft())) return dir.rotateLeft().rotateLeft();
-        return similarDirectionNoCloud(rc, dir);
+        return similarDirection(rc, dir);
     }
 
     private static boolean directionOkayNoCloud(RobotController rc, Direction targetDir, Direction actualDir) throws GameActionException {
