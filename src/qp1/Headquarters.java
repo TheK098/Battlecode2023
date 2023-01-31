@@ -46,7 +46,7 @@ public class Headquarters extends BaseBot {
         Comms.addHq(rc, curLocation); // report HQ position
         Comms.addWells(rc, rc.senseNearbyWells());
 
-        AMPLIFIER_FREQUENCY = 6000 / (int)Math.round(Math.sqrt(rc.getMapWidth() * rc.getMapHeight()));
+        AMPLIFIER_FREQUENCY = 6000 / (int)Math.round(Math.sqrt(MAP_SIZE));
     }
 
     @Override
@@ -65,10 +65,11 @@ public class Headquarters extends BaseBot {
 
         if (!itsAnchorTime() || (rc.getResourceAmount(ResourceType.ADAMANTIUM) >= 300 && rc.getResourceAmount(ResourceType.MANA) >= 300)) {
             RobotType[] spawnPriority = {RobotType.CARRIER, RobotType.LAUNCHER};
+            int typeIdx = 0;
             if ((rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) ||
                     (5 < rc.getRoundNum() && rc.getRoundNum() <= 50 && rc.getRoundNum() % 2 == 0) ||
                     (50 < rc.getRoundNum() && wells.length > 0 && FastRandom.nextInt(50 * wells.length) < rc.getRobotCount()))
-                spawnPriority = new RobotType[]{RobotType.LAUNCHER, RobotType.CARRIER};
+                typeIdx = 1;
 
             MapLocation newLoc;
             if (rc.getRoundNum() >= 400 && rc.getRoundNum() % AMPLIFIER_FREQUENCY == 0) {
@@ -76,8 +77,7 @@ public class Headquarters extends BaseBot {
                 if (newLoc != null) rc.buildRobot(RobotType.AMPLIFIER, newLoc);
             }
 
-            newLoc = pickEmptySpawnLocation(spawnPriority[0], allies.length);
-            int typeIdx = 0;
+            newLoc = pickEmptySpawnLocation(spawnPriority[typeIdx], allies.length);
             while (newLoc != null) {
                 rc.buildRobot(spawnPriority[typeIdx], newLoc);  // it's guaranteed that we can build
                 typeIdx ^= 1;
@@ -181,7 +181,7 @@ public class Headquarters extends BaseBot {
 
         int manaPriority = 0;
         for (int i = sightings.length; i--> 0;) manaPriority += sightings[i].urgency;
-        manaPriority = Math.min(30, (manaPriority / 4) + 3600 / (rc.getMapWidth() * rc.getMapHeight()));
+        manaPriority = Math.min(30, (manaPriority / 4) + 3600 / MAP_SIZE);
 
         Comms.setResourcePriorities(rc,
                 calculateResourcePriority(Comms.getAdamantiumPriority(rc), adamantiumPriority),

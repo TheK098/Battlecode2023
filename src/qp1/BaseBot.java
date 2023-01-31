@@ -12,8 +12,11 @@ abstract public class BaseBot {
     protected static int lastMoveOrAction;
     private static final MapLocation IRRELEVANT = new MapLocation(-10000, -10000);
 
+    protected static int MAP_SIZE;
+
     public BaseBot(RobotController rc) {
         BaseBot.rc = rc;
+        MAP_SIZE = rc.getMapWidth() * rc.getMapHeight();
         updateCommsOffsets();
         lastMoveOrAction = rc.getRoundNum();
     }
@@ -30,7 +33,7 @@ abstract public class BaseBot {
     }
 
     protected static boolean itsAnchorTime() {
-        double threshold = rc.getMapWidth() * rc.getMapHeight() / Math.pow(Math.max(1, rc.getRoundNum() * rc.getRoundNum() - 2_000_000), 0.15);
+        double threshold = MAP_SIZE / Math.pow(Math.max(1, rc.getRoundNum() * rc.getRoundNum() - 2_000_000), 0.15);
         int ourRobots = rc.getRobotCount();
         return ourRobots * 3 >= threshold;
     }
@@ -51,7 +54,7 @@ abstract public class BaseBot {
 
     public static void updateCommsOffsets() {
         EntityType.ENEMY.offset = 0;
-        EntityType.ENEMY.count = (int) (Math.log(rc.getMapWidth() * rc.getMapHeight())) + 1;  // from 9 to 12
+        EntityType.ENEMY.count = (int) (Math.log(MAP_SIZE)) + 1;  // from 9 to 12
 
         EntityType.ISLAND.offset = EntityType.ENEMY.offset + EntityType.ENEMY.count;
         EntityType.ISLAND.count = rc.getIslandCount();
@@ -68,10 +71,9 @@ abstract public class BaseBot {
         EnemySighting[] enemySightings = Comms.getEnemySightings(rc);
         int targetIdx = -1;
         int targetScore = 10;
-        int factor = rc.getMapWidth() * rc.getMapHeight();
         for (int i = enemySightings.length; i --> 0;) {
             if (enemySightings[i].urgency > 0) {
-                int score = factor * enemySightings[i].urgency / Math.max(1, rc.getLocation().distanceSquaredTo(enemySightings[i].location));
+                int score = MAP_SIZE * enemySightings[i].urgency / Math.max(1, rc.getLocation().distanceSquaredTo(enemySightings[i].location));
                 if (targetScore < score) {
                     targetScore = score;
                     targetIdx = i;

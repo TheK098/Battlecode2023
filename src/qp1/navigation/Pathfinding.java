@@ -10,17 +10,11 @@ import java.util.Arrays;
 import static qp1.utilities.Util.*;
 
 public class Pathfinding {
-
     public static final int INF_DIST = 60 * 60 * 60 * 60;
 
     // TODO: assumes vision radius is always 20 (HQ/amplifier have 34)
     private static final int MAX_IN_RANGE = 80;  // theoretical max is 69, but we might have bytecode issues
     private static final int MAX_SIZE = 4 + 4 + 1;
-
-    public static final Direction[] DIRECTIONS = {  // put diagonal directions first since they should go faster maybe?
-            Direction.NORTHWEST, Direction.NORTHEAST, Direction.SOUTHEAST, Direction.SOUTHWEST,
-            Direction.WEST, Direction.NORTH, Direction.EAST, Direction.SOUTH
-    };
 
     public static Direction moveWhileStayingAdjacent(RobotController rc, MapLocation target) throws GameActionException {
         MapLocation loc1 = rc.getLocation().add(Direction.NORTHWEST); MapInfo info1 = rc.onTheMap(loc1) ? rc.senseMapInfo(loc1) : null;
@@ -74,8 +68,6 @@ public class Pathfinding {
     // bytecodeLimit should be at least 650
     public static Direction moveToward(RobotController rc, MapLocation target, int bytecodeLimit) throws GameActionException {
 //        debugBytecode("4.0");
-        int visionLength = (int)(Math.sqrt(rc.getType().visionRadiusSquared) + 0.00001);
-
         Direction closestDir = directionToward(rc, target);
         MapLocation curLoc = rc.getLocation();
         MapLocation nextLoc = curLoc.add(closestDir);
@@ -90,15 +82,16 @@ public class Pathfinding {
 
 //        debugBytecode("4.1");
 
+        int visionLength = (int)(Math.sqrt(rc.getType().visionRadiusSquared) + 0.00001);
         int queueStart = 0, queueEnd = 0;
         queue[queueEnd++] = curLoc;
         distance[visionLength][visionLength] = 0;
         startingDir[visionLength][visionLength] = Direction.CENTER;
 
         closestDir = curLoc.directionTo(target);
-        int closestDistance = INF_DIST;
 
         int minX = curLoc.x - visionLength, minY = curLoc.y - visionLength;
+        int closestDistance = INF_DIST;
 
         int y, d, nx, ny, distanceRemaining, dist;   // declare once at top to save bytecode
         Direction dir, curDir;
@@ -108,8 +101,8 @@ public class Pathfinding {
             x = curLoc.x - minX; y = curLoc.y - minY;
 
             distanceRemaining = Math.max(
-                    Math.abs(target.x - (x + minX)),
-                    Math.abs(target.y - (y + minY))
+                    Math.abs(target.x - curLoc.x),
+                    Math.abs(target.y - curLoc.y)
             ) * 5;
 
             dist = distance[x][y];
@@ -154,7 +147,7 @@ public class Pathfinding {
         weightY += (Math.max(0, cube(EDGE_PUSH - y)) - Math.max(0, cube(y - (rc.getMapHeight() - EDGE_PUSH - 1)))) / 10f;
 
         RobotInfo[] robots = rc.senseNearbyRobots(settings.ally_dist_cutoff, rc.getTeam());
-        int dist;
+        float dist;
         float allyWeightX = 0, allyWeightY = 0;
         MapLocation loc;
         boolean notAnchor = settings != SpreadSettings.CARRIER_ANCHOR;

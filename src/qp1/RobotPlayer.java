@@ -66,16 +66,3 @@ public strictfp class RobotPlayer {
         }
     }
 }
-
-
-
-
-
-
-/*
-[A:CARRIER#13335@257] Started on round 256 but ended on round 257 with 12213 bytecode used. Location [12, 21]
-[A:CARRIER#12185@280] Started on round 279 but ended on round 280 with 12286 bytecode used. Location [12, 21]
-[A:LAUNCHER#12249@502] Started on round 501 but ended on round 502 with 20 bytecode used. Location [17, 12]
-[A:LAUNCHER#10249@507] Started on round 506 but ended on round 507 with 44 bytecode used. Location [17, 12]
-[A:LAUNCHER#11347@652] Started on round 651 but ended on round 652 with 574 bytecode used. Location [10, 22]
- */

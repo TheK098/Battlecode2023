@@ -6,7 +6,6 @@ import qp1.communications.Comms.WellLocation;
 import qp1.communications.Comms.IslandInfo;
 
 import static qp1.communications.Comms.UPDATE_FREQ;
-import static qp1.navigation.Pathfinding.DIRECTIONS;
 import static qp1.navigation.Pathfinding.INF_DIST;
 
 public class Util {
@@ -128,6 +127,10 @@ public class Util {
         return loc1.isWithinDistanceSquared(loc2, 2);
     }
 
+    private static final Direction[] DIRECTIONS = {
+            Direction.NORTHWEST, Direction.NORTHEAST, Direction.SOUTHEAST, Direction.SOUTHWEST,
+            Direction.WEST, Direction.NORTH, Direction.EAST, Direction.SOUTH
+    };
     public static Direction randomDirection(RobotController rc) {
         Direction dir;
         // Tries 25 times, (7/8)^25 ≈ 3.55% chance of missing available move, worst case
