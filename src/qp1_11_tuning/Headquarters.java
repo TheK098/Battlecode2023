@@ -60,7 +60,7 @@ public class Headquarters extends BaseBot {
         calculateWellDistances(wells);
 
         if ((rc.getRoundNum() - rc.getID()) % (18 / Comms.getHqs(rc).length) == 0) Comms.decreaseUrgencies(rc);
-        if (enemies.length >= 8 && allies.length == 0) return;  // save resources, any bots will get spawnkilled
+        if ((enemies.length >= 8 && allies.length == 0) || (rc.getRobotCount() <= 50 && rc.getRoundNum() >= 1900)) return;  // save resources, any bots will get spawnkilled
 
         if (!itsAnchorTime() || (rc.getResourceAmount(ResourceType.ADAMANTIUM) >= 300 && rc.getResourceAmount(ResourceType.MANA) >= 300)) {
             RobotType[] spawnPriority = {RobotType.CARRIER, RobotType.LAUNCHER};
