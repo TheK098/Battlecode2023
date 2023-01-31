@@ -1,12 +1,12 @@
-package qp1_11_tuning;
+package qp1_12_tuning;
 
 import battlecode.common.*;
-import qp1_11_tuning.communications.Comms;
-import qp1_11_tuning.communications.Comms.EnemySighting;
-import qp1_11_tuning.communications.Comms.WellLocation;
-import qp1_11_tuning.utilities.FastRandom;
+import qp1_12_tuning.communications.Comms;
+import qp1_12_tuning.communications.Comms.EnemySighting;
+import qp1_12_tuning.communications.Comms.WellLocation;
+import qp1_12_tuning.utilities.FastRandom;
 
-import static qp1_11_tuning.utilities.Util.pickNearest;
+import static qp1_12_tuning.utilities.Util.pickNearest;
 
 public class Headquarters extends BaseBot {
     private static int lastEnemyCommUpdate = 0;
@@ -60,7 +60,7 @@ public class Headquarters extends BaseBot {
         calculateWellDistances(wells);
 
         if ((rc.getRoundNum() - rc.getID()) % (18 / Comms.getHqs(rc).length) == 0) Comms.decreaseUrgencies(rc);
-        if ((enemies.length >= 8 && allies.length == 0)) return;  // save resources, any bots will get spawnkilled
+        if ((enemies.length >= 8 && allies.length == 0) || (rc.getRobotCount() <= 50 && rc.getRoundNum() >= 1900)) return;  // save resources, any bots will get spawnkilled
 
         if (!itsAnchorTime() || (rc.getResourceAmount(ResourceType.ADAMANTIUM) >= 300 && rc.getResourceAmount(ResourceType.MANA) >= 300)) {
             RobotType[] spawnPriority = {RobotType.CARRIER, RobotType.LAUNCHER};
@@ -85,7 +85,7 @@ public class Headquarters extends BaseBot {
             newLoc = pickEmptySpawnLocation(spawnPriority[typeIdx], allies.length);
             if (newLoc != null) rc.buildRobot(spawnPriority[typeIdx], newLoc);  // try again with other type
         }
-        if (itsAnchorTime() && rc.canBuildAnchor(Anchor.STANDARD) && rc.getNumAnchors(Anchor.STANDARD) < 3) {
+        if (itsAnchorTime() && rc.canBuildAnchor(Anchor.STANDARD) && rc.getNumAnchors(Anchor.STANDARD) < 2) {
             // stick with Standard anchors for now, chances are we're already overrunning the map
             rc.buildAnchor(Anchor.STANDARD);
         }

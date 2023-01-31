@@ -86,7 +86,7 @@ public class Headquarters extends BaseBot {
             newLoc = pickEmptySpawnLocation(spawnPriority[typeIdx], allies.length);
             if (newLoc != null) rc.buildRobot(spawnPriority[typeIdx], newLoc);  // try again with other type
         }
-        if (itsAnchorTime() && rc.canBuildAnchor(Anchor.STANDARD) && rc.getNumAnchors(Anchor.STANDARD) < 3) {
+        if (itsAnchorTime() && rc.canBuildAnchor(Anchor.STANDARD) && rc.getNumAnchors(Anchor.STANDARD) < 2) {
             // stick with Standard anchors for now, chances are we're already overrunning the map
             rc.buildAnchor(Anchor.STANDARD);
         }
