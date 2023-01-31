@@ -22,7 +22,7 @@ public class Headquarters extends BaseBot {
         super(rc);
 
         MapLocation curLocation = rc.getLocation();
-        MapLocation[] reachableLocations = rc.getAllLocationsWithinRadiusSquared(curLocation, RobotType.HEADQUARTERS.actionRadiusSquared);
+        MapLocation[] reachableLocations = rc.getAllLocationsWithinRadiusSquared(curLocation, 9);
         int canBuild = 0;  // store array of 29 booleans
         int n = 0;
         for (int i = reachableLocations.length; i --> 0;)

@@ -122,7 +122,7 @@ public class Carrier extends BaseBot {
     private static boolean tryToAttack(MapLocation location) throws GameActionException {
         Direction toward = directionTowardImmediate(rc, location);
         MapLocation closer = rc.getLocation().add(toward);
-        if (!rc.canAttack(location) && closer.isWithinDistanceSquared(location, rc.getType().actionRadiusSquared)) {
+        if (!rc.canAttack(location) && closer.isWithinDistanceSquared(location, 9)) {
             tryMove(toward);
         }
         if (rc.canAttack(location)) {

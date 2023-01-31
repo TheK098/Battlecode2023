@@ -46,7 +46,7 @@ public class Launcher extends BaseBot {
                         else if (adjacentToWell(rc, newLoc) && allies.length >= 16 && FastRandom.nextInt(8) != 0)
                             if (rc.senseWell(curLoc) != null) tryMove(randomDirection(rc));
                             else tryMove(directionAway(rc, pickNearest(rc, Comms.getKnownWells(rc)).location));
-                        else if (nearestEnemyHq != null && newLoc.isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
+                        else if (nearestEnemyHq != null && newLoc.isWithinDistanceSquared(nearestEnemyHq.location, 9))
                             tryMove(directionAway(rc, nearestEnemyHq.location));
                         else
                             tryMove(dir);
@@ -63,7 +63,7 @@ public class Launcher extends BaseBot {
     }
 
     private static void extraAttack(MapLocation curLoc, MapLocation nearestHq) throws GameActionException {
-        RobotInfo target = pickTarget(rc.senseNearbyRobots(RobotType.LAUNCHER.actionRadiusSquared, rc.getTeam().opponent()));
+        RobotInfo target = pickTarget(rc.senseNearbyRobots(16, rc.getTeam().opponent()));
         if (target != null && rc.canAttack(target.location)) {
             rc.attack(target.location);
             lastMoveOrAction = rc.getRoundNum();
@@ -72,7 +72,7 @@ public class Launcher extends BaseBot {
             MapLocation targetLoc = curLoc.add(dir).add(dir).add(dir.rotateLeft());  // rotateLeft to stay within attack range
             if (rc.canAttack(targetLoc)) rc.attack(targetLoc);
         } else {  // attack cloud
-            MapLocation[] clouds = rc.senseNearbyCloudLocations(RobotType.LAUNCHER.actionRadiusSquared);
+            MapLocation[] clouds = rc.senseNearbyCloudLocations(16);
             int farthestDist = 0, farthestIdx = -1;
             for (int i = clouds.length; i --> 0;) {
                 if (!curLoc.isWithinDistanceSquared(clouds[i], farthestDist)) {
@@ -149,7 +149,7 @@ public class Launcher extends BaseBot {
 
         if (allyToFollow != -1) {  // support hurt ally
             Direction dir = directionToward(rc, rc.senseRobot(allyToFollow).location);  // no pathing, just try to be nearby
-            if (enemies.length > 0 || nearestEnemyHq == null || !rc.getLocation().add(dir).isWithinDistanceSquared(nearestEnemyHq.location, RobotType.HEADQUARTERS.actionRadiusSquared))
+            if (enemies.length > 0 || nearestEnemyHq == null || !rc.getLocation().add(dir).isWithinDistanceSquared(nearestEnemyHq.location, 9))
                 tryMove(dir);
             else tryMove(directionAway(rc, nearestEnemyHq.location));
             return true;
