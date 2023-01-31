@@ -101,8 +101,8 @@ public class Comms {
             this.compressedLocation = new CompressedMapLocation(value % MAX_COMPRESSED_LOCATION); value /= MAX_COMPRESSED_LOCATION;
             this.location = new MapLocation(compressedLocation.x * MAP_COMPRESSION, compressedLocation.y * MAP_COMPRESSION);
             this.id = id;
-            this.team = Team.values()[value % 3]; value /= 3;
-            this.lastUpdate = value;
+            this.team = Team.values()[value % 3];
+            this.lastUpdate = value / 3;
         }
         @Override
         public int hashCode() {
@@ -157,7 +157,7 @@ public class Comms {
             if (value >= 0) {
                 additionalValues[locationsIdx] = value / MAX_LOCATION;
                 indexes[locationsIdx] = entityType.offset + i;
-                locations[locationsIdx] = unpackLocation(value);
+                locations[locationsIdx] = new MapLocation((value % MAX_LOCATION) / MAP_SIZE, value % MAP_SIZE);
                 if (entityType == EntityType.WELL) wellType[locationsIdx] = ResourceType.values()[value / MAX_LOCATION];
                 ++locationsIdx;
             }
@@ -169,13 +169,14 @@ public class Comms {
         boolean canWrite = rc.canWriteSharedArray(0, 0);
         int n = loadSharedLocations(rc, EntityType.WELL);
         for (int i = wells.length; i --> 0;) {
-            if (!locationInArray(locations, n, wells[i].getMapLocation()) && !locationInArray(wellCache, wellCacheSize, wells[i].getMapLocation())) {
+            MapLocation location = wells[i].getMapLocation();
+            if (!locationInArray(locations, n, location) && !locationInArray(wellCache, wellCacheSize, location)) {
                 int index = canWrite ? findEmptySpot(rc, EntityType.WELL) : -1;
                 if (index != -1) {
-                    rc.writeSharedArray(index, pack(wells[i].getMapLocation(), wells[i].getResourceType()) + 1);
+                    rc.writeSharedArray(index, pack(location, wells[i].getResourceType()) + 1);
                 } else {
                     wellTypeCache[wellCacheSize] = wells[i].getResourceType();
-                    wellCache[wellCacheSize++] = wells[i].getMapLocation();
+                    wellCache[wellCacheSize++] = location;
                 }
             }
         }
@@ -283,9 +284,8 @@ public class Comms {
     }
     public static void tryPushIslandCache(RobotController rc) throws GameActionException {
         if (rc.canWriteSharedArray(0, 0)) {  // just check once at top, hopefully we don't have bytecode issues
-            for (int i = EntityType.ISLAND.count; i-- > 0; ) {
-                int index = EntityType.ISLAND.offset + i;
-
+            int index = EntityType.ISLAND.offset;
+            for (int i = EntityType.ISLAND.count; i-- > 0; ++index) {
                 if (islandCache[i] != null) {
                     if (rc.readSharedArray(index) == INVALID) {
                         rc.writeSharedArray(index, islandCache[i].hashCode() + 1);
@@ -305,9 +305,6 @@ public class Comms {
     private static int pack(MapLocation loc) {
         return loc.x * MAP_SIZE + loc.y;
     }
-    private static MapLocation unpackLocation(int x) {
-        return new MapLocation((x % MAX_LOCATION) / MAP_SIZE, x % MAP_SIZE);
-    }
     private static int pack(MapLocation loc, int urgency) {
         return Math.min(MAX_URGENCY, urgency) * MAX_LOCATION + pack(loc);
     }
@@ -325,3 +322,44 @@ public class Comms {
         rc.writeSharedArray(RESOURCE_INDEX, (adamantiumPriority << 8) | manaPriority);
     }
 }
+
+/*
+[A:HEADQUARTERS#2@2] Started on round 1 but ended on round 2 with 3819 bytecode used. Location [9, 6]
+[A:CARRIER#12010@3] Started on round 2 but ended on round 3 with 3905 bytecode used. Location [11, 5]
+[A:CARRIER#12988@3] Started on round 2 but ended on round 3 with 5761 bytecode used. Location [8, 8]
+[A:CARRIER#12436@4] Started on round 3 but ended on round 4 with 6217 bytecode used. Location [8, 4]
+[A:CARRIER#11792@4] Started on round 3 but ended on round 4 with 7146 bytecode used. Location [7, 7]
+[A:CARRIER#11160@5] Started on round 3 but ended on round 5 with 3427 bytecode used. Location [25, 9]
+[A:CARRIER#11745@5] Started on round 3 but ended on round 5 with 2488 bytecode used. Location [24, 7]
+[A:CARRIER#12829@5] Started on round 3 but ended on round 5 with 2448 bytecode used. Location [21, 4]
+[A:CARRIER#10779@5] Started on round 3 but ended on round 5 with 3722 bytecode used. Location [37, 9]
+[A:CARRIER#11358@5] Started on round 3 but ended on round 5 with 2842 bytecode used. Location [38, 7]
+[A:CARRIER#12304@5] Started on round 3 but ended on round 5 with 2802 bytecode used. Location [35, 4]
+[A:CARRIER#12212@5] Started on round 3 but ended on round 5 with 3744 bytecode used. Location [49, 9]
+[A:CARRIER#13811@5] Started on round 3 but ended on round 5 with 2916 bytecode used. Location [50, 7]
+[A:CARRIER#12291@5] Started on round 3 but ended on round 5 with 2492 bytecode used. Location [47, 4]
+[A:CARRIER#11791@6] Started on round 4 but ended on round 6 with 6490 bytecode used. Location [23, 7]
+[A:CARRIER#12626@6] Started on round 4 but ended on round 6 with 6844 bytecode used. Location [37, 7]
+[A:CARRIER#11993@6] Started on round 4 but ended on round 6 with 6866 bytecode used. Location [49, 7]
+[A:CARRIER#11745@7] Started on round 6 but ended on round 7 with 4214 bytecode used. Location [25, 6]
+[A:CARRIER#12829@7] Started on round 6 but ended on round 7 with 4626 bytecode used. Location [22, 5]
+[A:CARRIER#11358@7] Started on round 6 but ended on round 7 with 4568 bytecode used. Location [39, 6]
+[A:CARRIER#12304@7] Started on round 6 but ended on round 7 with 4648 bytecode used. Location [36, 5]
+[A:CARRIER#13811@7] Started on round 6 but ended on round 7 with 4642 bytecode used. Location [51, 6]
+[A:CARRIER#12291@7] Started on round 6 but ended on round 7 with 4670 bytecode used. Location [48, 5]
+[A:CARRIER#11160@8] Started on round 7 but ended on round 8 with 1842 bytecode used. Location [25, 9]
+[A:CARRIER#10779@8] Started on round 7 but ended on round 8 with 2252 bytecode used. Location [37, 9]
+[A:CARRIER#12212@8] Started on round 7 but ended on round 8 with 2159 bytecode used. Location [49, 9]
+[A:CARRIER#11791@8] Started on round 7 but ended on round 8 with 4632 bytecode used. Location [24, 6]
+[A:CARRIER#12626@8] Started on round 7 but ended on round 8 with 4996 bytecode used. Location [38, 6]
+[A:CARRIER#11993@8] Started on round 7 but ended on round 8 with 4696 bytecode used. Location [50, 6]
+[A:CARRIER#11745@9] Started on round 8 but ended on round 9 with 2234 bytecode used. Location [24, 7]
+[A:CARRIER#12829@9] Started on round 8 but ended on round 9 with 5270 bytecode used. Location [23, 4]
+[A:CARRIER#11358@9] Started on round 8 but ended on round 9 with 2588 bytecode used. Location [38, 7]
+[A:CARRIER#12304@9] Started on round 8 but ended on round 9 with 5302 bytecode used. Location [37, 4]
+[A:CARRIER#13811@9] Started on round 8 but ended on round 9 with 2662 bytecode used. Location [50, 7]
+[A:CARRIER#12291@9] Started on round 8 but ended on round 9 with 5334 bytecode used. Location [49, 4]
+[A:CARRIER#11791@10] Started on round 9 but ended on round 10 with 4092 bytecode used. Location [23, 7]
+[A:CARRIER#12626@10] Started on round 9 but ended on round 10 with 4446 bytecode used. Location [37, 7]
+[A:CARRIER#11993@10] Started on round 9 but ended on round 10 with 4468 bytecode used. Location [49, 7]
+ */

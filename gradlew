@@ -1,5 +1,7 @@
 #!/bin/sh
 
+JAVA_HOME="/Users/qpwoeirut/Library/Java/JavaVirtualMachines/temurin-1.8.0_332/Contents/Home/"
+
 #
 # Copyright © 2015-2021 the original authors.
 #
