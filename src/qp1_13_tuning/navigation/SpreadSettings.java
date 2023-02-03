@@ -3,7 +3,7 @@ package qp1_13_tuning.navigation;
 public enum SpreadSettings {
     CARRIER_ANCHOR(-1, 30, 100),
     CARRIER_SEARCHING(-1, 20, 100),
-    LAUNCHER(15, 1, 20),
+    LAUNCHER(13, 0.8f, 20),
     AMPLIFIER(-1, 100, 100);
 
     public final int ally_dist_cutoff;
