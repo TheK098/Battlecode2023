@@ -16,9 +16,12 @@ public class Launcher extends BaseBot {
     private static final IntHashMap allyHealth = new IntHashMap(20);
     private static int allyToFollow = -1;
     private static int allyFollowTimer = 0;
+    private static float centerX, centerY;
 
     public Launcher(RobotController rc) {
         super(rc);
+        centerX = rc.getMapWidth() / 2f;
+        centerY = rc.getMapHeight() / 2f;
     }
 
     @Override
@@ -36,8 +39,8 @@ public class Launcher extends BaseBot {
                         tryMove(moveToward(rc, sighting.location, 700));
                     } else if (!attackNearestIsland()) {
                         Direction dir = spreadOut(rc,
-                                ((rc.getMapWidth() / 2f) - curLoc.x) / 5,
-                                ((rc.getMapHeight() / 2f) - curLoc.y) / 5,
+                                (centerX - curLoc.x) / 6,
+                                (centerY - curLoc.y) / 6,
                                 SpreadSettings.LAUNCHER);
                         MapLocation newLoc = curLoc.add(dir);
                         // maintain space for carriers
