@@ -33,9 +33,8 @@ abstract public class BaseBot {
     }
 
     protected static boolean itsAnchorTime() {
-        double threshold = MAP_SIZE / Math.pow(Math.max(1, rc.getRoundNum() * rc.getRoundNum() - 2_000_000), 0.15);
-        int ourRobots = rc.getRobotCount();
-        return ourRobots * 3 >= threshold;
+        return rc.getRobotCount() * 3 >= MAP_SIZE / Math.pow(Math.max(1, rc.getRoundNum() * rc.getRoundNum() - 2_500_000), 0.15) ||
+                (rc.getRoundNum() >= 500 && rc.getRoundNum() % 100 <= 8);
     }
 
     // only finds islands within range; required since comms only stores a compressed approximation of locations
