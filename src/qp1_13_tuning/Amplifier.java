@@ -10,8 +10,12 @@ import static qp1_13_tuning.navigation.Pathfinding.spreadOut;
 import static qp1_13_tuning.utilities.Util.directionAway;
 
 public class Amplifier extends BaseBot {
+    private static float centerX, centerY;
     public Amplifier(RobotController rc) {
         super(rc);
+
+        centerX = rc.getMapWidth() / 2f;
+        centerY = rc.getMapHeight() / 2f;
     }
 
     @Override
@@ -36,8 +40,8 @@ public class Amplifier extends BaseBot {
         if (nearestIdx != -1) tryMove(directionAway(rc, enemies[nearestIdx].location));
         else {
             EnemySighting sighting = pickSighting();
-            float weightX = sighting == null ? 0 : sighting.location.x - rc.getLocation().x;
-            float weightY = sighting == null ? 0 : sighting.location.y - rc.getLocation().y;
+            float weightX = (sighting == null ? centerX : sighting.location.x) - rc.getLocation().x;
+            float weightY = (sighting == null ? centerY : sighting.location.y) - rc.getLocation().y;
             Direction dir = spreadOut(rc, weightX, weightY, SpreadSettings.AMPLIFIER);
 
             if (shouldMove(dir, 4)) tryMove(dir);
