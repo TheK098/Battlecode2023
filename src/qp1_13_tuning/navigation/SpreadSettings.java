@@ -4,10 +4,10 @@ public enum SpreadSettings {
     CARRIER_ANCHOR(-1, 30, 100),
     CARRIER_SEARCHING(-1, 20, 100),
     LAUNCHER(13, 0.8f, 20),
-    AMPLIFIER(-1, 100, 100);
+    AMPLIFIER(-1, 80, 100);
 
-    public final int ally_dist_cutoff;
-    public final float ally_dist_factor;
+    public int ally_dist_cutoff;
+    public float ally_dist_factor;
     public final int random_cutoff;
     public final int random_bound;
 

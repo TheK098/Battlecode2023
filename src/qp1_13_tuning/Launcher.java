@@ -38,6 +38,10 @@ public class Launcher extends BaseBot {
                     if (sighting != null) {
                         tryMove(moveToward(rc, sighting.location, 700));
                     } else if (!attackNearestIsland()) {
+                        if (rc.getRoundNum() >= 500) {
+                            SpreadSettings.LAUNCHER.ally_dist_cutoff = 16;
+                            SpreadSettings.LAUNCHER.ally_dist_factor = 1.2f;
+                        }
                         Direction dir = spreadOut(rc,
                                 (centerX - curLoc.x) / 6,
                                 (centerY - curLoc.y) / 6,
