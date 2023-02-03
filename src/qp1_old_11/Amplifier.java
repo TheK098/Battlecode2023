@@ -1,14 +1,14 @@
-package qp1;
+package qp1_old_11;
 
 import battlecode.common.*;
-import qp1.communications.Comms;
-import qp1.communications.Comms.EnemySighting;
-import qp1.navigation.SpreadSettings;
-import qp1.utilities.FastRandom;
+import qp1_old_11.communications.Comms;
+import qp1_old_11.communications.Comms.EnemySighting;
+import qp1_old_11.navigation.SpreadSettings;
+import qp1_old_11.utilities.FastRandom;
 
-import static qp1.navigation.Pathfinding.INF_DIST;
-import static qp1.navigation.Pathfinding.spreadOut;
-import static qp1.utilities.Util.directionAway;
+import static qp1_old_11.navigation.Pathfinding.INF_DIST;
+import static qp1_old_11.navigation.Pathfinding.spreadOut;
+import static qp1_old_11.utilities.Util.directionAway;
 
 public class Amplifier extends BaseBot {
     public Amplifier(RobotController rc) {

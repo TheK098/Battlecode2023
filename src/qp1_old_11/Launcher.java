@@ -1,16 +1,16 @@
-package qp1;
+package qp1_old_11;
 
 import battlecode.common.*;
-import qp1.communications.Comms;
-import qp1.communications.Comms.EnemySighting;
-import qp1.communications.Comms.IslandInfo;
-import qp1.navigation.SpreadSettings;
-import qp1.utilities.FastRandom;
-import qp1.utilities.IntHashMap;
+import qp1_old_11.communications.Comms;
+import qp1_old_11.communications.Comms.EnemySighting;
+import qp1_old_11.communications.Comms.IslandInfo;
+import qp1_old_11.navigation.SpreadSettings;
+import qp1_old_11.utilities.FastRandom;
+import qp1_old_11.utilities.IntHashMap;
 
-import static qp1.navigation.Pathfinding.moveToward;
-import static qp1.navigation.Pathfinding.spreadOut;
-import static qp1.utilities.Util.*;
+import static qp1_old_11.navigation.Pathfinding.moveToward;
+import static qp1_old_11.navigation.Pathfinding.spreadOut;
+import static qp1_old_11.utilities.Util.*;
 
 public class Launcher extends BaseBot {
     private static final IntHashMap allyHealth = new IntHashMap(20);

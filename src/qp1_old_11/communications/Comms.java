@@ -1,8 +1,8 @@
-package qp1.communications;
+package qp1_old_11.communications;
 
 import battlecode.common.*;
 
-import static qp1.utilities.Util.locationInArray;
+import static qp1_old_11.utilities.Util.locationInArray;
 
 // TODO: consider cycling through writing data so that all the bots can eventually know everything
 

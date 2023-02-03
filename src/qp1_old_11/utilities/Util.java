@@ -1,12 +1,12 @@
-package qp1.utilities;
+package qp1_old_11.utilities;
 
 import battlecode.common.*;
-import qp1.communications.Comms;
-import qp1.communications.Comms.WellLocation;
-import qp1.communications.Comms.IslandInfo;
+import qp1_old_11.communications.Comms;
+import qp1_old_11.communications.Comms.WellLocation;
+import qp1_old_11.communications.Comms.IslandInfo;
 
-import static qp1.communications.Comms.UPDATE_FREQ;
-import static qp1.navigation.Pathfinding.INF_DIST;
+import static qp1_old_11.communications.Comms.UPDATE_FREQ;
+import static qp1_old_11.navigation.Pathfinding.INF_DIST;
 
 public class Util {
     // TODO: include pathfinding in the future

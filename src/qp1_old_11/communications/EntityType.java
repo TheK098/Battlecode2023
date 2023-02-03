@@ -1,4 +1,4 @@
-package qp1.communications;
+package qp1_old_11.communications;
 
 public enum EntityType {
     ENEMY(1, 1, 1, 1),

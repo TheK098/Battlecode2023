@@ -1,13 +1,13 @@
-package qp1.navigation;
+package qp1_old_11.navigation;
 
 import battlecode.common.*;
-import qp1.communications.Comms;
-import qp1.communications.Comms.EnemySighting;
-import qp1.utilities.FastRandom;
+import qp1_old_11.communications.Comms;
+import qp1_old_11.communications.Comms.EnemySighting;
+import qp1_old_11.utilities.FastRandom;
 
 import java.util.Arrays;
 
-import static qp1.utilities.Util.*;
+import static qp1_old_11.utilities.Util.*;
 
 public class Pathfinding {
     public static final int INF_DIST = 60 * 60 * 60 * 60;

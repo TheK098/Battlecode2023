@@ -1,14 +1,14 @@
-package qp1;
+package qp1_old_11;
 
 import battlecode.common.*;
-import qp1.communications.Comms;
-import qp1.communications.Comms.IslandInfo;
-import qp1.communications.Comms.WellLocation;
-import qp1.communications.EntityType;
-import qp1.navigation.SpreadSettings;
+import qp1_old_11.communications.Comms;
+import qp1_old_11.communications.Comms.IslandInfo;
+import qp1_old_11.communications.Comms.WellLocation;
+import qp1_old_11.communications.EntityType;
+import qp1_old_11.navigation.SpreadSettings;
 
-import static qp1.navigation.Pathfinding.*;
-import static qp1.utilities.Util.*;
+import static qp1_old_11.navigation.Pathfinding.*;
+import static qp1_old_11.utilities.Util.*;
 
 
 public class Carrier extends BaseBot {

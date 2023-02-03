@@ -1,9 +1,9 @@
-package qp1;
+package qp1_old_11;
 
 import battlecode.common.Clock;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
-import qp1.utilities.FastRandom;
+import qp1_old_11.utilities.FastRandom;
 
 @SuppressWarnings("unused")
 public strictfp class RobotPlayer {

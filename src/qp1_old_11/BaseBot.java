@@ -1,11 +1,11 @@
-package qp1;
+package qp1_old_11;
 
 import battlecode.common.*;
-import qp1.communications.Comms;
-import qp1.communications.Comms.EnemySighting;
-import qp1.communications.EntityType;
+import qp1_old_11.communications.Comms;
+import qp1_old_11.communications.Comms.EnemySighting;
+import qp1_old_11.communications.EntityType;
 
-import static qp1.utilities.Util.pickNearest;
+import static qp1_old_11.utilities.Util.pickNearest;
 
 abstract public class BaseBot {
     protected static RobotController rc;
