@@ -178,9 +178,9 @@ public class Headquarters extends BaseBot {
         for (int i = allies.length; i--> 0;) carrierDensity += allies[i].type == RobotType.CARRIER ? 1 : 0;
         int adamantiumPriority = spawnLocations.length / carrierDensity;  // locations is action radius, carrierDensity is vision radius
 
-        int manaPriority = 16;
+        int manaPriority = 15;
         for (int i = sightings.length; i--> 0;) manaPriority += sightings[i].urgency;
-        manaPriority = Math.min(30, (manaPriority / 4) + 3600 / MAP_SIZE);
+        manaPriority = Math.min(30, (manaPriority / 3) + 3600 / MAP_SIZE);
 
         Comms.setResourcePriorities(rc,
                 calculateResourcePriority(Comms.getAdamantiumPriority(rc), adamantiumPriority),
